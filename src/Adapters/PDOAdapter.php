@@ -13,9 +13,7 @@ use Sentience\Database\Results\PDOResult;
 
 class PDOAdapter extends AdapterAbstract
 {
-    protected PDO $pdo;
-
-    public function __construct(
+    public static function connect(
         Driver $driver,
         string $host,
         int $port,
@@ -25,49 +23,86 @@ class PDOAdapter extends AdapterAbstract
         array $queries,
         array $options,
         ?Closure $debug
+    ): static {
+        $dsn = (function (Driver $driver, string $host, int $port, string $name, array $options): string {
+            if (array_key_exists(static::OPTIONS_PDO_DSN, $options)) {
+                return (string) $options[static::OPTIONS_PDO_DSN];
+            }
+
+            if ($driver == Driver::SQLITE) {
+                return sprintf(
+                    '%s:%s',
+                    $driver->value,
+                    $name
+                );
+            }
+
+            $dsn = sprintf(
+                '%s:host=%s;port=%s;dbname=%s',
+                $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
+                $host,
+                $port,
+                $name
+            );
+
+            if ($driver == Driver::PGSQL) {
+                if (array_key_exists(static::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
+                    $dsn .= sprintf(
+                        ";options='--client_encoding=%s'",
+                        (string) $options[static::OPTIONS_PGSQL_CLIENT_ENCODING]
+                    );
+                }
+            }
+
+            return $dsn;
+        })($driver, $host, $port, $name, $options);
+
+        $pdo = new PDO(
+            $dsn,
+            $username,
+            $password,
+            [
+                PDO::ATTR_PERSISTENT => true
+            ]
+        );
+
+        return new static(
+            $pdo,
+            $driver,
+            $queries,
+            $options,
+            $debug
+        );
+    }
+
+    public function __construct(
+        protected PDO $pdo,
+        Driver $driver,
+        array $queries,
+        array $options,
+        ?Closure $debug
     ) {
         parent::__construct(
             $driver,
-            $host,
-            $port,
-            $name,
-            $username,
-            $password,
             $queries,
             $options,
             $debug
         );
 
-        $dsn = $this->dsn(
-            $driver,
-            $host,
-            $port,
-            $name,
-            $options
-        );
-
-        $this->pdo = new PDO(
-            $dsn,
-            $username,
-            $password,
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_EMULATE_PREPARES => false,
-                PDO::ATTR_STRINGIFY_FETCHES => false,
-                PDO::ATTR_PERSISTENT => true
-            ]
-        );
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+        $this->pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
 
         if (in_array($driver, [Driver::MARIADB, Driver::MYSQL])) {
-            $this->configurePDOForMySQL($options);
+            $this->configurePdoForMySQL($options);
         }
 
         if ($driver == Driver::PGSQL) {
-            $this->configurePDOForPgSQL($options);
+            $this->configurePdoForPgSQL($options);
         }
 
         if ($driver == Driver::SQLITE) {
-            $this->configurePDOForSQLite($options);
+            $this->configurePdoForSQLite($options);
         }
 
         foreach ($queries as $query) {
@@ -75,46 +110,7 @@ class PDOAdapter extends AdapterAbstract
         }
     }
 
-    protected function dsn(
-        Driver $driver,
-        string $host,
-        int $port,
-        string $name,
-        array $options
-    ): string {
-        if (array_key_exists(static::OPTIONS_PDO_DSN, $options)) {
-            return (string) $options[static::OPTIONS_PDO_DSN];
-        }
-
-        if ($driver == Driver::SQLITE) {
-            return sprintf(
-                '%s:%s',
-                $driver->value,
-                $name
-            );
-        }
-
-        $dsn = sprintf(
-            '%s:host=%s;port=%s;dbname=%s',
-            $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
-            $host,
-            $port,
-            $name
-        );
-
-        if ($driver == Driver::PGSQL) {
-            if (array_key_exists(static::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
-                $dsn .= sprintf(
-                    ";options='--client_encoding=%s'",
-                    (string) $options[static::OPTIONS_PGSQL_CLIENT_ENCODING]
-                );
-            }
-        }
-
-        return $dsn;
-    }
-
-    protected function configurePDOForMySQL(array $options): void
+    protected function configurePdoForMySQL(array $options): void
     {
         if (array_key_exists(static::OPTIONS_MYSQL_CHARSET, $options)) {
             $this->mysqlNames(
@@ -128,7 +124,7 @@ class PDOAdapter extends AdapterAbstract
         }
     }
 
-    protected function configurePDOForPgSQL(array $options): void
+    protected function configurePdoForPgSQL(array $options): void
     {
         if (array_key_exists(static::OPTIONS_PGSQL_SEARCH_PATH, $options)) {
             $this->exec(
@@ -140,7 +136,7 @@ class PDOAdapter extends AdapterAbstract
         }
     }
 
-    protected function configurePDOForSQLite(array $options): void
+    protected function configurePdoForSQLite(array $options): void
     {
         if (method_exists($this->pdo, 'sqliteCreateFunction')) {
             $this->pdo->sqliteCreateFunction(

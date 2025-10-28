@@ -26,11 +26,6 @@ abstract class AdapterAbstract implements AdapterInterface
 
     public function __construct(
         protected Driver $driver,
-        protected string $host,
-        protected int $port,
-        protected string $name,
-        protected string $username,
-        protected string $password,
         protected array $queries,
         protected array $options,
         protected ?Closure $debug

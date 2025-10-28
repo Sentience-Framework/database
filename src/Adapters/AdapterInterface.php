@@ -2,12 +2,26 @@
 
 namespace Sentience\Database\Adapters;
 
+use Closure;
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Driver;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\ResultInterface;
 
 interface AdapterInterface
 {
+    public static function connect(
+        Driver $driver,
+        string $host,
+        int $port,
+        string $name,
+        string $username,
+        string $password,
+        array $queries,
+        array $options,
+        ?Closure $debug
+    ): static;
+
     public function version(): int|string;
     public function exec(string $query): void;
     public function query(string $query): ResultInterface;

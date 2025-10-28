@@ -13,10 +13,9 @@ use Sentience\Database\Results\SQLite3Result;
 
 class SQLite3Adapter extends AdapterAbstract
 {
-    protected SQLite3 $sqlite3;
     protected bool $inTransaction = false;
 
-    public function __construct(
+    public static function connect(
         Driver $driver,
         string $host,
         int $port,
@@ -26,20 +25,8 @@ class SQLite3Adapter extends AdapterAbstract
         array $queries,
         array $options,
         ?Closure $debug
-    ) {
-        parent::__construct(
-            $driver,
-            $host,
-            $port,
-            $name,
-            $username,
-            $password,
-            $queries,
-            $options,
-            $debug
-        );
-
-        $this->sqlite3 = new SQLite3(
+    ): static {
+        $sqlite3 = new SQLite3(
             $name,
             !($options[static::OPTIONS_SQLITE_READ_ONLY] ?? false)
             ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
@@ -47,7 +34,30 @@ class SQLite3Adapter extends AdapterAbstract
             (string) ($options[static::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
         );
 
-        $this->sqlite3->enableExceptions(true);
+        $sqlite3->enableExceptions(true);
+
+        return new static(
+            $sqlite3,
+            $driver,
+            $queries,
+            $options,
+            $debug
+        );
+    }
+
+    public function __construct(
+        protected SQLite3 $sqlite3,
+        Driver $driver,
+        array $queries,
+        array $options,
+        ?Closure $debug
+    ) {
+        parent::__construct(
+            $driver,
+            $queries,
+            $options,
+            $debug
+        );
 
         $this->sqlite3->createFunction(
             static::REGEXP_LIKE_FUNCTION,
