@@ -12,7 +12,7 @@ abstract class ResultAbstract implements ResultInterface
             return null;
         }
 
-        $object = $this->constructClass($class, $constructorArgs);
+        $object = new $class(...$constructorArgs);
 
         return $this->mapAssocToObject($object, $assoc);
     }
@@ -21,17 +21,12 @@ abstract class ResultAbstract implements ResultInterface
     {
         $assocs = $this->fetchAssocs();
 
-        $object = $this->constructClass($class, $constructorArgs);
+        $object = new $class(...$constructorArgs);
 
         return array_map(
             fn (array $assoc): object => $this->mapAssocToObject(clone $object, $assoc),
             $assocs
         );
-    }
-
-    protected function constructClass(string $class, array $constructorArgs): object
-    {
-        return $class(...$constructorArgs);
     }
 
     protected function mapAssocToObject(object $object, array $assoc): object
