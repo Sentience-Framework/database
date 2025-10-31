@@ -1,0 +1,1300 @@
+<?php
+
+namespace Sentience\Database\Dialects;
+
+use BackedEnum;
+use DateTime;
+use DateTimeInterface;
+use Throwable;
+use Sentience\Database\Exceptions\QueryException;
+use Sentience\Database\Queries\Enums\ConditionEnum;
+use Sentience\Database\Queries\Enums\JoinEnum;
+use Sentience\Database\Queries\Enums\TypeEnum;
+use Sentience\Database\Queries\Interfaces\ConditionGroup;
+use Sentience\Database\Queries\Interfaces\Sql;
+use Sentience\Database\Queries\Objects\AddColumn;
+use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
+use Sentience\Database\Queries\Objects\AddPrimaryKeys;
+use Sentience\Database\Queries\Objects\AddUniqueConstraint;
+use Sentience\Database\Queries\Objects\Alias;
+use Sentience\Database\Queries\Objects\AlterColumn;
+use Sentience\Database\Queries\Objects\Column;
+use Sentience\Database\Queries\Objects\Condition;
+use Sentience\Database\Queries\Objects\DropColumn;
+use Sentience\Database\Queries\Objects\DropConstraint;
+use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
+use Sentience\Database\Queries\Objects\OnConflict;
+use Sentience\Database\Queries\Objects\OrderBy;
+use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\RenameColumn;
+use Sentience\Database\Queries\Objects\SubQuery;
+use Sentience\Database\Queries\Objects\UniqueConstraint;
+use Sentience\Database\Queries\Query;
+use Sentience\Database\Queries\SelectQuery;
+
+class SQLDialect extends DialectAbstract
+{
+    public const array CAST_TYPES = [];
+    public const string DATETIME_FORMAT = 'Y-m-d H:i:s';
+    public const bool ESCAPE_ANSI = true;
+    public const string ESCAPE_IDENTIFIER = '"';
+    public const string ESCAPE_STRING = "'";
+    public const array ESCAPE_CHARS = ["\0" => ''];
+    public const bool BOOL = false;
+    public const bool DISTINCT_ON = false;
+    public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
+    public const bool LATERAL = false;
+    public const bool ON_CONFLICT = false;
+    public const bool RETURNING = false;
+    public const bool SAVEPOINTS = true;
+
+    public function select(
+        ?array $distinct,
+        array $columns,
+        string|array|Alias|Sql|SubQuery $table,
+        array $joins,
+        array $where,
+        array $groupBy,
+        array $having,
+        array $orderBy,
+        ?int $limit,
+        ?int $offset,
+        array $unions
+    ): QueryWithParams {
+        $query = 'SELECT';
+        $params = [];
+
+        $this->buildDistinct($query, $distinct);
+
+        $query .= ' ';
+        $query .= count($columns) > 0
+            ? implode(
+                ', ',
+                array_map(
+                    function (string|array|Alias|SelectQuery|Sql|SubQuery $column) use (&$params): string {
+                        if ($column instanceof SelectQuery) {
+                            return $this->buildSelectQuery($params, $column);
+                        }
+
+                        if ($column instanceof SubQuery) {
+                            $column = $column->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
+                                return $this->buildSelectQuery($params, $selectQuery);
+                            });
+                        }
+
+                        return $this->escapeIdentifier($column);
+                    },
+                    $columns
+                )
+            )
+            : '*';
+
+        $query .= ' FROM';
+
+        $this->buildTable($query, $params, $table);
+        $this->buildJoins($query, $params, $joins);
+        $this->buildWhere($query, $params, $where);
+        $this->buildGroupBy($query, $groupBy);
+        $this->buildHaving($query, $params, $having);
+        $this->buildOrderBy($query, $orderBy);
+        $this->buildLimit($query, $limit, $offset);
+        $this->buildOffset($query, $limit, $offset);
+        $this->buildUnions($query, $params, $unions);
+
+        return new QueryWithParams($query, $params);
+    }
+
+    public function insert(
+        string|array|Sql $table,
+        array $values,
+        ?OnConflict $onConflict,
+        ?array $returning,
+        ?string $lastInsertId
+    ): QueryWithParams {
+        if (count($values) == 0) {
+            throw new QueryException('no insert values specified');
+        }
+
+        $query = 'INSERT INTO';
+        $params = [];
+
+        $this->buildTable($query, $params, $table);
+
+        $columns = [];
+
+        array_walk(
+            $values,
+            function (array $values) use (&$columns): void {
+                foreach (array_keys($values) as $column) {
+                    if (in_array($column, $columns)) {
+                        continue;
+                    }
+
+                    $columns[] = $column;
+                }
+            }
+        );
+
+        $query .= sprintf(
+            ' (%s)',
+            implode(
+                ', ',
+                array_map(
+                    fn (string $column): string => $this->escapeIdentifier($column),
+                    $columns
+                )
+            )
+        );
+
+        $query .= ' VALUES';
+
+        array_walk(
+            $values,
+            function (array $values, int $index) use (&$query, &$params, $columns): void {
+                foreach ($columns as $column) {
+                    $value = !array_key_exists($column, $values)
+                        ? Query::raw('DEFAULT')
+                        : $values[$column];
+
+                    unset($values[$column]);
+
+                    $values[$column] = $value;
+                }
+
+                $query .= $index > 0 ? ', ' : ' ';
+                $query .= $this->buildQuestionMarks($params, $values);
+            }
+        );
+
+        $this->buildOnConflict($query, $params, $onConflict, $values, $lastInsertId);
+        $this->buildReturning($query, $returning);
+
+        return new QueryWithParams($query, $params);
+    }
+
+    public function update(
+        string|array|Sql $table,
+        array $updates,
+        array $where,
+        ?array $returning
+    ): QueryWithParams {
+        if (count($updates) == 0) {
+            throw new QueryException('no updates specified');
+        }
+
+        $query = 'UPDATE';
+        $params = [];
+
+        $this->buildTable($query, $params, $table);
+
+        $query .= ' SET ';
+        $query .= implode(
+            ', ',
+            array_map(
+                function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, string $key) use (&$params): string {
+                    return sprintf(
+                        '%s = %s',
+                        $this->escapeIdentifier($key),
+                        $value instanceof SelectQuery
+                        ? $this->buildSelectQuery($params, $value)
+                        : $this->buildQuestionMarks($params, $value)
+                    );
+                },
+                $updates,
+                array_keys($updates)
+            )
+        );
+
+        $this->buildWhere($query, $params, $where);
+        $this->buildReturning($query, $returning);
+
+        return new QueryWithParams($query, $params);
+    }
+
+    public function delete(
+        string|array|Sql $table,
+        array $where,
+        ?array $returning
+    ): QueryWithParams {
+        $query = 'DELETE FROM';
+        $params = [];
+
+        $this->buildTable($query, $params, $table);
+        $this->buildWhere($query, $params, $where);
+        $this->buildReturning($query, $returning);
+
+        return new QueryWithParams($query, $params);
+    }
+
+    public function createTable(
+        bool $ifNotExists,
+        string|array|Sql $table,
+        array $columns,
+        array $primaryKeys,
+        array $constraints
+    ): QueryWithParams {
+        if (count($columns) == 0) {
+            throw new QueryException('no table columns specified');
+        }
+
+        $query = 'CREATE TABLE';
+        $params = [];
+
+        if ($ifNotExists) {
+            $query .= ' IF NOT EXISTS';
+        }
+
+        $this->buildTable($query, $params, $table);
+
+        $query .= ' (';
+
+        foreach ($columns as $index => $column) {
+            if ($index > 0) {
+                $query .= ', ';
+            }
+
+            $query .= $this->buildColumn($column);
+        }
+
+        if (count($primaryKeys) > 0) {
+            $query .= sprintf(
+                ', PRIMARY KEY (%s)',
+                implode(
+                    ', ',
+                    array_map(
+                        fn (string|Sql $column): string => $this->escapeIdentifier($column),
+                        $primaryKeys
+                    )
+                )
+            );
+        }
+
+        foreach ($constraints as $constraint) {
+            $query .= ', ';
+            $query .= match (true) {
+                $constraint instanceof UniqueConstraint => $this->buildUniqueConstraint($constraint),
+                $constraint instanceof ForeignKeyConstraint => $this->buildForeignKeyConstraint($constraint),
+                default => $constraint->rawSql($this)
+            };
+        }
+
+        $query .= ')';
+
+        return new QueryWithParams($query, $params);
+    }
+
+    public function alterTable(
+        string|array|Sql $table,
+        array $alters
+    ): array {
+        if (count($alters) == 0) {
+            throw new QueryException('no table alters specified');
+        }
+
+        return array_map(
+            function (object $alter) use ($table): QueryWithParams {
+                $query = 'ALTER TABLE';
+                $params = [];
+
+                $this->buildTable($query, $params, $table);
+
+                $query .= ' ';
+                $query .= match (true) {
+                    $alter instanceof AddColumn => $this->buildAlterTableAddColumn($alter),
+                    $alter instanceof AlterColumn => $this->buildAlterTableAlterColumn($alter),
+                    $alter instanceof RenameColumn => $this->buildAlterTableRenameColumn($alter),
+                    $alter instanceof DropColumn => $this->buildAlterTableDropColumn($alter),
+                    $alter instanceof AddPrimaryKeys => $this->buildAlterTableAddPrimaryKeys($alter),
+                    $alter instanceof AddUniqueConstraint => $this->buildAlterTableAddUniqueConstraint($alter),
+                    $alter instanceof AddForeignKeyConstraint => $this->buildAlterTableAddForeignKeyConstraint($alter),
+                    $alter instanceof DropConstraint => $this->buildAlterTableDropConstraint($alter),
+                    default => $alter->rawSql($this)
+                };
+
+                return new QueryWithParams($query, $params);
+            },
+            $alters
+        );
+    }
+
+    public function dropTable(
+        bool $ifExists,
+        string|array|Sql $table
+    ): QueryWithParams {
+        $query = 'DROP TABLE';
+        $params = [];
+
+        if ($ifExists) {
+            $query .= ' IF EXISTS';
+        }
+
+        $this->buildTable($query, $params, $table);
+
+        return new QueryWithParams($query, $params);
+    }
+
+    public function beginTransaction(
+        ?string $name
+    ): QueryWithParams {
+        $query = 'BEGIN TRANSACTION';
+
+        if ($name) {
+            $query .= ' ';
+            $query .= $this->escapeIdentifier($name);
+        }
+
+        return new QueryWithParams($query);
+    }
+
+    public function commitTransaction(
+        ?string $name
+    ): QueryWithParams {
+        $query = 'COMMIT';
+
+        if ($name) {
+            $query .= ' ';
+            $query .= $this->escapeIdentifier($name);
+        }
+
+        return new QueryWithParams($query);
+    }
+
+    public function rollbackTransaction(
+        ?string $name
+    ): QueryWithParams {
+        $query = 'ROLLBACK';
+
+        if ($name) {
+            $query .= ' ';
+            $query .= $this->escapeIdentifier($name);
+        }
+
+        return new QueryWithParams($query);
+    }
+
+    public function beginSavepoint(
+        string $name
+    ): QueryWithParams {
+        return new QueryWithParams(
+            sprintf(
+                'SAVEPOINT %s',
+                $this->escapeIdentifier($name)
+            )
+        );
+    }
+
+    public function commitSavepoint(
+        string $name
+    ): QueryWithParams {
+        return new QueryWithParams(
+            sprintf(
+                'RELEASE SAVEPOINT %s',
+                $this->escapeIdentifier($name)
+            )
+        );
+    }
+
+    public function rollbackSavepoint(
+        string $name
+    ): QueryWithParams {
+        return new QueryWithParams(
+            sprintf(
+                'ROLLBACK TO %s',
+                $this->escapeIdentifier($name)
+            )
+        );
+    }
+
+    protected function buildDistinct(string &$query, ?array $distinct): void
+    {
+        if (is_null($distinct)) {
+            return;
+        }
+
+        $query .= ' DISTINCT';
+
+        if (count($distinct) == 0) {
+            return;
+        }
+
+        if (!$this->distinctOn()) {
+            throw new QueryException('DISTINCT ON is not supported');
+        }
+
+        $query .= sprintf(
+            ' ON (%s)',
+            implode(
+                ', ',
+                array_map(
+                    fn (string|array|Sql $column): string => $this->escapeIdentifier($column),
+                    $distinct
+                )
+            )
+        );
+    }
+
+    protected function buildTable(string &$query, &$params, string|array|Alias|Sql|SubQuery $table): void
+    {
+        $query .= ' ';
+
+        if ($table instanceof SubQuery) {
+            $table = $table->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
+                return $this->buildSelectQuery($params, $selectQuery);
+            });
+        }
+
+        $query .= $this->escapeIdentifier($table);
+    }
+
+    protected function buildJoins(string &$query, array &$params, array $joins): void
+    {
+        if (count($joins) == 0) {
+            return;
+        }
+
+        $query .= ' ';
+
+        foreach ($joins as $index => $join) {
+            if ($index > 0) {
+                $query .= ' ';
+            }
+
+            if ($join instanceof Sql) {
+                $query .= $this->buildSql($params, $join);
+
+                continue;
+            }
+
+            if (in_array($join->join, [JoinEnum::LEFT_JOIN_LATERAL, JoinEnum::INNER_JOIN_LATERAL]) && !$this->lateral()) {
+                throw new QueryException('LATERAL is not supported');
+            }
+
+            $table = $join->table instanceof SubQuery
+                ? $join->table->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
+                    return $this->buildSelectQuery($params, $selectQuery);
+                })
+                : $join->table;
+
+            match ($join->join) {
+                JoinEnum::LEFT_JOIN,
+                JoinEnum::LEFT_JOIN_LATERAL => $this->buildLeftJoin($query, $params, $join->join, $table, $join->getConditions()),
+                JoinEnum::INNER_JOIN,
+                JoinEnum::INNER_JOIN_LATERAL => $this->buildLeftJoin($query, $params, $join->join, $table, $join->getConditions()),
+                default => $this->buildJoin($query, $params, $join->join, $table, $join->getConditions())
+            };
+        }
+    }
+
+    protected function buildJoin(string &$query, array &$params, string|JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    {
+        $query .= sprintf(
+            '%s %s ON ',
+            $join instanceof JoinEnum ? $join->value : $join,
+            $this->escapeIdentifier($table)
+        );
+
+        if (count($conditions) == 0) {
+            $query .= $this->castToQuery(true);
+
+            return;
+        }
+
+        foreach ($conditions as $index => $condition) {
+            $condition instanceof Condition
+                ? $this->buildCondition($query, $params, $index, $condition)
+                : $this->buildConditionGroup($query, $params, $index, $condition);
+        }
+    }
+
+    protected function buildLeftJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    {
+        $this->buildJoin($query, $params, $join, $table, $conditions);
+    }
+
+    protected function buildInnerJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    {
+        $this->buildJoin($query, $params, $join, $table, $conditions);
+    }
+
+    protected function buildWhere(string &$query, array &$params, array $where): void
+    {
+        if (count($where) == 0) {
+            return;
+        }
+
+        $query .= ' WHERE ';
+
+        foreach ($where as $index => $condition) {
+            $condition instanceof Condition
+                ? $this->buildCondition($query, $params, $index, $condition)
+                : $this->buildConditionGroup($query, $params, $index, $condition);
+        }
+    }
+
+    protected function buildCondition(string &$query, array &$params, int $index, Condition $condition): void
+    {
+        if ($index > 0) {
+            $query .= sprintf(' %s ', $condition->chain->value);
+        }
+
+        match ($condition->condition) {
+            ConditionEnum::EQUALS,
+            ConditionEnum::NOT_EQUALS => $this->buildConditionEquals($query, $params, $condition),
+            ConditionEnum::BETWEEN,
+            ConditionEnum::NOT_BETWEEN => $this->buildConditionBetween($query, $params, $condition),
+            ConditionEnum::LIKE,
+            ConditionEnum::NOT_LIKE => $this->buildConditionLike($query, $params, $condition),
+            ConditionEnum::IN,
+            ConditionEnum::NOT_IN => $this->buildConditionIn($query, $params, $condition),
+            ConditionEnum::REGEX,
+            ConditionEnum::NOT_REGEX => $this->buildConditionRegex($query, $params, $condition),
+            ConditionEnum::EXISTS,
+            ConditionEnum::NOT_EXISTS => $this->buildConditionExists($query, $params, $condition),
+            ConditionEnum::RAW => $this->buildConditionRaw($query, $params, $condition),
+            default => $this->buildConditionOperator($query, $params, $condition->identifier, $condition->condition, $condition->value)
+        };
+    }
+
+    protected function buildConditionOperator(string &$query, array &$params, string|array $identifier, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): void
+    {
+        $query .= sprintf(
+            '%s %s %s',
+            $this->escapeIdentifier($identifier),
+            is_subclass_of($operator, BackedEnum::class)
+            ? $operator->value
+            : $operator,
+            $value instanceof SelectQuery
+            ? $this->buildSelectQuery($params, $value)
+            : $this->buildQuestionMarks($params, $value)
+        );
+    }
+
+    protected function buildConditionEquals(string &$query, array &$params, Condition $condition): void
+    {
+        [$value, $cast] = $condition->value;
+
+        if (is_null($value)) {
+            $query .= sprintf(
+                '%s %s',
+                $this->escapeIdentifier($condition->identifier),
+                $condition->condition == ConditionEnum::EQUALS ? 'IS NULL' : 'IS NOT NULL'
+            );
+
+            return;
+        }
+
+        if (!$cast) {
+            $this->buildConditionOperator($query, $params, $condition->identifier, $condition->condition, $value);
+
+            return;
+        }
+
+        $operator = is_subclass_of($condition->condition, BackedEnum::class)
+            ? $condition->condition->value
+            : $condition->condition;
+
+        $type = get_debug_type($value);
+
+        $castType = static::CAST_TYPES[$type] ?? match ($type) {
+            'bool' => $this->type(TypeEnum::BOOL),
+            'int' => $this->type(TypeEnum::INT, 64),
+            'float' => $this->type(TypeEnum::FLOAT, 64),
+            'string' => $this->type(TypeEnum::STRING, PHP_INT_MAX),
+            default => is_subclass_of($value, DateTimeInterface::class) ? $this->type(TypeEnum::DATETIME, 6) : null
+        };
+
+        if (!$castType) {
+            $this->buildConditionOperator($query, $params, $condition->identifier, $condition->condition, $value);
+
+            return;
+        }
+
+        $query .= sprintf(
+            'cast(%s AS %s) %s cast(%s AS %s)',
+            $this->escapeIdentifier($condition->identifier),
+            $castType,
+            $operator,
+            $value instanceof SelectQuery
+            ? $this->buildSelectQuery($params, $value)
+            : $this->buildQuestionMarks($params, $value),
+            $castType
+        );
+    }
+
+    protected function buildConditionBetween(string &$query, array &$params, Condition $condition): void
+    {
+        $min = $condition->value[0] instanceof SelectQuery
+            ? $this->buildSelectQuery($params, $condition->value[0])
+            : $this->buildQuestionMarks($params, $condition->value[0]);
+
+        $max = $condition->value[1] instanceof SelectQuery
+            ? $this->buildSelectQuery($params, $condition->value[1])
+            : $this->buildQuestionMarks($params, $condition->value[1]);
+
+        $query .= sprintf(
+            '%s %s %s AND %s',
+            $this->escapeIdentifier($condition->identifier),
+            $condition->condition->value,
+            $min,
+            $max
+        );
+    }
+
+    protected function buildConditionLike(string &$query, array &$params, Condition $condition): void
+    {
+        [$value, $caseInsensitive] = $condition->value;
+
+        $identifier = $condition->identifier;
+        $questionMark = $this->buildQuestionMarks($params, $value);
+
+        $query .= sprintf(
+            '%s %s %s',
+            $caseInsensitive ? sprintf('lower(%s)', $identifier) : $identifier,
+            $condition->condition->value,
+            $caseInsensitive ? sprintf('lower(%s)', $questionMark) : $questionMark
+        );
+    }
+
+    protected function buildConditionIn(string &$query, array &$params, Condition $condition): void
+    {
+        if (!($condition->value instanceof SelectQuery) && count($condition->value) == 0) {
+            $query .= $condition->condition == ConditionEnum::IN ? '1 = 0' : '1 = 1';
+
+            return;
+        }
+
+        $this->buildConditionOperator($query, $params, $condition->identifier, $condition->condition, $condition->value);
+    }
+
+    protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
+    {
+        if ($condition->condition == ConditionEnum::NOT_REGEX) {
+            $query .= 'NOT ';
+        }
+
+        $query .= sprintf(
+            'regexp_like(%s, %s, %s)',
+            $this->escapeIdentifier($condition->identifier),
+            $this->buildQuestionMarks($params, $condition->value[0]),
+            $this->buildQuestionMarks($params, $condition->value[1])
+        );
+    }
+
+    protected function buildConditionRegexOperator(string &$query, array &$params, Condition $condition, string $equals, string $notEquals): void
+    {
+        [$pattern, $flags] = $condition->value;
+
+        $query .= sprintf(
+            '%s %s %s',
+            $this->escapeIdentifier($condition->identifier),
+            $condition->condition == ConditionEnum::REGEX ? $equals : $notEquals,
+            $this->buildQuestionMarks(
+                $params,
+                !empty($flags)
+                ? sprintf('(?%s)%s', $flags, $pattern)
+                : $pattern
+            )
+        );
+    }
+
+    protected function buildConditionExists(string &$query, array &$params, Condition $condition): void
+    {
+        $query .= sprintf(
+            '%s %s',
+            $condition->condition->value,
+            $this->buildSelectQuery($params, $condition->value)
+        );
+    }
+
+    protected function buildConditionRaw(string &$query, array &$params, Condition $condition): void
+    {
+        $query .= sprintf('(%s)', $condition->value->sql($this));
+
+        array_push($params, ...$condition->value->params($this));
+    }
+
+    protected function buildConditionGroup(string &$query, array &$params, int $index, ConditionGroup $group): void
+    {
+        if ($index > 0) {
+            $query .= sprintf(' %s ', $group->getChain()->value);
+        }
+
+        $conditions = $group->getConditions();
+
+        $query .= '(';
+
+        foreach ($conditions as $index => $condition) {
+            $condition instanceof Condition
+                ? $this->buildCondition($query, $params, $index, $condition)
+                : $this->buildConditionGroup($query, $params, $index, $condition);
+        }
+
+        $query .= ')';
+    }
+
+    protected function buildGroupBy(string &$query, array $groupBy): void
+    {
+        if (count($groupBy) == 0) {
+            return;
+        }
+
+        $query .= sprintf(
+            ' GROUP BY %s',
+            implode(
+                ', ',
+                array_map(
+                    fn (string|array|Sql $column): string => $this->escapeIdentifier($column),
+                    $groupBy
+                )
+            )
+        );
+    }
+
+    protected function buildHaving(string &$query, array &$params, array $having): void
+    {
+        if (count($having) == 0) {
+            return;
+        }
+
+        $query .= ' HAVING ';
+
+        foreach ($having as $index => $condition) {
+            $condition instanceof Condition
+                ? $this->buildCondition($query, $params, $index, $condition)
+                : $this->buildConditionGroup($query, $params, $index, $condition);
+        }
+    }
+
+    protected function buildOrderBy(string &$query, array $orderBy): void
+    {
+        if (count($orderBy) == 0) {
+            return;
+        }
+
+        $query .= sprintf(
+            ' ORDER BY %s',
+            implode(
+                ', ',
+                array_map(
+                    fn (OrderBy $orderBy): string => sprintf(
+                        '%s %s',
+                        $this->escapeIdentifier($orderBy->column),
+                        $orderBy->direction->value
+                    ),
+                    $orderBy
+                )
+            )
+        );
+    }
+
+    protected function buildLimit(string &$query, ?int $limit, ?int $offset): void
+    {
+        if (is_null($limit)) {
+            return;
+        }
+
+        $query .= " LIMIT {$limit}";
+    }
+
+    protected function buildOffset(string &$query, ?int $limit, ?int $offset): void
+    {
+        if (is_null($limit)) {
+            return;
+        }
+
+        if (is_null($offset)) {
+            return;
+        }
+
+        $query .= " OFFSET {$offset}";
+    }
+
+    protected function buildUnions(string &$query, array &$params, array $unions): void
+    {
+        if (count($unions) > 0) {
+            $query = sprintf('(%s)', $query);
+        }
+
+        foreach ($unions as $union) {
+            $query .= sprintf(
+                ' %s %s',
+                $union->union->value,
+                $this->buildSelectQuery($params, $union->selectQuery)
+            );
+        }
+    }
+
+    protected function buildOnConflict(string &$query, array &$params, ?OnConflict $onConflict, array $values, ?string $lastInsertId): void
+    {
+        if (!$this->onConflict()) {
+            return;
+        }
+
+        if (is_null($onConflict)) {
+            return;
+        }
+
+        $conflict = is_string($onConflict->conflict)
+            ? sprintf('ON CONSTRAINT %s', $this->escapeIdentifier($onConflict->conflict))
+            : sprintf(
+                '(%s)',
+                implode(
+                    ', ',
+                    array_map(
+                        fn (string|Sql $column): string => $this->escapeIdentifier($column),
+                        $onConflict->conflict
+                    )
+                )
+            );
+
+        $query .= sprintf(' ON CONFLICT %s DO ', $conflict);
+
+        if (is_null($onConflict->updates)) {
+            $query .= 'NOTHING';
+
+            return;
+        }
+
+        $updates = count($onConflict->updates) == 0
+            ? (function () use ($values): array {
+                $columns = [];
+
+                array_walk(
+                    $values,
+                    function (array $values) use (&$columns): void {
+                        foreach (array_keys($values) as $column) {
+                            if (array_key_exists($column, $columns)) {
+                                continue;
+                            }
+
+                            $columns[$column] = Query::identifier(['excluded', $column]);
+                        }
+                    }
+                );
+
+                return $columns;
+            })()
+            : $onConflict->updates;
+
+        $query .= sprintf(
+            'UPDATE SET %s',
+            implode(
+                ', ',
+                array_map(
+                    function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, string $key) use (&$params): string {
+                        return sprintf(
+                            '%s = %s',
+                            $this->escapeIdentifier($key),
+                            $value instanceof SelectQuery
+                            ? $this->buildSelectQuery($params, $value)
+                            : $this->buildQuestionMarks($params, $value)
+                        );
+                    },
+                    $updates,
+                    array_keys($updates)
+                )
+            )
+        );
+    }
+
+    protected function buildReturning(string &$query, ?array $returning): void
+    {
+        if (!$this->returning()) {
+            return;
+        }
+
+        if (is_null($returning)) {
+            return;
+        }
+
+        $columns = count($returning) > 0
+            ? implode(
+                ', ',
+                array_map(
+                    fn (string $column): string => $this->escapeIdentifier($column),
+                    $returning
+                )
+            )
+            : '*';
+
+        $query .= " RETURNING {$columns}";
+    }
+
+    protected function buildQuestionMarks(array &$params, null|bool|int|float|string|array|DateTimeInterface|Sql $value, bool $parentheses = true, string $separator = ', '): string
+    {
+        if ($value instanceof Sql) {
+            return $this->buildSql($params, $value);
+        }
+
+        if (is_array($value)) {
+            return sprintf(
+                $parentheses ? '(%s)' : '%s',
+                implode(
+                    $separator,
+                    array_map(
+                        function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value) use (&$params): string {
+                            return $value instanceof SelectQuery
+                                ? $this->buildSelectQuery($params, $value)
+                                : $this->buildQuestionMarks($params, $value);
+                        },
+                        $value
+                    )
+                )
+            );
+        }
+
+        array_push($params, $value);
+
+        return '?';
+    }
+
+    protected function buildSelectQuery(array &$params, SelectQuery $selectQuery): string
+    {
+        $queryWithParams = $selectQuery->toQueryWithParams();
+
+        array_push($params, ...$queryWithParams->params);
+
+        return sprintf(
+            '(%s)',
+            $queryWithParams->query
+        );
+    }
+
+    protected function buildSql(array &$params, Sql $sql): string
+    {
+        array_push($params, ...$sql->params($this));
+
+        return $sql->sql($this);
+    }
+
+    protected function buildColumn(Column $column): string
+    {
+        $sql = sprintf(
+            '%s %s',
+            $this->escapeIdentifier($column->name),
+            $column->type
+        );
+
+        if ($column->generatedByDefaultAsIdentity && $this->generatedByDefaultAsIdentity()) {
+            $sql .= ' GENERATED BY DEFAULT AS IDENTITY';
+        }
+
+        if ($column->notNull) {
+            $sql .= ' NOT NULL';
+        }
+
+        if (!is_null($column->default)) {
+            $default = $column->default instanceof Sql
+                ? $column->default->rawSql($this)
+                : $this->castToQuery($column->default);
+
+            $sql .= " DEFAULT {$default}";
+        }
+
+        return $sql;
+    }
+
+    protected function buildUniqueConstraint(UniqueConstraint $uniqueConstraint): string
+    {
+        $sql = sprintf(
+            'UNIQUE (%s)',
+            implode(
+                ', ',
+                array_map(
+                    fn (string $column): string => $this->escapeIdentifier($column),
+                    $uniqueConstraint->columns
+                )
+            )
+        );
+
+        if ($uniqueConstraint->name) {
+            return sprintf(
+                'CONSTRAINT %s %s',
+                $this->escapeIdentifier($uniqueConstraint->name),
+                $sql
+            );
+        }
+
+        return $sql;
+    }
+
+    protected function buildForeignKeyConstraint(ForeignKeyConstraint $foreignKeyConstraint): string
+    {
+        $sql = sprintf(
+            'FOREIGN KEY (%s) REFERENCES %s (%s)',
+            $foreignKeyConstraint->column,
+            $foreignKeyConstraint->referenceTable,
+            $foreignKeyConstraint->referenceColumn
+        );
+
+        if ($foreignKeyConstraint->name) {
+            $sql = sprintf(
+                'CONSTRAINT %s %s',
+                $this->escapeIdentifier($foreignKeyConstraint->name),
+                $sql
+            );
+        }
+
+        foreach ($foreignKeyConstraint->referentialActions as $referentialAction) {
+            $sql .= ' ';
+            $sql .= (string) is_subclass_of($referentialAction, BackedEnum::class)
+                ? $referentialAction->value
+                : $referentialAction;
+        }
+
+        return $sql;
+    }
+
+    protected function buildAlterTableAddColumn(AddColumn $addColumn): string
+    {
+        return sprintf(
+            'ADD COLUMN %s',
+            $this->buildColumn($addColumn)
+        );
+    }
+
+    protected function buildAlterTableAlterColumn(AlterColumn $alterColumn): string
+    {
+        return sprintf(
+            'ALTER COLUMN %s %s',
+            $this->escapeIdentifier($alterColumn->column),
+            $alterColumn->sql
+        );
+    }
+
+    protected function buildAlterTableRenameColumn(RenameColumn $renameColumn): string
+    {
+        return sprintf(
+            'RENAME COLUMN %s TO %s',
+            $this->escapeIdentifier($renameColumn->old),
+            $this->escapeIdentifier($renameColumn->new)
+        );
+    }
+
+    protected function buildAlterTableDropColumn(DropColumn $dropColumn): string
+    {
+        return sprintf(
+            'DROP COLUMN %s',
+            $this->escapeIdentifier($dropColumn->column)
+        );
+    }
+
+    protected function buildAlterTableAddPrimaryKeys(AddPrimaryKeys $addPrimaryKeys): string
+    {
+        return sprintf(
+            'ADD PRIMARY KEY (%s)',
+            implode(
+                ', ',
+                array_map(
+                    fn (string|array|Sql $column): string => $this->escapeIdentifier($column),
+                    $addPrimaryKeys->columns
+                )
+            )
+        );
+    }
+
+    protected function buildAlterTableAddUniqueConstraint(AddUniqueConstraint $addUniqueConstraint): string
+    {
+        return sprintf(
+            'ADD %s',
+            $this->buildUniqueConstraint($addUniqueConstraint)
+        );
+    }
+
+    protected function buildAlterTableAddForeignKeyConstraint(AddForeignKeyConstraint $addForeignKeyConstraint): string
+    {
+        return sprintf(
+            'ADD %s',
+            $this->buildForeignKeyConstraint($addForeignKeyConstraint)
+        );
+    }
+
+    protected function buildAlterTableDropConstraint(DropConstraint $dropConstraint): string
+    {
+        return sprintf(
+            'DROP CONSTRAINT %s',
+            $this->escapeIdentifier($dropConstraint->constraint)
+        );
+    }
+
+    public function escapeIdentifier(string|array|Alias|Sql $identifier): string
+    {
+        if ($identifier instanceof Alias) {
+            return sprintf(
+                '%s AS %s',
+                $this->escapeIdentifier($identifier->identifier),
+                $this->escapeIdentifier($identifier->alias)
+            );
+        }
+
+        if ($identifier instanceof Sql) {
+            return $identifier->rawSql($this);
+        }
+
+        return is_array($identifier)
+            ? implode(
+                '.',
+                array_map(
+                    fn (string|array|Sql $identifier): string => $this->escapeIdentifier($identifier),
+                    $identifier
+                )
+            )
+            : $this->escape($identifier, static::ESCAPE_IDENTIFIER);
+    }
+
+    public function escapeString(string $string): string
+    {
+        return $this->escape($string, static::ESCAPE_STRING);
+    }
+
+    protected function escape(string $string, string $char): string
+    {
+        $escaped = strtr(
+            $string,
+            [
+                ...static::ESCAPE_CHARS,
+                $char => static::ESCAPE_ANSI
+                    ? sprintf('%s%s', $char, $char)
+                    : sprintf('\\%s', $char, $char)
+            ]
+        );
+
+        return "{$char}{$escaped}{$char}";
+    }
+
+    public function castToDriver(null|bool|int|float|string|DateTimeInterface $value): null|bool|int|float|string
+    {
+        if (is_bool($value)) {
+            return $this->castBool($value);
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return $this->castDateTime($value);
+        }
+
+        return $value;
+    }
+
+    public function castToQuery(null|bool|int|float|string|DateTimeInterface $value): string
+    {
+        if (is_null($value)) {
+            return 'NULL';
+        }
+
+        if (is_bool($value)) {
+            if ($this->bool()) {
+                return $value ? 'TRUE' : 'FALSE';
+            }
+
+            $bool = $this->castBool($value);
+
+            return is_string($bool)
+                ? $this->escapeString($bool)
+                : (string) $bool;
+        }
+
+        if (is_int($value)) {
+            return sprintf('%d', $value);
+        }
+
+        if (is_float($value)) {
+            preg_replace(
+                '/(\.[0-9]+?)[0]+$/',
+                '$1',
+                sprintf('%.53f', $value)
+            );
+        }
+
+        if (is_string($value)) {
+            return $this->escapeString($value);
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return $this->escapeString($this->castDateTime($value));
+        }
+
+        return (string) $value;
+    }
+
+    public function castBool(bool $bool): null|bool|int|float|string
+    {
+        return !$this->bool()
+            ? ($bool ? 1 : 0)
+            : $bool;
+    }
+
+    public function castDateTime(DateTimeInterface $dateTimeInterface): null|bool|int|float|string
+    {
+        return $dateTimeInterface->format(static::DATETIME_FORMAT);
+    }
+
+    public function parseBool(null|bool|int|float|string $bool): bool
+    {
+        if (is_bool($bool)) {
+            return $bool;
+        }
+
+        return (int) $bool > 0;
+    }
+
+    public function parseDateTime(string $string): ?DateTime
+    {
+        $dateTime = DateTime::createFromFormat(static::DATETIME_FORMAT, $string);
+
+        if ($dateTime) {
+            return $dateTime;
+        }
+
+        try {
+            return new DateTime($string);
+        } catch (Throwable $exception) {
+            return null;
+        }
+    }
+
+    public function type(TypeEnum $type, ?int $size = null): string
+    {
+        return match ($type) {
+            TypeEnum::BOOL => $this->bool() ? 'BOOLEAN' : 'INTEGER',
+            TypeEnum::INT => $size > 32 ? 'BIGINT' : 'INTEGER',
+            TypeEnum::FLOAT => $size > 32 ? 'DECIMAL(30, 15)' : 'DECIMAL(15, 7)',
+            TypeEnum::STRING => $size > 255 ? 'TEXT' : sprintf('VARCHAR(%d)', $size ?? 255),
+            TypeEnum::DATETIME => 'DATETIME'
+        };
+    }
+
+    public function bool(): bool
+    {
+        return static::BOOL;
+    }
+
+    public function distinctOn(): bool
+    {
+        return static::DISTINCT_ON;
+    }
+
+    public function generatedByDefaultAsIdentity(): bool
+    {
+        return static::GENERATED_BY_DEFAULT_AS_IDENTITY;
+    }
+
+    public function lateral(): bool
+    {
+        return static::LATERAL;
+    }
+
+    public function onConflict(): bool
+    {
+        return static::ON_CONFLICT;
+    }
+
+    public function returning(): bool
+    {
+        return static::RETURNING;
+    }
+
+    public function savepoints(): bool
+    {
+        return static::SAVEPOINTS;
+    }
+}
