@@ -91,7 +91,7 @@ class SQLDialect extends DialectAbstract
         $this->buildGroupBy($query, $groupBy);
         $this->buildHaving($query, $params, $having);
         $this->buildOrderBy($query, $orderBy);
-        $this->buildLimit($query, $limit);
+        $this->buildLimit($query, $limit, $offset);
         $this->buildOffset($query, $limit, $offset);
 
         $query .= ';';
@@ -589,7 +589,7 @@ class SQLDialect extends DialectAbstract
         );
     }
 
-    protected function buildLimit(string &$query, ?int $limit): void
+    protected function buildLimit(string &$query, ?int $limit, ?int $offset): void
     {
         if (is_null($limit)) {
             return;

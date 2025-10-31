@@ -36,7 +36,7 @@ class Database
         ?Closure $debug,
         bool $usePdoAdapter = false
     ): static {
-        if (!$driver->isSupported()) {
+        if (!$driver->isSupportedBySentience()) {
             throw new DriverException('this driver requires ::pdo()');
         }
 

@@ -39,8 +39,6 @@ class PgSQLDialect extends SQLDialect
                 $pattern
             ) : $pattern
         );
-
-        return;
     }
 
     protected function buildOnConflict(string &$query, array &$params, ?OnConflict $onConflict, array $values, ?string $lastInsertId): void

@@ -13,6 +13,8 @@ use Sentience\Database\Queries\Query;
 
 class MySQLDialect extends SQLDialect
 {
+    public const string AUTO_INCREMENT = 'AUTO_INCREMENT';
+
     protected const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
     protected const bool ESCAPE_ANSI = false;
     protected const string ESCAPE_IDENTIFIER = '`';
@@ -45,8 +47,6 @@ class MySQLDialect extends SQLDialect
                 $pattern
             ) : $pattern
         );
-
-        return;
     }
 
     protected function buildOnConflict(string &$query, array &$params, ?OnConflict $onConflict, array $values, ?string $lastInsertId): void
