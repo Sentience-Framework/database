@@ -64,6 +64,14 @@ interface DialectInterface
         string|array|Alias|Raw $table
     ): QueryWithParams;
 
+    public function createDatabase(
+        string|array|Alias|Raw $table
+    ): QueryWithParams;
+
+    public function dropDatabase(
+        string|array|Alias|Raw $table
+    ): QueryWithParams;
+
     public function escapeIdentifier(string|array|Raw $identifier): string;
     public function escapeString(string $string): string;
     public function castToDriver(mixed $value): mixed;
