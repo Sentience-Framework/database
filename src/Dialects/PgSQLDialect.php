@@ -3,7 +3,6 @@
 namespace Sentience\Database\Dialects;
 
 use DateTime;
-use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\Raw;
@@ -22,22 +21,12 @@ class PgSQLDialect extends SQLDialect
             return;
         }
 
-        $query .= sprintf(
-            '%s %s ?',
-            $this->escapeIdentifier($condition->identifier),
-            $condition->condition == ConditionEnum::REGEX ? '~' : '!~'
-        );
-
-        [$pattern, $flags] = $condition->value;
-
-        array_push(
+        parent::buildConditionRegexOperator(
+            $query,
             $params,
-            !empty($flags)
-            ? sprintf(
-                '(?%s)%s',
-                $flags,
-                $pattern
-            ) : $pattern
+            $condition,
+            '~',
+            '!~'
         );
     }
 

@@ -114,14 +114,14 @@ trait WhereTrait
         return $this->notEmpty($column, ChainEnum::AND);
     }
 
-    public function whereRegex(string|array $column, string $pattern, string $flags = ''): static
+    public function whereRegex(string|array $column, string $pattern): static
     {
-        return $this->regex($column, $pattern, $flags, ChainEnum::AND);
+        return $this->regex($column, $pattern, ChainEnum::AND);
     }
 
-    public function whereNotRegex(string|array $column, string $pattern, string $flags = ''): static
+    public function whereNotRegex(string|array $column, string $pattern): static
     {
-        return $this->notRegex($column, $pattern, $flags, ChainEnum::AND);
+        return $this->notRegex($column, $pattern, ChainEnum::AND);
     }
 
     public function whereGroup(callable $callback): static
@@ -234,14 +234,14 @@ trait WhereTrait
         return $this->notEmpty($column, ChainEnum::AND);
     }
 
-    public function orWhereRegex(string|array $column, string $pattern, string $flags = ''): static
+    public function orWhereRegex(string|array $column, string $pattern): static
     {
-        return $this->regex($column, $pattern, $flags, ChainEnum::OR);
+        return $this->regex($column, $pattern, ChainEnum::OR);
     }
 
-    public function orWhereNotRegex(string|array $column, string $pattern, string $flags = ''): static
+    public function orWhereNotRegex(string|array $column, string $pattern): static
     {
-        return $this->notRegex($column, $pattern, $flags, ChainEnum::OR);
+        return $this->notRegex($column, $pattern, ChainEnum::OR);
     }
 
     public function orWhereGroup(callable $callback): static
@@ -366,14 +366,14 @@ trait WhereTrait
         );
     }
 
-    protected function regex(string|array $column, string $pattern, string $flags, ChainEnum $chain): static
+    protected function regex(string|array $column, string $pattern, ChainEnum $chain): static
     {
-        return $this->addCondition(ConditionEnum::REGEX, $column, [$pattern, $flags], $chain);
+        return $this->addCondition(ConditionEnum::REGEX, $column, $this->parsePregPattern($pattern), $chain);
     }
 
-    protected function notRegex(string|array $column, string $pattern, string $flags, ChainEnum $chain): static
+    protected function notRegex(string|array $column, string $pattern, ChainEnum $chain): static
     {
-        return $this->addCondition(ConditionEnum::NOT_REGEX, $column, [$pattern, $flags], $chain);
+        return $this->addCondition(ConditionEnum::NOT_REGEX, $column, $this->parsePregPattern($pattern), $chain);
     }
 
     protected function group(callable $callback, ChainEnum $chain): static
@@ -414,5 +414,16 @@ trait WhereTrait
         $this->where[] = $rawCondition->toCondition();
 
         return $this;
+    }
+
+    protected function parsePregPattern(string $pattern): array
+    {
+        preg_match('/^\/(.*)\/([a-zA-Z]*)$/', $pattern, $matches);
+
+        if (count($matches) == 0) {
+            return [$pattern, ''];
+        }
+
+        return array_slice($matches, 1);
     }
 }

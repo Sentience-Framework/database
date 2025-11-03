@@ -8,7 +8,6 @@ use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Adapters\PDOAdapter;
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Dialects\SQLDialect;
 use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\AlterTableQuery;
 use Sentience\Database\Queries\CreateTableQuery;
@@ -64,10 +63,9 @@ class Database
         Driver $driver,
         array $queries,
         array $options,
-        ?Closure $debug,
-        bool $useSqlDialect = false
+        ?Closure $debug
     ): static {
-        $pdoAdapter = new PDOAdapter(
+        $adapter = new PDOAdapter(
             $pdo,
             $driver,
             $queries,
@@ -75,13 +73,11 @@ class Database
             $debug
         );
 
-        $version = $pdoAdapter->version();
+        $version = $adapter->version();
 
-        $dialect = !$useSqlDialect
-            ? $driver->getDialect($version)
-            : new SQLDialect($driver, $version);
+        $dialect = $driver->getDialect($version);
 
-        return new static($pdoAdapter, $dialect);
+        return new static($adapter, $dialect);
     }
 
     public function __construct(

@@ -3,7 +3,6 @@
 namespace Sentience\Database\Dialects;
 
 use Sentience\Database\Driver;
-use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\DropConstraint;
@@ -30,22 +29,12 @@ class MySQLDialect extends SQLDialect
             return;
         }
 
-        $query .= sprintf(
-            '%s %s ?',
-            $this->escapeIdentifier($condition->identifier),
-            $condition->condition == ConditionEnum::REGEX ? 'REGEXP' : 'NOT REGEXP'
-        );
-
-        [$pattern, $flags] = $condition->value;
-
-        array_push(
+        parent::buildConditionRegexOperator(
+            $query,
             $params,
-            !empty($flags)
-            ? sprintf(
-                '(?%s)%s',
-                $flags,
-                $pattern
-            ) : $pattern
+            $condition,
+            'REGEXP',
+            'NOT REGEXP'
         );
     }
 

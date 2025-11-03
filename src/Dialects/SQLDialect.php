@@ -510,6 +510,27 @@ class SQLDialect extends DialectAbstract
         return;
     }
 
+    protected function buildConditionRegexOperator(string &$query, array &$params, Condition $condition, string $equals, string $notEquals): void
+    {
+        $query .= sprintf(
+            '%s %s ?',
+            $this->escapeIdentifier($condition->identifier),
+            $condition->condition == ConditionEnum::REGEX ? $equals : $notEquals
+        );
+
+        [$pattern, $flags] = $condition->value;
+
+        array_push(
+            $params,
+            !empty($flags)
+            ? sprintf(
+                '(?%s)%s',
+                $flags,
+                $pattern
+            ) : $pattern
+        );
+    }
+
     protected function buildConditionRaw(string &$query, array &$params, Condition $condition): void
     {
         $query .= sprintf('(%s)', $condition->identifier);
