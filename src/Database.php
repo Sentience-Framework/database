@@ -11,10 +11,8 @@ use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Dialects\SQLDialect;
 use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\AlterTableQuery;
-use Sentience\Database\Queries\CreateDatabaseQuery;
 use Sentience\Database\Queries\CreateTableQuery;
 use Sentience\Database\Queries\DeleteQuery;
-use Sentience\Database\Queries\DropDatabaseQuery;
 use Sentience\Database\Queries\DropTableQuery;
 use Sentience\Database\Queries\InsertQuery;
 use Sentience\Database\Queries\Objects\Alias;
@@ -192,15 +190,5 @@ class Database
     public function dropTable(string|array|Alias|Raw $table): DropTableQuery
     {
         return new DropTableQuery($this, $this->dialect, $table);
-    }
-
-    public function createDatabase(string|array|Alias|Raw $table): CreateDatabaseQuery
-    {
-        return new CreateDatabaseQuery($this, $this->dialect, $table);
-    }
-
-    public function dropDatabase(string|array|Alias|Raw $table): DropDatabaseQuery
-    {
-        return new DropDatabaseQuery($this, $this->dialect, $table);
     }
 }

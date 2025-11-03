@@ -335,30 +335,6 @@ class SQLDialect extends DialectAbstract
         return new QueryWithParams($query);
     }
 
-    public function createDatabase(
-        string|array|Alias|Raw $table
-    ): QueryWithParams {
-        $query = 'CREATE DATABASE';
-
-        $this->buildTable($query, $table);
-
-        $query .= ';';
-
-        return new QueryWithParams($query);
-    }
-
-    public function dropDatabase(
-        string|array|Alias|Raw $table
-    ): QueryWithParams {
-        $query = 'DROP DATABASE';
-
-        $this->buildTable($query, $table);
-
-        $query .= ';';
-
-        return new QueryWithParams($query);
-    }
-
     protected function buildTable(string &$query, string|array|Alias|Raw $table): void
     {
         $query .= ' ';
