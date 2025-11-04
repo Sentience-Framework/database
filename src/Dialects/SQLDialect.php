@@ -64,10 +64,6 @@ class SQLDialect extends DialectAbstract
                 ', ',
                 array_map(
                     function (string|array|Alias|Raw $column): string {
-                        if (is_array($column)) {
-                            return $this->escapeIdentifier($column);
-                        }
-
                         if ($column instanceof Alias) {
                             return $this->escapeIdentifierWithAlias($column->identifier, $column->alias);
                         }
