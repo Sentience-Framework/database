@@ -109,7 +109,9 @@ enum Driver: string
         if ($adapter == MySQLiAdapter::class) {
             return new MySQLiAdapter(
                 fn (): mysqli => new mysqli(
-                    ($options[AdapterAbstract::OPTIONS_PERSISTENT] ?? false) ? sprintf('p:%s', $host) : $host,
+                    ($options[AdapterAbstract::OPTIONS_PERSISTENT] ?? false)
+                    ? sprintf('p:%s', $host)
+                    : $host,
                     $username,
                     $password,
                     $name,
