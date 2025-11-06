@@ -3,6 +3,7 @@
 namespace Sentience\Database\Adapters;
 
 use Closure;
+use Sentience\Database\Exceptions\AdapterException;
 use Throwable;
 use Sentience\Database\Driver;
 use Sentience\Database\Queries\Query;
@@ -129,13 +130,22 @@ abstract class AdapterAbstract implements AdapterInterface
             return;
         }
 
-        static::__construct(
+        $this->__construct(
             $this->connect,
             $this->driver,
             $this->queries,
             $this->options,
             $this->debug
         );
+    }
+
+    protected function throwExceptionIfDisconnected(): void
+    {
+        if ($this->isConnected()) {
+            return;
+        }
+
+        throw new AdapterException('adapter not connected');
     }
 
     public function __destruct()

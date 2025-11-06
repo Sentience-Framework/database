@@ -32,7 +32,7 @@ class MySQLiAdapter extends AdapterAbstract
         ?Closure $debug
     ): static {
         return new static(
-            fn (): mysqli => new mysqli(
+            fn(): mysqli => new mysqli(
                 ($options[static::OPTIONS_PERSISTENT] ?? false) ? sprintf('p:%s', $host) : $host,
                 $username,
                 $password,
@@ -83,11 +83,15 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function version(): int
     {
+        $this->throwExceptionIfDisconnected();
+
         return $this->mysqli->server_version;
     }
 
     public function exec(string $query): void
     {
+        $this->throwExceptionIfDisconnected();
+
         $start = microtime(true);
 
         try {
@@ -103,6 +107,8 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function query(string $query): MySQLiResult
     {
+        $this->throwExceptionIfDisconnected();
+
         try {
             $start = microtime(true);
 
@@ -120,6 +126,8 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): MySQLiResult
     {
+        $this->throwExceptionIfDisconnected();
+
         $queryWithParams->namedParamsToQuestionMarks();
 
         $query = $queryWithParams->toSql($dialect);
@@ -183,6 +191,8 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function beginTransaction(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         if ($this->inTransaction()) {
             return;
         }
@@ -194,6 +204,8 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function commitTransaction(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         if (!$this->inTransaction()) {
             return;
         }
@@ -209,6 +221,8 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function rollbackTransaction(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         if (!$this->inTransaction()) {
             return;
         }
@@ -224,16 +238,24 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function inTransaction(): bool
     {
+        $this->throwExceptionIfDisconnected();
+
         return $this->inTransaction;
     }
 
     public function lastInsertId(?string $name = null): int|string
     {
+        $this->throwExceptionIfDisconnected();
+
         return $this->mysqli->insert_id;
     }
 
     public function disconnect(): void
     {
+        if (!$this->isConnected()) {
+            return;
+        }
+
         $this->mysqli->close();
 
         $this->mysqli = null;

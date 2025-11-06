@@ -29,7 +29,7 @@ class PDOAdapter extends AdapterAbstract
     ): static {
         return new static(
             function () use ($driver, $host, $port, $name, $username, $password, $options): PDO {
-                $dsn = (function (Driver $driver, string $host, int $port, string $name, array $options): string {
+                $dsn = (function (Driver $driver, string $host, int $port, string $name, array $options): string{
                     if (array_key_exists(static::OPTIONS_PDO_DSN, $options)) {
                         return (string) $options[static::OPTIONS_PDO_DSN];
                     }
@@ -150,7 +150,7 @@ class PDOAdapter extends AdapterAbstract
             if (method_exists($this->pdo, $method)) {
                 [$this->pdo, $method](
                     static::REGEXP_LIKE_FUNCTION,
-                    fn (string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction(
+                    fn(string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction(
                         $value,
                         $pattern,
                         $flags
@@ -196,11 +196,15 @@ class PDOAdapter extends AdapterAbstract
 
     public function version(): string
     {
+        $this->throwExceptionIfDisconnected();
+
         return $this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
     }
 
     public function exec(string $query): void
     {
+        $this->throwExceptionIfDisconnected();
+
         $start = microtime(true);
 
         try {
@@ -216,6 +220,8 @@ class PDOAdapter extends AdapterAbstract
 
     public function query(string $query): PDOResult
     {
+        $this->throwExceptionIfDisconnected();
+
         $start = microtime(true);
 
         try {
@@ -233,6 +239,8 @@ class PDOAdapter extends AdapterAbstract
 
     public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): PDOResult
     {
+        $this->throwExceptionIfDisconnected();
+
         $query = $queryWithParams->toSql($dialect);
 
         $start = microtime(true);
@@ -289,6 +297,8 @@ class PDOAdapter extends AdapterAbstract
 
     public function beginTransaction(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         if ($this->inTransaction()) {
             return;
         }
@@ -298,6 +308,8 @@ class PDOAdapter extends AdapterAbstract
 
     public function commitTransaction(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         if (!$this->inTransaction()) {
             return;
         }
@@ -307,6 +319,8 @@ class PDOAdapter extends AdapterAbstract
 
     public function rollbackTransaction(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         if (!$this->inTransaction()) {
             return;
         }
@@ -316,11 +330,15 @@ class PDOAdapter extends AdapterAbstract
 
     public function inTransaction(): bool
     {
+        $this->throwExceptionIfDisconnected();
+
         return $this->pdo->inTransaction();
     }
 
     public function lastInsertId(?string $name = null): null|int|string
     {
+        $this->throwExceptionIfDisconnected();
+
         $lastInserId = $this->pdo->lastInsertId($name);
 
         if (is_bool($lastInserId)) {
@@ -336,11 +354,15 @@ class PDOAdapter extends AdapterAbstract
 
     protected function enableEmulatePrepares(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
     }
 
     protected function disableEmulatePrepares(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
     }
 
@@ -356,6 +378,10 @@ class PDOAdapter extends AdapterAbstract
 
     public function disconnect(): void
     {
+        if (!$this->isConnected()) {
+            return;
+        }
+
         if ($this->driver == Driver::SQLITE) {
             $this->sqliteOptimize($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false);
         }

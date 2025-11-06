@@ -28,7 +28,7 @@ class SQLite3Adapter extends AdapterAbstract
         ?Closure $debug
     ): static {
         return new static(
-            fn (): SQLite3 => new SQLite3(
+            fn(): SQLite3 => new SQLite3(
                 $name,
                 !($options[static::OPTIONS_SQLITE_READ_ONLY] ?? false)
                 ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
@@ -63,7 +63,7 @@ class SQLite3Adapter extends AdapterAbstract
 
         $this->sqlite3->createFunction(
             static::REGEXP_LIKE_FUNCTION,
-            fn (string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction($value, $pattern, $flags)
+            fn(string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction($value, $pattern, $flags)
         );
 
         if (array_key_exists(static::OPTIONS_SQLITE_BUSY_TIMEOUT, $options)) {
@@ -94,6 +94,8 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function exec(string $query): void
     {
+        $this->throwExceptionIfDisconnected();
+
         $start = microtime(true);
 
         try {
@@ -109,6 +111,8 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function query(string $query): SQLite3Result
     {
+        $this->throwExceptionIfDisconnected();
+
         $start = microtime(true);
 
         try {
@@ -126,6 +130,8 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): SQLite3Result
     {
+        $this->throwExceptionIfDisconnected();
+
         $query = $queryWithParams->toSql($dialect);
 
         if ($emulatePrepare) {
@@ -173,6 +179,8 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function beginTransaction(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         if ($this->inTransaction()) {
             return;
         }
@@ -184,6 +192,8 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function commitTransaction(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         if (!$this->inTransaction()) {
             return;
         }
@@ -199,6 +209,8 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function rollbackTransaction(): void
     {
+        $this->throwExceptionIfDisconnected();
+
         if (!$this->inTransaction()) {
             return;
         }
@@ -214,11 +226,15 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function inTransaction(): bool
     {
+        $this->throwExceptionIfDisconnected();
+
         return $this->inTransaction;
     }
 
     public function lastInsertId(?string $name = null): int
     {
+        $this->throwExceptionIfDisconnected();
+
         return $this->sqlite3->lastInsertRowID();
     }
 
@@ -234,6 +250,10 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function disconnect(): void
     {
+        if (!$this->isConnected()) {
+            return;
+        }
+
         $this->sqliteOptimize($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false);
 
         $this->sqlite3->close();
