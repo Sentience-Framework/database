@@ -17,6 +17,7 @@ class MySQLiAdapter extends AdapterAbstract
     public const string MYSQLI_FLOAT = 'd';
     public const string MYSQLI_STRING = 's';
 
+    protected ?mysqli $mysqli;
     protected bool $inTransaction = false;
 
     public static function connect(
@@ -30,16 +31,14 @@ class MySQLiAdapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ): static {
-        $mysqli = new mysqli(
-            $host,
-            $username,
-            $password,
-            $name,
-            $port
-        );
-
         return new static(
-            $mysqli,
+            fn (): mysqli => new mysqli(
+                ($options[static::OPTIONS_PERSISTENT] ?? false) ? sprintf('p:%s', $host) : $host,
+                $username,
+                $password,
+                $name,
+                $port
+            ),
             $driver,
             $queries,
             $options,
@@ -48,18 +47,21 @@ class MySQLiAdapter extends AdapterAbstract
     }
 
     public function __construct(
-        protected mysqli $mysqli,
+        Closure $connect,
         Driver $driver,
         array $queries,
         array $options,
         ?Closure $debug
     ) {
         parent::__construct(
+            $connect,
             $driver,
             $queries,
             $options,
             $debug
         );
+
+        $this->mysqli = $connect();
 
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
@@ -230,8 +232,15 @@ class MySQLiAdapter extends AdapterAbstract
         return $this->mysqli->insert_id;
     }
 
-    public function __destruct()
+    public function disconnect(): void
     {
         $this->mysqli->close();
+
+        $this->mysqli = null;
+    }
+
+    public function isConnected(): bool
+    {
+        return !is_null($this->mysqli);
     }
 }

@@ -3,7 +3,6 @@
 namespace Sentience\Database;
 
 use Closure;
-use PDO;
 use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Adapters\PDOAdapter;
@@ -19,10 +18,13 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\SelectQuery;
 use Sentience\Database\Queries\UpdateQuery;
+use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
 
 class Database
 {
+    protected bool $lazy = false;
+
     public static function connect(
         Driver $driver,
         string $host,
@@ -59,14 +61,14 @@ class Database
     }
 
     public static function pdo(
-        PDO $pdo,
+        Closure $connect,
         Driver $driver,
         array $queries,
         array $options,
         ?Closure $debug
     ): static {
         $adapter = new PDOAdapter(
-            $pdo,
+            $connect,
             $driver,
             $queries,
             $options,
@@ -88,12 +90,26 @@ class Database
 
     public function exec(string $query): void
     {
+        $this->reconnectIfNotConnected();
+
         $this->adapter->exec($query);
+
+        $this->disconnectIfLazyAndNotInTransaction();
     }
 
     public function query(string $query): ResultInterface
     {
-        return $this->adapter->query($query);
+        $this->reconnectIfNotConnected();
+
+        $result = $this->adapter->query($query);
+
+        if ($this->lazy) {
+            $result = Result::fromInterface($result);
+        }
+
+        $this->disconnectIfLazyAndNotInTransaction();
+
+        return $result;
     }
 
     public function prepared(string $query, array $params = [], bool $emulatePrepare = false): ResultInterface
@@ -106,9 +122,19 @@ class Database
 
     public function queryWithParams(QueryWithParams $queryWithParams, bool $emulatePrepare = false): ResultInterface
     {
-        return count($queryWithParams->params) > 0
+        $this->reconnectIfNotConnected();
+
+        $result = count($queryWithParams->params) > 0
             ? $this->adapter->queryWithParams($this->dialect, $queryWithParams, $emulatePrepare)
             : $this->adapter->query($queryWithParams->query);
+
+        if ($this->lazy) {
+            $result = Result::fromInterface($result);
+        }
+
+        $this->disconnectIfLazyAndNotInTransaction();
+
+        return $result;
     }
 
     public function beginTransaction(): void
@@ -186,5 +212,47 @@ class Database
     public function dropTable(string|array|Alias|Raw $table): DropTableQuery
     {
         return new DropTableQuery($this, $this->dialect, $table);
+    }
+
+    public function enableLazy(): static
+    {
+        $this->lazy = true;
+
+        return $this;
+    }
+
+    public function disableLazy(): static
+    {
+        $this->lazy = false;
+
+        $this->adapter->reconnect();
+
+        return $this;
+    }
+
+    protected function reconnectIfNotConnected(): void
+    {
+        if (!$this->lazy) {
+            return;
+        }
+
+        if ($this->adapter->isConnected()) {
+            return;
+        }
+
+        $this->adapter->reconnect();
+    }
+
+    protected function disconnectIfLazyAndNotInTransaction(): void
+    {
+        if (!$this->lazy) {
+            return;
+        }
+
+        if ($this->inTransaction()) {
+            return;
+        }
+
+        $this->adapter->disconnect();
     }
 }

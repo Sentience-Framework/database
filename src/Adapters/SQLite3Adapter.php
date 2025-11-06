@@ -13,6 +13,7 @@ use Sentience\Database\Results\SQLite3Result;
 
 class SQLite3Adapter extends AdapterAbstract
 {
+    protected ?SQLite3 $sqlite3;
     protected bool $inTransaction = false;
 
     public static function connect(
@@ -26,18 +27,14 @@ class SQLite3Adapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ): static {
-        $sqlite3 = new SQLite3(
-            $name,
-            !($options[static::OPTIONS_SQLITE_READ_ONLY] ?? false)
-            ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
-            : SQLITE3_OPEN_READONLY,
-            (string) ($options[static::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
-        );
-
-        $sqlite3->enableExceptions(true);
-
         return new static(
-            $sqlite3,
+            fn (): SQLite3 => new SQLite3(
+                $name,
+                !($options[static::OPTIONS_SQLITE_READ_ONLY] ?? false)
+                ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
+                : SQLITE3_OPEN_READONLY,
+                (string) ($options[static::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
+            ),
             $driver,
             $queries,
             $options,
@@ -46,18 +43,23 @@ class SQLite3Adapter extends AdapterAbstract
     }
 
     public function __construct(
-        protected SQLite3 $sqlite3,
+        Closure $connect,
         Driver $driver,
         array $queries,
         array $options,
         ?Closure $debug
     ) {
         parent::__construct(
+            $connect,
             $driver,
             $queries,
             $options,
             $debug
         );
+
+        $this->sqlite3 = $connect();
+
+        $this->sqlite3->enableExceptions(true);
 
         $this->sqlite3->createFunction(
             static::REGEXP_LIKE_FUNCTION,
@@ -230,10 +232,17 @@ class SQLite3Adapter extends AdapterAbstract
         $sqlite3Stmt->bindParam($key, $value, $type);
     }
 
-    public function __destruct()
+    public function disconnect(): void
     {
         $this->sqliteOptimize($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false);
 
         $this->sqlite3->close();
+
+        $this->sqlite3 = null;
+    }
+
+    public function isConnected(): bool
+    {
+        return !is_null($this->sqlite3);
     }
 }

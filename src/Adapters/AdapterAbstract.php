@@ -9,7 +9,9 @@ use Sentience\Database\Queries\Query;
 
 abstract class AdapterAbstract implements AdapterInterface
 {
+    public const string OPTIONS_PERSISTENT = 'persistent';
     public const string OPTIONS_PDO_DSN = 'dsn';
+    public const string OPTIONS_FIREBIRD_EMBEDDED = 'embedded';
     public const string OPTIONS_MYSQL_CHARSET = 'charset';
     public const string OPTIONS_MYSQL_COLLATION = 'collation';
     public const string OPTIONS_MYSQL_ENGINE = 'engine';
@@ -25,6 +27,7 @@ abstract class AdapterAbstract implements AdapterInterface
     public const string REGEXP_LIKE_FUNCTION = 'REGEXP_LIKE';
 
     public function __construct(
+        protected Closure $connect,
         protected Driver $driver,
         protected array $queries,
         protected array $options,
@@ -118,5 +121,35 @@ abstract class AdapterAbstract implements AdapterInterface
         }
 
         ($this->debug)($query, $start, $error instanceof Throwable ? $error->getMessage() : $error);
+    }
+
+    public function reconnect(): void
+    {
+        if ($this->isConnected()) {
+            return;
+        }
+
+        static::__construct(
+            $this->connect,
+            $this->driver,
+            $this->queries,
+            $this->options,
+            $this->debug
+        );
+    }
+
+    public function __destruct()
+    {
+        if (!$this->isConnected()) {
+            return;
+        }
+
+        if ($this->driver == Driver::SQLITE) {
+            $this->disconnect();
+        }
+
+        if (!($this->options[static::OPTIONS_PERSISTENT] ?? false)) {
+            $this->disconnect();
+        }
     }
 }

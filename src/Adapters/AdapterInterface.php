@@ -31,4 +31,7 @@ interface AdapterInterface
     public function rollbackTransaction(): void;
     public function inTransaction(): bool;
     public function lastInsertId(?string $name = null): null|int|string;
+    public function disconnect(): void;
+    public function reconnect(): void;
+    public function isConnected(): bool;
 }
