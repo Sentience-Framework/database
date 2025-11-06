@@ -139,6 +139,8 @@ class Database
 
     public function beginTransaction(): void
     {
+        $this->reconnectIfNotConnected();
+
         $this->adapter->beginTransaction();
     }
 
@@ -154,6 +156,8 @@ class Database
 
     public function inTransaction(): bool
     {
+        $this->reconnectIfNotConnected();
+
         return $this->adapter->inTransaction();
     }
 
@@ -214,9 +218,13 @@ class Database
         return new DropTableQuery($this, $this->dialect, $table);
     }
 
-    public function enableLazy(): static
+    public function enableLazy(bool $disconnect = true): static
     {
         $this->lazy = true;
+
+        if ($disconnect) {
+            $this->adapter->disconnect();
+        }
 
         return $this;
     }
