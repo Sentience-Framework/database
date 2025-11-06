@@ -8,6 +8,7 @@ use PDOStatement;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
+use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\PDOResult;
 
@@ -33,20 +34,8 @@ class PDOAdapter extends AdapterAbstract
                         return (string) $options[static::OPTIONS_PDO_DSN];
                     }
 
-                    if ($driver == Driver::FIREBIRD) {
-                        return !($options[static::OPTIONS_FIREBIRD_EMBEDDED] ?? false)
-                            ? sprintf(
-                                '%s:dbname=%s/%s:%s',
-                                $driver->value,
-                                $host,
-                                $port,
-                                $name
-                            )
-                            : sprintf(
-                                '%s:dbname=%s',
-                                $driver->value,
-                                $name
-                            );
+                    if (!in_array($driver, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
+                        throw new DriverException('this driver requires a dsn');
                     }
 
                     if ($driver == Driver::SQLITE) {
