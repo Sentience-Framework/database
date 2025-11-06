@@ -2,140 +2,100 @@
 
 namespace Sentience\Database\Adapters;
 
-use Closure;
 use PDO;
 use PDOStatement;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
-use Sentience\Database\Exceptions\DriverException;
+use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\PDOResult;
+use Sentience\Database\Results\Result;
+use Sentience\Database\Results\ResultInterface;
 
 class PDOAdapter extends AdapterAbstract
 {
-    protected ?PDO $pdo;
+    protected ?PDO $pdo = null;
 
-    public static function connect(
-        Driver $driver,
-        string $host,
-        int $port,
-        string $name,
-        string $username,
-        string $password,
-        array $queries,
-        array $options,
-        ?Closure $debug
-    ): static {
-        return new static(
-            function () use ($driver, $host, $port, $name, $username, $password, $options): PDO {
-                $dsn = (function (Driver $driver, string $host, int $port, string $name, array $options): string{
-                    if (array_key_exists(static::OPTIONS_PDO_DSN, $options)) {
-                        return (string) $options[static::OPTIONS_PDO_DSN];
-                    }
+    public function connect(): void
+    {
+        if ($this->connected()) {
+            return;
+        }
 
-                    if (!in_array($driver, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
-                        throw new DriverException('this driver requires a dsn');
-                    }
-
-                    if ($driver == Driver::SQLITE) {
-                        return sprintf(
-                            '%s:%s',
-                            $driver->value,
-                            $name
-                        );
-                    }
-
-                    $dsn = sprintf(
-                        '%s:host=%s;port=%s;dbname=%s',
-                        $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
-                        $host,
-                        $port,
-                        $name
-                    );
-
-                    if ($driver == Driver::PGSQL) {
-                        if (array_key_exists(static::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
-                            $dsn .= sprintf(
-                                ";options='--client_encoding=%s'",
-                                (string) $options[static::OPTIONS_PGSQL_CLIENT_ENCODING]
-                            );
-                        }
-                    }
-
-                    return $dsn;
-                })($driver, $host, $port, $name, $options);
-
-                return new PDO(
-                    $dsn,
-                    $username,
-                    $password
-                );
-            },
-            $driver,
-            $queries,
-            $options,
-            $debug
-        );
-    }
-
-    public function __construct(
-        Closure $connect,
-        Driver $driver,
-        array $queries,
-        array $options,
-        ?Closure $debug
-    ) {
-        parent::__construct(
-            $connect,
-            $driver,
-            $queries,
-            $options,
-            $debug
-        );
-
-        $this->pdo = $connect();
+        $this->pdo = ($this->connect)();
 
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->pdo->setAttribute(PDO::ATTR_PERSISTENT, $options[static::OPTIONS_PERSISTENT] ?? false);
+        $this->pdo->setAttribute(PDO::ATTR_PERSISTENT, $this->options[static::OPTIONS_PERSISTENT] ?? false);
         $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         $this->pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
 
-        if (in_array($driver, [Driver::MARIADB, Driver::MYSQL])) {
-            $this->configurePdoForMySQL($options);
+        if (in_array($this->driver, [Driver::MARIADB, Driver::MYSQL])) {
+            $this->configurePdoForMySQL($this->options);
         }
 
-        if ($driver == Driver::PGSQL) {
-            $this->configurePdoForPgSQL($options);
+        if ($this->driver == Driver::PGSQL) {
+            $this->configurePdoForPgSQL($this->options);
         }
 
-        if ($driver == Driver::SQLITE) {
-            $this->configurePdoForSQLite($options);
+        if ($this->driver == Driver::SQLITE) {
+            $this->configurePdoForSQLite($this->options);
         }
 
-        foreach ($queries as $query) {
-            $this->exec($query);
+        foreach ($this->queries as $query) {
+            $this->pdo->exec($query);
         }
+    }
+
+    public function disconnect(): void
+    {
+        if (!$this->connected()) {
+            return;
+        }
+
+        if ($this->driver == Driver::SQLITE) {
+            $this->sqliteOptimize(
+                function (string $query): void {
+                    $this->pdo->exec($query);
+                },
+                $this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false
+            );
+        }
+
+        $this->pdo = null;
+    }
+
+    public function connected(): bool
+    {
+        return !is_null($this->pdo);
     }
 
     protected function configurePdoForMySQL(array $options): void
     {
         if (array_key_exists(static::OPTIONS_MYSQL_CHARSET, $options)) {
             $this->mysqlNames(
+                function (string $query): void {
+                    $this->pdo->exec($query);
+                },
                 (string) $options[static::OPTIONS_MYSQL_CHARSET],
                 $options[static::OPTIONS_MYSQL_COLLATION] ?? null
             );
         }
 
         if (array_key_exists(static::OPTIONS_MYSQL_ENGINE, $options)) {
-            $this->mysqlEngine((string) $options[static::OPTIONS_MYSQL_ENGINE]);
+            $this->mysqlEngine(
+                function (string $query): void {
+                    $this->pdo->exec($query);
+                },
+                (string) $options[static::OPTIONS_MYSQL_ENGINE]
+            );
         }
     }
 
     protected function configurePdoForPgSQL(array $options): void
     {
         if (array_key_exists(static::OPTIONS_PGSQL_SEARCH_PATH, $options)) {
-            $this->exec(
+            $this->pdo->exec(
                 sprintf(
                     "SET search_path TO %s;",
                     (string) $options[static::OPTIONS_PGSQL_SEARCH_PATH]
@@ -150,7 +110,7 @@ class PDOAdapter extends AdapterAbstract
             if (method_exists($this->pdo, $method)) {
                 [$this->pdo, $method](
                     static::REGEXP_LIKE_FUNCTION,
-                    fn(string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction(
+                    fn (string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction(
                         $value,
                         $pattern,
                         $flags
@@ -160,11 +120,11 @@ class PDOAdapter extends AdapterAbstract
         }
 
         if ($options[static::OPTIONS_SQLITE_READ_ONLY] ?? false) {
-            $this->exec('PRAGMA query_only = ON;');
+            $this->pdo->exec('PRAGMA query_only = ON;');
         }
 
         if (array_key_exists(static::OPTIONS_SQLITE_ENCRYPTION_KEY, $options)) {
-            $this->exec(
+            $this->pdo->exec(
                 sprintf(
                     "PRAGMA key = '%s';",
                     (string) $options[static::OPTIONS_SQLITE_ENCRYPTION_KEY]
@@ -173,7 +133,7 @@ class PDOAdapter extends AdapterAbstract
         }
 
         if (array_key_exists(static::OPTIONS_SQLITE_BUSY_TIMEOUT, $options)) {
-            $this->exec(
+            $this->pdo->exec(
                 sprintf(
                     "PRAGMA busy_timeout = %d;",
                     (int) $options[static::OPTIONS_SQLITE_BUSY_TIMEOUT]
@@ -182,28 +142,49 @@ class PDOAdapter extends AdapterAbstract
         }
 
         if (array_key_exists(static::OPTIONS_SQLITE_ENCODING, $options)) {
-            $this->sqliteEncoding((string) $options[static::OPTIONS_SQLITE_ENCODING]);
+            $this->sqliteEncoding(
+                function (string $query): void {
+                    $this->pdo->exec($query);
+                },
+                (string) $options[static::OPTIONS_SQLITE_ENCODING]
+            );
         }
 
         if (array_key_exists(static::OPTIONS_SQLITE_JOURNAL_MODE, $options)) {
-            $this->sqliteJournalMode((string) $options[static::OPTIONS_SQLITE_JOURNAL_MODE]);
+            $this->sqliteJournalMode(
+                function (string $query): void {
+                    $this->pdo->exec($query);
+                },
+                (string) $options[static::OPTIONS_SQLITE_JOURNAL_MODE]
+            );
         }
 
         if (array_key_exists(static::OPTIONS_SQLITE_FOREIGN_KEYS, $options)) {
-            $this->sqliteForeignKeys((bool) $options[static::OPTIONS_SQLITE_FOREIGN_KEYS]);
+            $this->sqliteForeignKeys(
+                function (string $query): void {
+                    $this->pdo->exec($query);
+                },
+                (bool) $options[static::OPTIONS_SQLITE_FOREIGN_KEYS]
+            );
         }
     }
 
     public function version(): string
     {
-        $this->throwExceptionIfDisconnected();
+        $this->connect();
 
-        return $this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+        $version = $this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+
+        if ($this->lazy) {
+            $this->disconnect();
+        }
+
+        return $version;
     }
 
     public function exec(string $query): void
     {
-        $this->throwExceptionIfDisconnected();
+        $this->connect();
 
         $start = microtime(true);
 
@@ -213,14 +194,18 @@ class PDOAdapter extends AdapterAbstract
             $this->debug($query, $start, $exception);
 
             throw $exception;
+        } finally {
+            if ($this->lazy) {
+                $this->disconnect();
+            }
         }
 
         $this->debug($query, $start);
     }
 
-    public function query(string $query): PDOResult
+    public function query(string $query): ResultInterface
     {
-        $this->throwExceptionIfDisconnected();
+        $this->connect();
 
         $start = microtime(true);
 
@@ -229,17 +214,25 @@ class PDOAdapter extends AdapterAbstract
 
             $this->debug($query, $start);
 
-            return new PDOResult($pdoStatement);
+            $result = new PDOResult($pdoStatement);
+
+            return $this->lazy
+                ? Result::fromInterface($result)
+                : $result;
         } catch (Throwable $exception) {
             $this->debug($query, $start, $exception);
 
             throw $exception;
+        } finally {
+            if ($this->lazy) {
+                $this->disconnect();
+            }
         }
     }
 
-    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): PDOResult
+    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): ResultInterface
     {
-        $this->throwExceptionIfDisconnected();
+        $this->connect();
 
         $query = $queryWithParams->toSql($dialect);
 
@@ -252,6 +245,10 @@ class PDOAdapter extends AdapterAbstract
 
             $pdoStatement = $this->pdo->prepare($queryWithParams->query);
         } catch (Throwable $exception) {
+            if ($this->lazy) {
+                $this->disconnect();
+            }
+
             if ($emulatePrepare) {
                 $this->disableEmulatePrepares();
             }
@@ -281,6 +278,10 @@ class PDOAdapter extends AdapterAbstract
         try {
             $pdoStatement->execute();
         } catch (Throwable $exception) {
+            if ($this->lazy) {
+                $this->disconnect();
+            }
+
             $this->debug($query, $start, $exception);
 
             throw $exception;
@@ -292,12 +293,20 @@ class PDOAdapter extends AdapterAbstract
 
         $this->debug($query, $start);
 
-        return new PDOResult($pdoStatement);
+        $result = new PDOResult($pdoStatement);
+
+        if ($this->lazy) {
+            $result = Result::fromInterface($result);
+
+            $this->disconnect();
+        }
+
+        return $result;
     }
 
     public function beginTransaction(): void
     {
-        $this->throwExceptionIfDisconnected();
+        $this->connect();
 
         if ($this->inTransaction()) {
             return;
@@ -308,60 +317,88 @@ class PDOAdapter extends AdapterAbstract
 
     public function commitTransaction(): void
     {
-        $this->throwExceptionIfDisconnected();
+        if (!$this->connected()) {
+            return;
+        }
 
         if (!$this->inTransaction()) {
             return;
         }
 
-        $this->pdo->commit();
+        try {
+            $this->pdo->commit();
+        } catch (Throwable $exception) {
+            throw $exception;
+        } finally {
+            if ($this->lazy) {
+                $this->disconnect();
+            }
+        }
     }
 
     public function rollbackTransaction(): void
     {
-        $this->throwExceptionIfDisconnected();
+        if (!$this->connected()) {
+            return;
+        }
 
         if (!$this->inTransaction()) {
             return;
         }
 
-        $this->pdo->rollBack();
+        try {
+            $this->pdo->rollBack();
+        } catch (Throwable $exception) {
+            throw $exception;
+        } finally {
+            if ($this->lazy) {
+                $this->disconnect();
+            }
+        }
     }
 
     public function inTransaction(): bool
     {
-        $this->throwExceptionIfDisconnected();
+        if (!$this->connected()) {
+            return false;
+        }
 
         return $this->pdo->inTransaction();
     }
 
     public function lastInsertId(?string $name = null): null|int|string
     {
-        $this->throwExceptionIfDisconnected();
+        if (!$this->connected()) {
+            throw new AdapterException('last insert id is not support in lazy mode');
+        }
 
-        $lastInserId = $this->pdo->lastInsertId($name);
+        $lastInsertId = $this->pdo->lastInsertId($name);
 
-        if (is_bool($lastInserId)) {
+        if (is_bool($lastInsertId)) {
             return null;
         }
 
-        if (preg_match('/[0-9]+/', $lastInserId)) {
-            return (int) $lastInserId;
+        if (preg_match('/[0-9]+/', $lastInsertId)) {
+            return (int) $lastInsertId;
         }
 
-        return $lastInserId;
+        return $lastInsertId;
     }
 
     protected function enableEmulatePrepares(): void
     {
-        $this->throwExceptionIfDisconnected();
+        if (!$this->connected()) {
+            return;
+        }
 
         $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
     }
 
     protected function disableEmulatePrepares(): void
     {
-        $this->throwExceptionIfDisconnected();
+        if (!$this->connected()) {
+            return;
+        }
 
         $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
     }
@@ -374,23 +411,5 @@ class PDOAdapter extends AdapterAbstract
     protected function bindParam(PDOStatement $pdoStatement, string $key, mixed $value, int $type): void
     {
         $pdoStatement->bindParam($key, $value, $type);
-    }
-
-    public function disconnect(): void
-    {
-        if (!$this->isConnected()) {
-            return;
-        }
-
-        if ($this->driver == Driver::SQLITE) {
-            $this->sqliteOptimize($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false);
-        }
-
-        $this->pdo = null;
-    }
-
-    public function isConnected(): bool
-    {
-        return !is_null($this->pdo);
     }
 }

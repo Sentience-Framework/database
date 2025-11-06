@@ -2,13 +2,14 @@
 
 namespace Sentience\Database\Adapters;
 
-use Closure;
 use mysqli;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Driver;
+use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\MySQLiResult;
+use Sentience\Database\Results\Result;
+use Sentience\Database\Results\ResultInterface;
 
 class MySQLiAdapter extends AdapterAbstract
 {
@@ -17,80 +18,75 @@ class MySQLiAdapter extends AdapterAbstract
     public const string MYSQLI_FLOAT = 'd';
     public const string MYSQLI_STRING = 's';
 
-    protected ?mysqli $mysqli;
+    protected ?mysqli $mysqli = null;
     protected bool $inTransaction = false;
 
-    public static function connect(
-        Driver $driver,
-        string $host,
-        int $port,
-        string $name,
-        string $username,
-        string $password,
-        array $queries,
-        array $options,
-        ?Closure $debug
-    ): static {
-        return new static(
-            fn(): mysqli => new mysqli(
-                ($options[static::OPTIONS_PERSISTENT] ?? false) ? sprintf('p:%s', $host) : $host,
-                $username,
-                $password,
-                $name,
-                $port
-            ),
-            $driver,
-            $queries,
-            $options,
-            $debug
-        );
-    }
+    public function connect(): void
+    {
+        if ($this->connected()) {
+            return;
+        }
 
-    public function __construct(
-        Closure $connect,
-        Driver $driver,
-        array $queries,
-        array $options,
-        ?Closure $debug
-    ) {
-        parent::__construct(
-            $connect,
-            $driver,
-            $queries,
-            $options,
-            $debug
-        );
-
-        $this->mysqli = $connect();
+        $this->mysqli = ($this->connect)();
 
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-        if (array_key_exists(static::OPTIONS_MYSQL_CHARSET, $options)) {
+        if (array_key_exists(static::OPTIONS_MYSQL_CHARSET, $this->options)) {
             $this->mysqlNames(
-                (string) $options[static::OPTIONS_MYSQL_CHARSET],
+                function (string $query): void {
+                    $this->mysqli->query($query);
+                },
+                (string) $this->options[static::OPTIONS_MYSQL_CHARSET],
                 $options[static::OPTIONS_MYSQL_COLLATION] ?? null
             );
         }
 
-        if (array_key_exists(static::OPTIONS_MYSQL_ENGINE, $options)) {
-            $this->mysqlEngine((string) $options[static::OPTIONS_MYSQL_ENGINE]);
+        if (array_key_exists(static::OPTIONS_MYSQL_ENGINE, $this->options)) {
+            $this->mysqlEngine(
+                function (string $query): void {
+                    $this->mysqli->query($query);
+                },
+                (string) $this->options[static::OPTIONS_MYSQL_ENGINE]
+            );
         }
 
-        foreach ($queries as $query) {
-            $this->exec($query);
+        foreach ($this->queries as $query) {
+            $this->mysqli->query($query);
         }
+    }
+
+    public function disconnect(): void
+    {
+        if (!$this->connected()) {
+            return;
+        }
+
+        $this->mysqli->close();
+
+        $this->mysqli = null;
+    }
+
+    public function connected(): bool
+    {
+        return !is_null($this->mysqli);
     }
 
     public function version(): int
     {
-        $this->throwExceptionIfDisconnected();
+        $this->connect();
 
-        return $this->mysqli->server_version;
+        $version = $this->mysqli->server_version;
+
+        if ($this->lazy) {
+            $this->disconnect();
+        }
+
+        return $version;
     }
 
     public function exec(string $query): void
     {
-        $this->throwExceptionIfDisconnected();
+        $this->connect();
 
         $start = microtime(true);
 
@@ -100,14 +96,18 @@ class MySQLiAdapter extends AdapterAbstract
             $this->debug($query, $start, $exception);
 
             throw $exception;
+        } finally {
+            if ($this->lazy) {
+                $this->disconnect();
+            }
         }
 
         $this->debug($query, $start);
     }
 
-    public function query(string $query): MySQLiResult
+    public function query(string $query): ResultInterface
     {
-        $this->throwExceptionIfDisconnected();
+        $this->connect();
 
         try {
             $start = microtime(true);
@@ -116,17 +116,25 @@ class MySQLiAdapter extends AdapterAbstract
 
             $this->debug($query, $start);
 
-            return new MySQLiResult($mysqliResult);
+            $result = new MySQLiResult($mysqliResult);
+
+            return $this->lazy
+                ? Result::fromInterface($result)
+                : $result;
         } catch (Throwable $exception) {
             $this->debug($query, $start, $exception);
 
             throw $exception;
+        } finally {
+            if ($this->lazy) {
+                $this->disconnect();
+            }
         }
     }
 
-    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): MySQLiResult
+    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): ResultInterface
     {
-        $this->throwExceptionIfDisconnected();
+        $this->connect();
 
         $queryWithParams->namedParamsToQuestionMarks();
 
@@ -141,6 +149,10 @@ class MySQLiAdapter extends AdapterAbstract
         try {
             $mysqliStmt = $this->mysqli->prepare($queryWithParams->query);
         } catch (Throwable $exception) {
+            if ($this->lazy) {
+                $this->disconnect();
+            }
+
             $this->debug($query, $start, $exception);
 
             throw $exception;
@@ -177,6 +189,10 @@ class MySQLiAdapter extends AdapterAbstract
         try {
             $mysqliStmt->execute();
         } catch (Throwable $exception) {
+            if ($this->lazy) {
+                $this->disconnect();
+            }
+
             $this->debug($query, $start, $exception);
 
             throw $exception;
@@ -186,12 +202,20 @@ class MySQLiAdapter extends AdapterAbstract
 
         $this->debug($query, $start);
 
-        return new MySQLiResult($mysqliResult);
+        $result = new MySQLiResult($mysqliResult);
+
+        if ($this->lazy) {
+            $result = Result::fromInterface($result);
+
+            $this->disconnect();
+        }
+
+        return $result;
     }
 
     public function beginTransaction(): void
     {
-        $this->throwExceptionIfDisconnected();
+        $this->connect();
 
         if ($this->inTransaction()) {
             return;
@@ -204,7 +228,9 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function commitTransaction(): void
     {
-        $this->throwExceptionIfDisconnected();
+        if (!$this->connected()) {
+            return;
+        }
 
         if (!$this->inTransaction()) {
             return;
@@ -216,12 +242,18 @@ class MySQLiAdapter extends AdapterAbstract
             throw $exception;
         } finally {
             $this->inTransaction = false;
+
+            if ($this->lazy) {
+                $this->disconnect();
+            }
         }
     }
 
     public function rollbackTransaction(): void
     {
-        $this->throwExceptionIfDisconnected();
+        if (!$this->connected()) {
+            return;
+        }
 
         if (!$this->inTransaction()) {
             return;
@@ -233,36 +265,28 @@ class MySQLiAdapter extends AdapterAbstract
             throw $exception;
         } finally {
             $this->inTransaction = false;
+
+            if ($this->lazy) {
+                $this->disconnect();
+            }
         }
     }
 
     public function inTransaction(): bool
     {
-        $this->throwExceptionIfDisconnected();
+        if (!$this->connected()) {
+            return false;
+        }
 
         return $this->inTransaction;
     }
 
     public function lastInsertId(?string $name = null): int|string
     {
-        $this->throwExceptionIfDisconnected();
-
-        return $this->mysqli->insert_id;
-    }
-
-    public function disconnect(): void
-    {
-        if (!$this->isConnected()) {
-            return;
+        if (!$this->connected()) {
+            throw new AdapterException('last insert id is not support in lazy mode');
         }
 
-        $this->mysqli->close();
-
-        $this->mysqli = null;
-    }
-
-    public function isConnected(): bool
-    {
-        return !is_null($this->mysqli);
+        return $this->mysqli->insert_id;
     }
 }

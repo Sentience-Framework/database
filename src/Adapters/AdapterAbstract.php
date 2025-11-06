@@ -3,7 +3,6 @@
 namespace Sentience\Database\Adapters;
 
 use Closure;
-use Sentience\Database\Exceptions\AdapterException;
 use Throwable;
 use Sentience\Database\Driver;
 use Sentience\Database\Queries\Query;
@@ -32,11 +31,38 @@ abstract class AdapterAbstract implements AdapterInterface
         protected Driver $driver,
         protected array $queries,
         protected array $options,
-        protected ?Closure $debug
+        protected ?Closure $debug,
+        protected bool $lazy = false
     ) {
+        if (!$lazy) {
+            $this->connect();
+        }
     }
 
-    protected function mysqlNames(string $charset, ?string $collation): void
+    public function enableLazy(bool $disconnect = true): void
+    {
+        $this->lazy = true;
+
+        if ($disconnect) {
+            $this->disconnect();
+        }
+    }
+
+    public function disableLazy(bool $connect = true): void
+    {
+        $this->lazy = false;
+
+        if ($connect) {
+            $this->connect();
+        }
+    }
+
+    public function isLazy(): bool
+    {
+        return $this->lazy;
+    }
+
+    protected function mysqlNames(Closure $execute, string $charset, ?string $collation): void
     {
         $query = sprintf(
             'SET NAMES %s',
@@ -52,12 +78,12 @@ abstract class AdapterAbstract implements AdapterInterface
 
         $query .= ';';
 
-        $this->exec($query);
+        $execute($query);
     }
 
-    protected function mysqlEngine(string $engine): void
+    protected function mysqlEngine(Closure $execute, string $engine): void
     {
-        $this->exec(
+        $execute(
             sprintf(
                 'SET SESSION default_storage_engine = %s;',
                 $engine
@@ -65,9 +91,9 @@ abstract class AdapterAbstract implements AdapterInterface
         );
     }
 
-    protected function sqliteEncoding(string $encoding): void
+    protected function sqliteEncoding(Closure $execute, string $encoding): void
     {
-        $this->exec(
+        $execute(
             sprintf(
                 "PRAGMA encoding = '%s';",
                 $encoding
@@ -75,9 +101,9 @@ abstract class AdapterAbstract implements AdapterInterface
         );
     }
 
-    protected function sqliteJournalMode(string $journalMode): void
+    protected function sqliteJournalMode(Closure $execute, string $journalMode): void
     {
-        $this->exec(
+        $execute(
             sprintf(
                 'PRAGMA journal_mode = %s;',
                 $journalMode
@@ -85,22 +111,22 @@ abstract class AdapterAbstract implements AdapterInterface
         );
     }
 
-    protected function sqliteForeignKeys(bool $foreignKeys): void
+    protected function sqliteForeignKeys(Closure $execute, bool $foreignKeys): void
     {
         if (!$foreignKeys) {
             return;
         }
 
-        $this->exec('PRAGMA foreign_keys = ON;');
+        $execute('PRAGMA foreign_keys = ON;');
     }
 
-    protected function sqliteOptimize(bool $optimize): void
+    protected function sqliteOptimize(Closure $execute, bool $optimize): void
     {
         if (!$optimize) {
             return;
         }
 
-        $this->exec('PRAGMA optimize;');
+        $execute('PRAGMA optimize;');
     }
 
     protected function regexpLikeFunction(string $value, string $pattern, string $flags): bool
@@ -124,33 +150,9 @@ abstract class AdapterAbstract implements AdapterInterface
         ($this->debug)($query, $start, $error instanceof Throwable ? $error->getMessage() : $error);
     }
 
-    public function reconnect(): void
-    {
-        if ($this->isConnected()) {
-            return;
-        }
-
-        $this->__construct(
-            $this->connect,
-            $this->driver,
-            $this->queries,
-            $this->options,
-            $this->debug
-        );
-    }
-
-    protected function throwExceptionIfDisconnected(): void
-    {
-        if ($this->isConnected()) {
-            return;
-        }
-
-        throw new AdapterException('adapter not connected');
-    }
-
     public function __destruct()
     {
-        if (!$this->isConnected()) {
+        if (!$this->connected()) {
             return;
         }
 

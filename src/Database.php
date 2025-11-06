@@ -18,7 +18,6 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\SelectQuery;
 use Sentience\Database\Queries\UpdateQuery;
-use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
 
 class Database
@@ -35,7 +34,8 @@ class Database
         array $queries,
         array $options,
         ?Closure $debug,
-        bool $usePdoAdapter = false
+        bool $usePdoAdapter = false,
+        bool $lazy = false
     ): static {
         if (!$driver->isSupportedBySentience()) {
             throw new DriverException('this driver requires ::pdo()');
@@ -50,7 +50,8 @@ class Database
             $queries,
             $options,
             $debug,
-            $usePdoAdapter
+            $usePdoAdapter,
+            $lazy
         );
 
         $version = $adapter->version();
@@ -65,14 +66,16 @@ class Database
         Driver $driver,
         array $queries,
         array $options,
-        ?Closure $debug
+        ?Closure $debug,
+        bool $lazy = false
     ): static {
         $adapter = new PDOAdapter(
             $connect,
             $driver,
             $queries,
             $options,
-            $debug
+            $debug,
+            $lazy
         );
 
         $version = $adapter->version();
@@ -90,26 +93,12 @@ class Database
 
     public function exec(string $query): void
     {
-        $this->reconnectIfNotConnected();
-
         $this->adapter->exec($query);
-
-        $this->disconnectIfLazyAndNotInTransaction();
     }
 
     public function query(string $query): ResultInterface
     {
-        $this->reconnectIfNotConnected();
-
-        $result = $this->adapter->query($query);
-
-        if ($this->lazy) {
-            $result = Result::fromInterface($result);
-        }
-
-        $this->disconnectIfLazyAndNotInTransaction();
-
-        return $result;
+        return $this->adapter->query($query);
     }
 
     public function prepared(string $query, array $params = [], bool $emulatePrepare = false): ResultInterface
@@ -122,25 +111,13 @@ class Database
 
     public function queryWithParams(QueryWithParams $queryWithParams, bool $emulatePrepare = false): ResultInterface
     {
-        $this->reconnectIfNotConnected();
-
-        $result = count($queryWithParams->params) > 0
+        return count($queryWithParams->params) > 0
             ? $this->adapter->queryWithParams($this->dialect, $queryWithParams, $emulatePrepare)
             : $this->adapter->query($queryWithParams->query);
-
-        if ($this->lazy) {
-            $result = Result::fromInterface($result);
-        }
-
-        $this->disconnectIfLazyAndNotInTransaction();
-
-        return $result;
     }
 
     public function beginTransaction(): void
     {
-        $this->reconnectIfNotConnected();
-
         $this->adapter->beginTransaction();
     }
 
@@ -156,8 +133,6 @@ class Database
 
     public function inTransaction(): bool
     {
-        $this->reconnectIfNotConnected();
-
         return $this->adapter->inTransaction();
     }
 
@@ -218,49 +193,18 @@ class Database
         return new DropTableQuery($this, $this->dialect, $table);
     }
 
-    public function enableLazy(bool $disconnect = true): static
+    public function enableLazy(bool $disconnect = true): void
     {
-        $this->lazy = true;
-
-        if ($disconnect) {
-            $this->adapter->disconnect();
-        }
-
-        return $this;
+        $this->adapter->enableLazy($disconnect);
     }
 
-    public function disableLazy(): static
+    public function disableLazy(bool $connect = true): void
     {
-        $this->lazy = false;
-
-        $this->adapter->reconnect();
-
-        return $this;
+        $this->adapter->disableLazy($connect);
     }
 
-    protected function reconnectIfNotConnected(): void
+    public function isLazy(): bool
     {
-        if (!$this->lazy) {
-            return;
-        }
-
-        if ($this->adapter->isConnected()) {
-            return;
-        }
-
-        $this->adapter->reconnect();
-    }
-
-    protected function disconnectIfLazyAndNotInTransaction(): void
-    {
-        if (!$this->lazy) {
-            return;
-        }
-
-        if ($this->inTransaction()) {
-            return;
-        }
-
-        $this->adapter->disconnect();
+        return $this->adapter->isLazy();
     }
 }

@@ -19,7 +19,6 @@ class MySQLDialect extends SQLDialect
     protected const string ESCAPE_IDENTIFIER = '`';
     protected const string ESCAPE_STRING = '"';
     protected const bool ON_CONFLICT = true;
-    protected const bool RETURNING = true;
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
     {

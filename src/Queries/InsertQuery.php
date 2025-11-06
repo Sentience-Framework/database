@@ -2,7 +2,9 @@
 
 namespace Sentience\Database\Queries;
 
+use Closure;
 use Sentience\Database\Exceptions\QueryException;
+use Sentience\Database\Queries\Objects\ConditionGroup;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Traits\LastInsertIdTrait;
 use Sentience\Database\Queries\Traits\OnConflictTrait;
@@ -81,6 +83,21 @@ class InsertQuery extends Query
         return $selectQuery->count(null, $emulatePrepare);
     }
 
+    protected function select(Closure $whereGroup, bool $emulatePrepare): ResultInterface
+    {
+        return $this->database->select($this->table)
+            ->columns(
+                array_unique(
+                    count($this->returning) > 0
+                    ? [$this->lastInsertId, ...$this->returning]
+                    : []
+                )
+            )
+            ->whereGroup($whereGroup)
+            ->limit(1)
+            ->execute($emulatePrepare);
+    }
+
     protected function insert(bool $emulatePrepare): ResultInterface
     {
         $result = parent::execute($emulatePrepare);
@@ -95,17 +112,13 @@ class InsertQuery extends Query
             return $result;
         }
 
-        return $this->database->select($this->table)
-            ->columns(
-                array_unique(
-                    count($this->returning) > 0
-                    ? [$this->lastInsertId, ...$this->returning]
-                    : []
-                )
-            )
-            ->whereEquals($this->lastInsertId, $lastInsertId)
-            ->limit(1)
-            ->execute($emulatePrepare);
+        return $this->select(
+            fn (ConditionGroup $conditionGroup): ConditionGroup => $conditionGroup->whereEquals(
+                $this->lastInsertId,
+                $lastInsertId
+            ),
+            $emulatePrepare
+        );
     }
 
     protected function update(array $conflict, bool $emulatePrepare): ResultInterface
@@ -126,6 +139,19 @@ class InsertQuery extends Query
             $updateQuery->returning($this->returning);
         }
 
-        return $updateQuery->execute($emulatePrepare);
+        $result = $updateQuery->execute($emulatePrepare);
+
+        if (is_null($this->returning) || $this->dialect->returning()) {
+            return $result;
+        }
+
+        return $this->select(
+            function (ConditionGroup $conditionGroup) use ($conflict): void {
+                foreach ($conflict as $column => $value) {
+                    $conditionGroup->whereEquals($column, $value);
+                }
+            },
+            $emulatePrepare
+        );
     }
 }
