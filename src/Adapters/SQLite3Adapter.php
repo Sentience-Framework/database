@@ -9,7 +9,6 @@ use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\Result;
-use Sentience\Database\Results\ResultInterface;
 use Sentience\Database\Results\SQLite3Result;
 
 class SQLite3Adapter extends AdapterAbstract
@@ -117,7 +116,7 @@ class SQLite3Adapter extends AdapterAbstract
         $this->debug($query, $start);
     }
 
-    public function query(string $query): ResultInterface
+    public function query(string $query): SQLite3Result|Result
     {
         $this->connect();
 
@@ -144,7 +143,7 @@ class SQLite3Adapter extends AdapterAbstract
         }
     }
 
-    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): ResultInterface
+    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): SQLite3Result|Result
     {
         $this->connect();
 

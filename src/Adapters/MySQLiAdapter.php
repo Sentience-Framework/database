@@ -9,7 +9,6 @@ use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\MySQLiResult;
 use Sentience\Database\Results\Result;
-use Sentience\Database\Results\ResultInterface;
 
 class MySQLiAdapter extends AdapterAbstract
 {
@@ -105,7 +104,7 @@ class MySQLiAdapter extends AdapterAbstract
         $this->debug($query, $start);
     }
 
-    public function query(string $query): ResultInterface
+    public function query(string $query): MySQLiResult|Result
     {
         $this->connect();
 
@@ -132,7 +131,7 @@ class MySQLiAdapter extends AdapterAbstract
         }
     }
 
-    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): ResultInterface
+    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): MySQLiResult|Result
     {
         $this->connect();
 

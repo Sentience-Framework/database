@@ -11,7 +11,6 @@ use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\PDOResult;
 use Sentience\Database\Results\Result;
-use Sentience\Database\Results\ResultInterface;
 
 class PDOAdapter extends AdapterAbstract
 {
@@ -203,7 +202,7 @@ class PDOAdapter extends AdapterAbstract
         $this->debug($query, $start);
     }
 
-    public function query(string $query): ResultInterface
+    public function query(string $query): PDOResult|Result
     {
         $this->connect();
 
@@ -230,7 +229,7 @@ class PDOAdapter extends AdapterAbstract
         }
     }
 
-    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): ResultInterface
+    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): PDOResult|Result
     {
         $this->connect();
 
