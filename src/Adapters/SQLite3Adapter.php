@@ -28,7 +28,7 @@ class SQLite3Adapter extends AdapterAbstract
 
         $this->sqlite3->createFunction(
             static::REGEXP_LIKE_FUNCTION,
-            fn (string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction($value, $pattern, $flags)
+            fn(string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction($value, $pattern, $flags)
         );
 
         if (array_key_exists(static::OPTIONS_SQLITE_BUSY_TIMEOUT, $this->options)) {
@@ -268,10 +268,14 @@ class SQLite3Adapter extends AdapterAbstract
         return $this->inTransaction;
     }
 
-    public function lastInsertId(?string $name = null): int
+    public function lastInsertId(?string $name = null): ?int
     {
-        if (!$this->connected()) {
+        if ($this->lazy) {
             throw new AdapterException('last insert id is not support in lazy mode');
+        }
+
+        if (!$this->connected()) {
+            return null;
         }
 
         return $this->sqlite3->lastInsertRowID();

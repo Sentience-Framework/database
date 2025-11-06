@@ -280,10 +280,14 @@ class MySQLiAdapter extends AdapterAbstract
         return $this->inTransaction;
     }
 
-    public function lastInsertId(?string $name = null): int|string
+    public function lastInsertId(?string $name = null): null|int|string
     {
-        if (!$this->connected()) {
+        if ($this->lazy) {
             throw new AdapterException('last insert id is not support in lazy mode');
+        }
+
+        if (!$this->connected()) {
+            return null;
         }
 
         return $this->mysqli->insert_id;
