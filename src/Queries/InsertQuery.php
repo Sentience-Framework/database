@@ -42,7 +42,7 @@ class InsertQuery extends Query
         }
 
         if (is_string($this->onConflict->conflict)) {
-            throw new QueryException('database only supports an array of columns as constraints');
+            throw new QueryException('database does not support named constraints');
         }
 
         $conflict = [];

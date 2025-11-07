@@ -283,7 +283,7 @@ class MySQLiAdapter extends AdapterAbstract
     public function lastInsertId(?string $name = null): null|int|string
     {
         if ($this->lazy) {
-            throw new AdapterException('last insert id is not support in lazy mode');
+            throw new AdapterException('last insert id is not supported in lazy mode');
         }
 
         if (!$this->connected()) {

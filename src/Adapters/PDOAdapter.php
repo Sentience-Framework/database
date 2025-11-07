@@ -109,7 +109,7 @@ class PDOAdapter extends AdapterAbstract
             if (method_exists($this->pdo, $method)) {
                 [$this->pdo, $method](
                     static::REGEXP_LIKE_FUNCTION,
-                    fn(string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction(
+                    fn (string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction(
                         $value,
                         $pattern,
                         $flags
@@ -368,7 +368,7 @@ class PDOAdapter extends AdapterAbstract
     public function lastInsertId(?string $name = null): null|int|string
     {
         if ($this->lazy) {
-            throw new AdapterException('last insert id is not support in lazy mode');
+            throw new AdapterException('last insert id is not supported in lazy mode');
         }
 
         if (!$this->connected()) {
