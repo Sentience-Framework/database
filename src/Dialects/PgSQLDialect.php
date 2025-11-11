@@ -3,6 +3,7 @@
 namespace Sentience\Database\Dialects;
 
 use DateTime;
+use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\Raw;
@@ -83,6 +84,26 @@ class PgSQLDialect extends SQLDialect
         );
     }
 
+    protected function buildColumn(Column $column): string
+    {
+        if (!$this->generatedByDefaultAsIdentity()) {
+            $isUppercase = (bool) preg_match('/[A-Z]/', $column->type);
+
+            $column->type = match (strtoupper($column->type)) {
+                'SMALLINT',
+                'INTEGER',
+                'INT',
+                'INT2',
+                'INT4' => $isUppercase ? 'SERIAL' : 'serial',
+                'BIGINT',
+                'INT8' => $isUppercase ? 'BIGSERIAL' : 'bigserial',
+                default => $column->type
+            };
+        }
+
+        return parent::buildColumn($column);
+    }
+
     public function castToQuery(mixed $value): mixed
     {
         if (is_bool($value)) {
@@ -109,5 +130,10 @@ class PgSQLDialect extends SQLDialect
         }
 
         return parent::parseDateTime($string);
+    }
+
+    public function generatedByDefaultAsIdentity(): bool
+    {
+        return $this->version >= 1700;
     }
 }

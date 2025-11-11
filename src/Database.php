@@ -22,8 +22,6 @@ use Sentience\Database\Results\ResultInterface;
 
 class Database
 {
-    protected bool $lazy = false;
-
     public static function connect(
         Driver $driver,
         string $host,
@@ -35,26 +33,39 @@ class Database
         array $options,
         ?Closure $debug,
         bool $usePdoAdapter = false,
-        bool $lazy = false
+        bool $lazy = false,
+        int $retries = 0
     ): static {
         if (!$driver->isSupportedBySentience()) {
             throw new DriverException('this driver requires ::pdo()');
         }
 
-        $adapter = $driver->getAdapter(
-            $host,
-            $port,
-            $name,
-            $username,
-            $password,
-            $queries,
-            $options,
-            $debug,
-            $usePdoAdapter,
-            $lazy
-        );
+        for ($i = 0; $i <= $retries; $i++) {
+            try {
+                $adapter = $driver->getAdapter(
+                    $host,
+                    $port,
+                    $name,
+                    $username,
+                    $password,
+                    $queries,
+                    $options,
+                    $debug,
+                    $usePdoAdapter,
+                    $lazy
+                );
+            } catch (Throwable $exception) {
+                if ($i == $retries) {
+                    throw $exception;
+                }
 
-        $version = $adapter->version();
+                continue;
+            }
+        }
+
+        $version = array_key_exists(AdapterInterface::OPTIONS_VERSION, $options)
+            ? (string) $options[AdapterInterface::OPTIONS_VERSION]
+            : $adapter->version();
 
         $dialect = $driver->getDialect($version);
 
@@ -67,18 +78,31 @@ class Database
         array $queries,
         array $options,
         ?Closure $debug,
-        bool $lazy = false
+        bool $lazy = false,
+        int $retries = 0
     ): static {
-        $adapter = new PDOAdapter(
-            $connect,
-            $driver,
-            $queries,
-            $options,
-            $debug,
-            $lazy
-        );
+        for ($i = 0; $i <= $retries; $i++) {
+            try {
+                $adapter = new PDOAdapter(
+                    $connect,
+                    $driver,
+                    $queries,
+                    $options,
+                    $debug,
+                    $lazy
+                );
+            } catch (Throwable $exception) {
+                if ($i == $retries) {
+                    throw $exception;
+                }
 
-        $version = $adapter->version();
+                continue;
+            }
+        }
+
+        $version = array_key_exists(AdapterInterface::OPTIONS_VERSION, $options)
+            ? (string) $options[AdapterInterface::OPTIONS_VERSION]
+            : $adapter->version();
 
         $dialect = $driver->getDialect($version);
 
@@ -93,12 +117,12 @@ class Database
 
     public function exec(string $query): void
     {
-        $this->adapter->exec($query);
+        $this->adapter->exec($this->dialect, $query);
     }
 
     public function query(string $query): ResultInterface
     {
-        return $this->adapter->query($query);
+        return $this->adapter->query($this->dialect, $query);
     }
 
     public function prepared(string $query, array $params = [], bool $emulatePrepare = false): ResultInterface
@@ -113,22 +137,22 @@ class Database
     {
         return count($queryWithParams->params) > 0
             ? $this->adapter->queryWithParams($this->dialect, $queryWithParams, $emulatePrepare)
-            : $this->adapter->query($queryWithParams->query);
+            : $this->adapter->query($this->dialect, $queryWithParams->query);
     }
 
     public function beginTransaction(): void
     {
-        $this->adapter->beginTransaction();
+        $this->adapter->beginTransaction($this->dialect);
     }
 
     public function commitTransaction(): void
     {
-        $this->adapter->commitTransaction();
+        $this->adapter->commitTransaction($this->dialect);
     }
 
     public function rollbackTransaction(): void
     {
-        $this->adapter->rollbackTransaction();
+        $this->adapter->rollbackTransaction($this->dialect);
     }
 
     public function inTransaction(): bool
@@ -191,6 +215,11 @@ class Database
     public function dropTable(string|array|Alias|Raw $table): DropTableQuery
     {
         return new DropTableQuery($this, $this->dialect, $table);
+    }
+
+    public function ping(bool $reconnect = false): bool
+    {
+        return $this->adapter->ping($this->dialect, $reconnect);
     }
 
     public function enableLazy(bool $disconnect = true): void

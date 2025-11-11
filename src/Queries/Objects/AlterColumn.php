@@ -6,7 +6,7 @@ class AlterColumn
 {
     public function __construct(
         public string $column,
-        public array $options
+        public string $sql
     ) {
     }
 }

@@ -9,7 +9,7 @@ class Column
         public string $type,
         public bool $notNull,
         public mixed $default,
-        public array $options
+        public bool $generatedByDefaultAsIdentity
     ) {
     }
 }

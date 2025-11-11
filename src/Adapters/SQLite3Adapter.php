@@ -18,7 +18,7 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function connect(): void
     {
-        if ($this->connected()) {
+        if ($this->isConnected()) {
             return;
         }
 
@@ -69,7 +69,7 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function disconnect(): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
@@ -85,7 +85,7 @@ class SQLite3Adapter extends AdapterAbstract
         $this->sqlite3 = null;
     }
 
-    public function connected(): bool
+    public function isConnected(): bool
     {
         return !is_null($this->sqlite3);
     }
@@ -95,7 +95,7 @@ class SQLite3Adapter extends AdapterAbstract
         return SQLite3::version()['versionString'];
     }
 
-    public function exec(string $query): void
+    public function exec(DialectInterface $dialect, string $query): void
     {
         $this->connect();
 
@@ -104,7 +104,7 @@ class SQLite3Adapter extends AdapterAbstract
         try {
             $this->sqlite3->exec($query);
         } catch (Throwable $exception) {
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -113,10 +113,10 @@ class SQLite3Adapter extends AdapterAbstract
             }
         }
 
-        $this->debug($query, $start);
+        $this->debug($dialect, $query, $start);
     }
 
-    public function query(string $query): SQLite3Result|Result
+    public function query(DialectInterface $dialect, string $query): SQLite3Result|Result
     {
         $this->connect();
 
@@ -125,7 +125,7 @@ class SQLite3Adapter extends AdapterAbstract
         try {
             $sqlite3Result = $this->sqlite3->query($query);
 
-            $this->debug($query, $start);
+            $this->debug($dialect, $query, $start);
 
             $result = new SQLite3Result($sqlite3Result);
 
@@ -133,7 +133,7 @@ class SQLite3Adapter extends AdapterAbstract
                 ? Result::fromInterface($result)
                 : $result;
         } catch (Throwable $exception) {
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -150,7 +150,7 @@ class SQLite3Adapter extends AdapterAbstract
         $query = $queryWithParams->toSql($dialect);
 
         if ($emulatePrepare) {
-            return $this->query($query);
+            return $this->query($dialect, $query);
         }
 
         $start = microtime(true);
@@ -162,7 +162,7 @@ class SQLite3Adapter extends AdapterAbstract
                 $this->disconnect();
             }
 
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $query, $start, $exception);
 
             throw $exception;
         }
@@ -190,12 +190,12 @@ class SQLite3Adapter extends AdapterAbstract
                 $this->disconnect();
             }
 
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $query, $start, $exception);
 
             throw $exception;
         }
 
-        $this->debug($query, $start);
+        $this->debug($dialect, $query, $start);
 
         $result = new SQLite3Result($sqlite3Result);
 
@@ -208,7 +208,7 @@ class SQLite3Adapter extends AdapterAbstract
         return $result;
     }
 
-    public function beginTransaction(): void
+    public function beginTransaction(DialectInterface $dialect): void
     {
         $this->connect();
 
@@ -216,14 +216,14 @@ class SQLite3Adapter extends AdapterAbstract
             return;
         }
 
-        $this->exec('BEGIN;');
+        $this->exec($dialect, 'BEGIN;');
 
         $this->inTransaction = true;
     }
 
-    public function commitTransaction(): void
+    public function commitTransaction(DialectInterface $dialect): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
@@ -232,7 +232,7 @@ class SQLite3Adapter extends AdapterAbstract
         }
 
         try {
-            $this->exec('COMMIT;');
+            $this->exec($dialect, 'COMMIT;');
         } catch (Throwable $exception) {
             throw $exception;
         } finally {
@@ -240,9 +240,9 @@ class SQLite3Adapter extends AdapterAbstract
         }
     }
 
-    public function rollbackTransaction(): void
+    public function rollbackTransaction(DialectInterface $dialect): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
@@ -251,7 +251,7 @@ class SQLite3Adapter extends AdapterAbstract
         }
 
         try {
-            $this->exec('ROLLBACK;');
+            $this->exec($dialect, 'ROLLBACK;');
         } catch (Throwable $exception) {
             throw $exception;
         } finally {
@@ -261,7 +261,7 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function inTransaction(): bool
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return false;
         }
 
@@ -274,7 +274,7 @@ class SQLite3Adapter extends AdapterAbstract
             throw new AdapterException('last insert id is not supported in lazy mode');
         }
 
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return null;
         }
 

@@ -22,7 +22,7 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function connect(): void
     {
-        if ($this->connected()) {
+        if ($this->isConnected()) {
             return;
         }
 
@@ -56,7 +56,7 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function disconnect(): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
@@ -65,9 +65,30 @@ class MySQLiAdapter extends AdapterAbstract
         $this->mysqli = null;
     }
 
-    public function connected(): bool
+    public function isConnected(): bool
     {
         return !is_null($this->mysqli);
+    }
+
+    public function ping(DialectInterface $dialect, bool $reconnect = false): bool
+    {
+        if (!$this->isConnected()) {
+            return false;
+        }
+
+        $isConnected = $this->mysqli->ping();
+
+        if ($isConnected) {
+            return true;
+        }
+
+        if (!$reconnect) {
+            return false;
+        }
+
+        $this->reconnect();
+
+        return true;
     }
 
     public function version(): int
@@ -83,7 +104,7 @@ class MySQLiAdapter extends AdapterAbstract
         return $version;
     }
 
-    public function exec(string $query): void
+    public function exec(DialectInterface $dialect, string $query): void
     {
         $this->connect();
 
@@ -92,7 +113,7 @@ class MySQLiAdapter extends AdapterAbstract
         try {
             $this->mysqli->query($query);
         } catch (Throwable $exception) {
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -101,10 +122,10 @@ class MySQLiAdapter extends AdapterAbstract
             }
         }
 
-        $this->debug($query, $start);
+        $this->debug($dialect, $query, $start);
     }
 
-    public function query(string $query): MySQLiResult|Result
+    public function query(DialectInterface $dialect, string $query): MySQLiResult|Result
     {
         $this->connect();
 
@@ -113,7 +134,7 @@ class MySQLiAdapter extends AdapterAbstract
 
             $mysqliResult = $this->mysqli->query($query);
 
-            $this->debug($query, $start);
+            $this->debug($dialect, $query, $start);
 
             $result = new MySQLiResult($mysqliResult);
 
@@ -121,7 +142,7 @@ class MySQLiAdapter extends AdapterAbstract
                 ? Result::fromInterface($result)
                 : $result;
         } catch (Throwable $exception) {
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -137,10 +158,8 @@ class MySQLiAdapter extends AdapterAbstract
 
         $queryWithParams->namedParamsToQuestionMarks();
 
-        $query = $queryWithParams->toSql($dialect);
-
         if ($emulatePrepare) {
-            return $this->query($query);
+            return $this->query($dialect, $queryWithParams->toSql($dialect));
         }
 
         $start = microtime(true);
@@ -152,7 +171,7 @@ class MySQLiAdapter extends AdapterAbstract
                 $this->disconnect();
             }
 
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $queryWithParams, $start, $exception);
 
             throw $exception;
         }
@@ -192,14 +211,14 @@ class MySQLiAdapter extends AdapterAbstract
                 $this->disconnect();
             }
 
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $queryWithParams, $start, $exception);
 
             throw $exception;
         }
 
         $mysqliResult = $mysqliStmt->get_result();
 
-        $this->debug($query, $start);
+        $this->debug($dialect, $queryWithParams, $start);
 
         $result = new MySQLiResult($mysqliResult);
 
@@ -212,7 +231,7 @@ class MySQLiAdapter extends AdapterAbstract
         return $result;
     }
 
-    public function beginTransaction(): void
+    public function beginTransaction(DialectInterface $dialect): void
     {
         $this->connect();
 
@@ -225,9 +244,9 @@ class MySQLiAdapter extends AdapterAbstract
         $this->inTransaction = true;
     }
 
-    public function commitTransaction(): void
+    public function commitTransaction(DialectInterface $dialect): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
@@ -248,9 +267,9 @@ class MySQLiAdapter extends AdapterAbstract
         }
     }
 
-    public function rollbackTransaction(): void
+    public function rollbackTransaction(DialectInterface $dialect): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
@@ -273,7 +292,7 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function inTransaction(): bool
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return false;
         }
 
@@ -286,7 +305,7 @@ class MySQLiAdapter extends AdapterAbstract
             throw new AdapterException('last insert id is not supported in lazy mode');
         }
 
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return null;
         }
 

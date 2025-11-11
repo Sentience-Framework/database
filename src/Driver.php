@@ -6,7 +6,6 @@ use Closure;
 use mysqli;
 use PDO;
 use SQLite3;
-use Sentience\Database\Adapters\AdapterAbstract;
 use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Adapters\MySQLiAdapter;
 use Sentience\Database\Adapters\PDOAdapter;
@@ -109,7 +108,7 @@ enum Driver: string
         if ($adapter == MySQLiAdapter::class) {
             return new MySQLiAdapter(
                 fn (): mysqli => new mysqli(
-                    ($options[AdapterAbstract::OPTIONS_PERSISTENT] ?? false)
+                    ($options[AdapterInterface::OPTIONS_PERSISTENT] ?? false)
                     ? sprintf('p:%s', $host)
                     : $host,
                     $username,
@@ -129,10 +128,10 @@ enum Driver: string
             return new SQLite3Adapter(
                 fn (): SQLite3 => new SQLite3(
                     $name,
-                    !($options[AdapterAbstract::OPTIONS_SQLITE_READ_ONLY] ?? false)
+                    !($options[AdapterInterface::OPTIONS_SQLITE_READ_ONLY] ?? false)
                     ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
                     : SQLITE3_OPEN_READONLY,
-                    (string) ($options[AdapterAbstract::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
+                    (string) ($options[AdapterInterface::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
                 ),
                 $this,
                 $queries,
@@ -145,8 +144,8 @@ enum Driver: string
         return new PDOAdapter(
             function () use ($host, $port, $name, $username, $password, $options): PDO {
                 $dsn = (function (string $host, int $port, string $name, array $options): string {
-                    if (array_key_exists(AdapterAbstract::OPTIONS_PDO_DSN, $options)) {
-                        return (string) $options[AdapterAbstract::OPTIONS_PDO_DSN];
+                    if (array_key_exists(AdapterInterface::OPTIONS_PDO_DSN, $options)) {
+                        return (string) $options[AdapterInterface::OPTIONS_PDO_DSN];
                     }
 
                     if (!in_array($this, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
@@ -170,10 +169,10 @@ enum Driver: string
                     );
 
                     if ($this == Driver::PGSQL) {
-                        if (array_key_exists(AdapterAbstract::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
+                        if (array_key_exists(AdapterInterface::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
                             $dsn .= sprintf(
                                 ";options='--client_encoding=%s'",
-                                (string) $options[AdapterAbstract::OPTIONS_PGSQL_CLIENT_ENCODING]
+                                (string) $options[AdapterInterface::OPTIONS_PGSQL_CLIENT_ENCODING]
                             );
                         }
                     }

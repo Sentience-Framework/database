@@ -40,9 +40,9 @@ class CreateTableQuery extends Query
         return parent::execute($emulatePrepare);
     }
 
-    public function column(string $name, string $type, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null, array $options = []): static
+    public function column(string $name, string $type, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null, bool $generatedByDefaultAsIdentity = false): static
     {
-        $this->columns[] = new Column($name, $type, $notNull, $default, $options);
+        $this->columns[] = new Column($name, $type, $notNull, $default, $generatedByDefaultAsIdentity);
 
         return $this;
     }

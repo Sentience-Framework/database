@@ -18,7 +18,7 @@ class PDOAdapter extends AdapterAbstract
 
     public function connect(): void
     {
-        if ($this->connected()) {
+        if ($this->isConnected()) {
             return;
         }
 
@@ -48,7 +48,7 @@ class PDOAdapter extends AdapterAbstract
 
     public function disconnect(): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
@@ -64,7 +64,7 @@ class PDOAdapter extends AdapterAbstract
         $this->pdo = null;
     }
 
-    public function connected(): bool
+    public function isConnected(): bool
     {
         return !is_null($this->pdo);
     }
@@ -181,7 +181,7 @@ class PDOAdapter extends AdapterAbstract
         return $version;
     }
 
-    public function exec(string $query): void
+    public function exec(DialectInterface $dialect, string $query): void
     {
         $this->connect();
 
@@ -190,7 +190,7 @@ class PDOAdapter extends AdapterAbstract
         try {
             $this->pdo->exec($query);
         } catch (Throwable $exception) {
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -199,10 +199,10 @@ class PDOAdapter extends AdapterAbstract
             }
         }
 
-        $this->debug($query, $start);
+        $this->debug($dialect, $query, $start);
     }
 
-    public function query(string $query): PDOResult|Result
+    public function query(DialectInterface $dialect, string $query): PDOResult|Result
     {
         $this->connect();
 
@@ -211,7 +211,7 @@ class PDOAdapter extends AdapterAbstract
         try {
             $pdoStatement = $this->pdo->query($query);
 
-            $this->debug($query, $start);
+            $this->debug($dialect, $query, $start);
 
             $result = new PDOResult($pdoStatement);
 
@@ -219,7 +219,7 @@ class PDOAdapter extends AdapterAbstract
                 ? Result::fromInterface($result)
                 : $result;
         } catch (Throwable $exception) {
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -252,7 +252,7 @@ class PDOAdapter extends AdapterAbstract
                 $this->disableEmulatePrepares();
             }
 
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $query, $start, $exception);
 
             throw $exception;
         }
@@ -281,7 +281,7 @@ class PDOAdapter extends AdapterAbstract
                 $this->disconnect();
             }
 
-            $this->debug($query, $start, $exception);
+            $this->debug($dialect, $query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -290,7 +290,7 @@ class PDOAdapter extends AdapterAbstract
             }
         }
 
-        $this->debug($query, $start);
+        $this->debug($dialect, $query, $start);
 
         $result = new PDOResult($pdoStatement);
 
@@ -303,7 +303,7 @@ class PDOAdapter extends AdapterAbstract
         return $result;
     }
 
-    public function beginTransaction(): void
+    public function beginTransaction(DialectInterface $dialect): void
     {
         $this->connect();
 
@@ -314,9 +314,9 @@ class PDOAdapter extends AdapterAbstract
         $this->pdo->beginTransaction();
     }
 
-    public function commitTransaction(): void
+    public function commitTransaction(DialectInterface $dialect): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
@@ -335,9 +335,9 @@ class PDOAdapter extends AdapterAbstract
         }
     }
 
-    public function rollbackTransaction(): void
+    public function rollbackTransaction(DialectInterface $dialect): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
@@ -358,7 +358,7 @@ class PDOAdapter extends AdapterAbstract
 
     public function inTransaction(): bool
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return false;
         }
 
@@ -371,7 +371,7 @@ class PDOAdapter extends AdapterAbstract
             throw new AdapterException('last insert id is not supported in lazy mode');
         }
 
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return null;
         }
 
@@ -390,7 +390,7 @@ class PDOAdapter extends AdapterAbstract
 
     protected function enableEmulatePrepares(): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
@@ -399,7 +399,7 @@ class PDOAdapter extends AdapterAbstract
 
     protected function disableEmulatePrepares(): void
     {
-        if (!$this->connected()) {
+        if (!$this->isConnected()) {
             return;
         }
 
