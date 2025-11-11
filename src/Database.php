@@ -32,31 +32,20 @@ class Database
         array $options,
         ?Closure $debug,
         bool $usePdoAdapter = false,
-        bool $lazy = false,
-        int $retries = 0
+        bool $lazy = false
     ): static {
-        for ($i = 0; $i <= $retries; $i++) {
-            try {
-                $adapter = $driver->getAdapter(
-                    $host,
-                    $port,
-                    $name,
-                    $username,
-                    $password,
-                    $queries,
-                    $options,
-                    $debug,
-                    $usePdoAdapter,
-                    $lazy
-                );
-            } catch (Throwable $exception) {
-                if ($i == $retries) {
-                    throw $exception;
-                }
-
-                continue;
-            }
-        }
+        $adapter = $driver->getAdapter(
+            $host,
+            $port,
+            $name,
+            $username,
+            $password,
+            $queries,
+            $options,
+            $debug,
+            $usePdoAdapter,
+            $lazy
+        );
 
         $version = array_key_exists(AdapterInterface::OPTIONS_VERSION, $options)
             ? (string) $options[AdapterInterface::OPTIONS_VERSION]
@@ -73,27 +62,16 @@ class Database
         array $queries,
         array $options,
         ?Closure $debug,
-        bool $lazy = false,
-        int $retries = 0
+        bool $lazy = false
     ): static {
-        for ($i = 0; $i <= $retries; $i++) {
-            try {
-                $adapter = new PDOAdapter(
-                    $connect,
-                    $driver,
-                    $queries,
-                    $options,
-                    $debug,
-                    $lazy
-                );
-            } catch (Throwable $exception) {
-                if ($i == $retries) {
-                    throw $exception;
-                }
-
-                continue;
-            }
-        }
+        $adapter = new PDOAdapter(
+            $connect,
+            $driver,
+            $queries,
+            $options,
+            $debug,
+            $lazy
+        );
 
         $version = array_key_exists(AdapterInterface::OPTIONS_VERSION, $options)
             ? (string) $options[AdapterInterface::OPTIONS_VERSION]
