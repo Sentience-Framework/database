@@ -3,9 +3,6 @@
 namespace Sentience\Database;
 
 use Closure;
-use mysqli;
-use PDO;
-use SQLite3;
 use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Adapters\MySQLiAdapter;
 use Sentience\Database\Adapters\PDOAdapter;
@@ -16,7 +13,6 @@ use Sentience\Database\Dialects\MySQLDialect;
 use Sentience\Database\Dialects\PgSQLDialect;
 use Sentience\Database\Dialects\SQLDialect;
 use Sentience\Database\Dialects\SQLiteDialect;
-use Sentience\Database\Exceptions\DriverException;
 
 enum Driver: string
 {
@@ -55,18 +51,39 @@ enum Driver: string
             }
         : PDOAdapter::class;
 
-        return $this->connect(
-            $adapter,
-            $host,
-            $port,
-            $name,
-            $username,
-            $password,
-            $queries,
-            $options,
-            $debug,
-            $lazy
-        );
+        return match (true) {
+            $adapter instanceof MySQLiAdapter => MySQLiAdapter::mysqli(
+                $this,
+                $host,
+                $port,
+                $name,
+                $username,
+                $password,
+                $queries,
+                $options,
+                $debug,
+                $lazy
+            ),
+            $adapter instanceof SQLite3Adapter => SQLite3Adapter::sqlite3(
+                $name,
+                $queries,
+                $options,
+                $debug,
+                $lazy
+            ),
+            default => PDOAdapter::pdo(
+                $this,
+                $host,
+                $port,
+                $name,
+                $username,
+                $password,
+                $queries,
+                $options,
+                $debug,
+                $lazy
+            )
+        };
     }
 
     public function getDialect(int|string $version): DialectInterface
@@ -79,118 +96,5 @@ enum Driver: string
             static::SQLITE => new SQLiteDialect($this, $version),
             default => new SQLDialect($this, $version)
         };
-    }
-
-    public function isSupportedBySentience(): bool
-    {
-        return match ($this) {
-            static::FIREBIRD,
-            static::MARIADB,
-            static::MYSQL,
-            static::PGSQL,
-            static::SQLITE => true,
-            default => false
-        };
-    }
-
-    protected function connect(
-        string $adapter,
-        string $host,
-        int $port,
-        string $name,
-        string $username,
-        string $password,
-        array $queries,
-        array $options,
-        ?Closure $debug,
-        bool $lazy = false
-    ): AdapterInterface {
-        if ($adapter == MySQLiAdapter::class) {
-            return new MySQLiAdapter(
-                fn (): mysqli => new mysqli(
-                    ($options[AdapterInterface::OPTIONS_PERSISTENT] ?? false)
-                    ? sprintf('p:%s', $host)
-                    : $host,
-                    $username,
-                    $password,
-                    $name,
-                    $port
-                ),
-                $this,
-                $queries,
-                $options,
-                $debug,
-                $lazy
-            );
-        }
-
-        if ($adapter == SQLite3Adapter::class) {
-            return new SQLite3Adapter(
-                fn (): SQLite3 => new SQLite3(
-                    $name,
-                    !($options[AdapterInterface::OPTIONS_SQLITE_READ_ONLY] ?? false)
-                    ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
-                    : SQLITE3_OPEN_READONLY,
-                    (string) ($options[AdapterInterface::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
-                ),
-                $this,
-                $queries,
-                $options,
-                $debug,
-                $lazy
-            );
-        }
-
-        return new PDOAdapter(
-            function () use ($host, $port, $name, $username, $password, $options): PDO {
-                $dsn = (function (string $host, int $port, string $name, array $options): string {
-                    if (array_key_exists(AdapterInterface::OPTIONS_PDO_DSN, $options)) {
-                        return (string) $options[AdapterInterface::OPTIONS_PDO_DSN];
-                    }
-
-                    if (!in_array($this, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
-                        throw new DriverException('this driver requires a dsn');
-                    }
-
-                    if ($this == Driver::SQLITE) {
-                        return sprintf(
-                            '%s:%s',
-                            $this->value,
-                            $name
-                        );
-                    }
-
-                    $dsn = sprintf(
-                        '%s:host=%s;port=%s;dbname=%s',
-                        $this == Driver::MARIADB ? Driver::MYSQL->value : $this->value,
-                        $host,
-                        $port,
-                        $name
-                    );
-
-                    if ($this == Driver::PGSQL) {
-                        if (array_key_exists(AdapterInterface::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
-                            $dsn .= sprintf(
-                                ";options='--client_encoding=%s'",
-                                (string) $options[AdapterInterface::OPTIONS_PGSQL_CLIENT_ENCODING]
-                            );
-                        }
-                    }
-
-                    return $dsn;
-                })($host, $port, $name, $options);
-
-                return new PDO(
-                    $dsn,
-                    $username,
-                    $password
-                );
-            },
-            $this,
-            $queries,
-            $options,
-            $debug,
-            $lazy
-        );
     }
 }

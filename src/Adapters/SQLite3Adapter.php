@@ -2,10 +2,12 @@
 
 namespace Sentience\Database\Adapters;
 
+use Closure;
 use SQLite3;
 use SQLite3Stmt;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\Result;
@@ -15,6 +17,29 @@ class SQLite3Adapter extends AdapterAbstract
 {
     protected ?SQLite3 $sqlite3 = null;
     protected bool $inTransaction = false;
+
+    public static function sqlite3(
+        string $file,
+        array $queries,
+        array $options,
+        ?Closure $debug,
+        bool $lazy = false
+    ): static {
+        return new static(
+            fn (): SQLite3 => new SQLite3(
+                $file,
+                !($options[AdapterInterface::OPTIONS_SQLITE_READ_ONLY] ?? false)
+                ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
+                : SQLITE3_OPEN_READONLY,
+                (string) ($options[AdapterInterface::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
+            ),
+            Driver::SQLITE,
+            $queries,
+            $options,
+            $debug,
+            $lazy
+        );
+    }
 
     public function connect(): void
     {
@@ -28,7 +53,11 @@ class SQLite3Adapter extends AdapterAbstract
 
         $this->sqlite3->createFunction(
             static::REGEXP_LIKE_FUNCTION,
-            fn (string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction($value, $pattern, $flags)
+            fn (string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction(
+                $value,
+                $pattern,
+                $flags
+            )
         );
 
         if (array_key_exists(static::OPTIONS_SQLITE_BUSY_TIMEOUT, $this->options)) {
@@ -95,7 +124,7 @@ class SQLite3Adapter extends AdapterAbstract
         return SQLite3::version()['versionString'];
     }
 
-    public function exec(DialectInterface $dialect, string $query): void
+    public function exec(string $query): void
     {
         $this->connect();
 
@@ -104,7 +133,7 @@ class SQLite3Adapter extends AdapterAbstract
         try {
             $this->sqlite3->exec($query);
         } catch (Throwable $exception) {
-            $this->debug($dialect, $query, $start, $exception);
+            $this->debug($query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -113,10 +142,10 @@ class SQLite3Adapter extends AdapterAbstract
             }
         }
 
-        $this->debug($dialect, $query, $start);
+        $this->debug($query, $start);
     }
 
-    public function query(DialectInterface $dialect, string $query): SQLite3Result|Result
+    public function query(string $query): SQLite3Result|Result
     {
         $this->connect();
 
@@ -125,7 +154,7 @@ class SQLite3Adapter extends AdapterAbstract
         try {
             $sqlite3Result = $this->sqlite3->query($query);
 
-            $this->debug($dialect, $query, $start);
+            $this->debug($query, $start);
 
             $result = new SQLite3Result($sqlite3Result);
 
@@ -133,7 +162,7 @@ class SQLite3Adapter extends AdapterAbstract
                 ? Result::fromInterface($result)
                 : $result;
         } catch (Throwable $exception) {
-            $this->debug($dialect, $query, $start, $exception);
+            $this->debug($query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -147,10 +176,8 @@ class SQLite3Adapter extends AdapterAbstract
     {
         $this->connect();
 
-        $query = $queryWithParams->toSql($dialect);
-
         if ($emulatePrepare) {
-            return $this->query($dialect, $query);
+            return $this->query($queryWithParams->toSql($dialect));
         }
 
         $start = microtime(true);
@@ -162,7 +189,11 @@ class SQLite3Adapter extends AdapterAbstract
                 $this->disconnect();
             }
 
-            $this->debug($dialect, $query, $start, $exception);
+            $this->debug(
+                $queryWithParams->toSql($dialect),
+                $start,
+                $exception
+            );
 
             throw $exception;
         }
@@ -190,12 +221,16 @@ class SQLite3Adapter extends AdapterAbstract
                 $this->disconnect();
             }
 
-            $this->debug($dialect, $query, $start, $exception);
+            $this->debug(
+                $queryWithParams->toSql($dialect),
+                $start,
+                $exception
+            );
 
             throw $exception;
         }
 
-        $this->debug($dialect, $query, $start);
+        $this->debug($queryWithParams->toSql($dialect), $start);
 
         $result = new SQLite3Result($sqlite3Result);
 
@@ -216,7 +251,7 @@ class SQLite3Adapter extends AdapterAbstract
             return;
         }
 
-        $this->exec($dialect, 'BEGIN;');
+        $this->exec('BEGIN;');
 
         $this->inTransaction = true;
     }
@@ -232,7 +267,7 @@ class SQLite3Adapter extends AdapterAbstract
         }
 
         try {
-            $this->exec($dialect, 'COMMIT;');
+            $this->exec('COMMIT;');
         } catch (Throwable $exception) {
             throw $exception;
         } finally {
@@ -251,7 +286,7 @@ class SQLite3Adapter extends AdapterAbstract
         }
 
         try {
-            $this->exec($dialect, 'ROLLBACK;');
+            $this->exec('ROLLBACK;');
         } catch (Throwable $exception) {
             throw $exception;
         } finally {

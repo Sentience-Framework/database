@@ -2,12 +2,14 @@
 
 namespace Sentience\Database\Adapters;
 
+use Closure;
 use PDO;
 use PDOStatement;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\AdapterException;
+use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\PDOResult;
 use Sentience\Database\Results\Result;
@@ -15,6 +17,71 @@ use Sentience\Database\Results\Result;
 class PDOAdapter extends AdapterAbstract
 {
     protected ?PDO $pdo = null;
+
+    public static function pdo(
+        Driver $driver,
+        string $host,
+        int $port,
+        string $name,
+        string $username,
+        string $password,
+        array $queries,
+        array $options,
+        ?Closure $debug,
+        bool $lazy = false
+    ): static {
+        return new static(
+            function () use ($driver, $host, $port, $name, $username, $password, $options): PDO {
+                $dsn = (function (Driver $driver, string $host, int $port, string $name, array $options): string {
+                    if (array_key_exists(static::OPTIONS_PDO_DSN, $options)) {
+                        return (string) $options[static::OPTIONS_PDO_DSN];
+                    }
+
+                    if (!in_array($driver, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
+                        throw new DriverException('this driver requires a dsn');
+                    }
+
+                    if ($driver == Driver::SQLITE) {
+                        return sprintf(
+                            '%s:%s',
+                            $driver->value,
+                            $name
+                        );
+                    }
+
+                    $dsn = sprintf(
+                        '%s:host=%s;port=%s;dbname=%s',
+                        $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
+                        $host,
+                        $port,
+                        $name
+                    );
+
+                    if ($driver == Driver::PGSQL) {
+                        if (array_key_exists(static::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
+                            $dsn .= sprintf(
+                                ";options='--client_encoding=%s'",
+                                (string) $options[static::OPTIONS_PGSQL_CLIENT_ENCODING]
+                            );
+                        }
+                    }
+
+                    return $dsn;
+                })($driver, $host, $port, $name, $options);
+
+                return new PDO(
+                    $dsn,
+                    $username,
+                    $password
+                );
+            },
+            $driver,
+            $queries,
+            $options,
+            $debug,
+            $lazy
+        );
+    }
 
     public function connect(): void
     {
@@ -181,7 +248,7 @@ class PDOAdapter extends AdapterAbstract
         return $version;
     }
 
-    public function exec(DialectInterface $dialect, string $query): void
+    public function exec(string $query): void
     {
         $this->connect();
 
@@ -190,7 +257,7 @@ class PDOAdapter extends AdapterAbstract
         try {
             $this->pdo->exec($query);
         } catch (Throwable $exception) {
-            $this->debug($dialect, $query, $start, $exception);
+            $this->debug($query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -199,10 +266,10 @@ class PDOAdapter extends AdapterAbstract
             }
         }
 
-        $this->debug($dialect, $query, $start);
+        $this->debug($query, $start);
     }
 
-    public function query(DialectInterface $dialect, string $query): PDOResult|Result
+    public function query(string $query): PDOResult|Result
     {
         $this->connect();
 
@@ -211,7 +278,7 @@ class PDOAdapter extends AdapterAbstract
         try {
             $pdoStatement = $this->pdo->query($query);
 
-            $this->debug($dialect, $query, $start);
+            $this->debug($query, $start);
 
             $result = new PDOResult($pdoStatement);
 
@@ -219,7 +286,7 @@ class PDOAdapter extends AdapterAbstract
                 ? Result::fromInterface($result)
                 : $result;
         } catch (Throwable $exception) {
-            $this->debug($dialect, $query, $start, $exception);
+            $this->debug($query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -232,8 +299,6 @@ class PDOAdapter extends AdapterAbstract
     public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): PDOResult|Result
     {
         $this->connect();
-
-        $query = $queryWithParams->toSql($dialect);
 
         $start = microtime(true);
 
@@ -252,7 +317,11 @@ class PDOAdapter extends AdapterAbstract
                 $this->disableEmulatePrepares();
             }
 
-            $this->debug($dialect, $query, $start, $exception);
+            $this->debug(
+                $queryWithParams->toSql($dialect),
+                $start,
+                $exception
+            );
 
             throw $exception;
         }
@@ -281,7 +350,11 @@ class PDOAdapter extends AdapterAbstract
                 $this->disconnect();
             }
 
-            $this->debug($dialect, $query, $start, $exception);
+            $this->debug(
+                $queryWithParams->toSql($dialect),
+                $start,
+                $exception
+            );
 
             throw $exception;
         } finally {
@@ -290,7 +363,7 @@ class PDOAdapter extends AdapterAbstract
             }
         }
 
-        $this->debug($dialect, $query, $start);
+        $this->debug($queryWithParams->toSql($dialect), $start);
 
         $result = new PDOResult($pdoStatement);
 

@@ -87,16 +87,16 @@ class PgSQLDialect extends SQLDialect
     protected function buildColumn(Column $column): string
     {
         if (!$this->generatedByDefaultAsIdentity()) {
-            $isUppercase = (bool) preg_match('/[A-Z]/', $column->type);
+            $typeIsUppercase = (bool) preg_match('/[A-Z]/', $column->type);
 
             $column->type = match (strtoupper($column->type)) {
                 'SMALLINT',
                 'INTEGER',
                 'INT',
                 'INT2',
-                'INT4' => $isUppercase ? 'SERIAL' : 'serial',
+                'INT4' => $typeIsUppercase ? 'SERIAL' : 'serial',
                 'BIGINT',
-                'INT8' => $isUppercase ? 'BIGSERIAL' : 'bigserial',
+                'INT8' => $typeIsUppercase ? 'BIGSERIAL' : 'bigserial',
                 default => $column->type
             };
         }

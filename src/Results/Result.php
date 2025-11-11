@@ -41,6 +41,10 @@ class Result extends ResultAbstract
 
     public function fetchAssocs(): array
     {
-        return $this->rows;
+        $rows = $this->rows;
+
+        $this->rows = [];
+
+        return $rows;
     }
 }

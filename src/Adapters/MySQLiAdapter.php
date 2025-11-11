@@ -2,9 +2,11 @@
 
 namespace Sentience\Database\Adapters;
 
+use Closure;
 use mysqli;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\MySQLiResult;
@@ -19,6 +21,36 @@ class MySQLiAdapter extends AdapterAbstract
 
     protected ?mysqli $mysqli = null;
     protected bool $inTransaction = false;
+
+    public static function mysqli(
+        Driver $driver,
+        string $host,
+        int $port,
+        string $name,
+        string $username,
+        string $password,
+        array $queries,
+        array $options,
+        ?Closure $debug,
+        bool $lazy = false
+    ): static {
+        return new static(
+            fn (): mysqli => new mysqli(
+                ($options[static::OPTIONS_PERSISTENT] ?? false)
+                ? sprintf('p:%s', $host)
+                : $host,
+                $username,
+                $password,
+                $name,
+                $port
+            ),
+            $driver,
+            $queries,
+            $options,
+            $debug,
+            $lazy
+        );
+    }
 
     public function connect(): void
     {
@@ -70,7 +102,7 @@ class MySQLiAdapter extends AdapterAbstract
         return !is_null($this->mysqli);
     }
 
-    public function ping(DialectInterface $dialect, bool $reconnect = false): bool
+    public function ping(bool $reconnect = false): bool
     {
         if (!$this->isConnected()) {
             return false;
@@ -104,7 +136,7 @@ class MySQLiAdapter extends AdapterAbstract
         return $version;
     }
 
-    public function exec(DialectInterface $dialect, string $query): void
+    public function exec(string $query): void
     {
         $this->connect();
 
@@ -113,7 +145,7 @@ class MySQLiAdapter extends AdapterAbstract
         try {
             $this->mysqli->query($query);
         } catch (Throwable $exception) {
-            $this->debug($dialect, $query, $start, $exception);
+            $this->debug($query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -122,10 +154,10 @@ class MySQLiAdapter extends AdapterAbstract
             }
         }
 
-        $this->debug($dialect, $query, $start);
+        $this->debug($query, $start);
     }
 
-    public function query(DialectInterface $dialect, string $query): MySQLiResult|Result
+    public function query(string $query): MySQLiResult|Result
     {
         $this->connect();
 
@@ -134,7 +166,7 @@ class MySQLiAdapter extends AdapterAbstract
 
             $mysqliResult = $this->mysqli->query($query);
 
-            $this->debug($dialect, $query, $start);
+            $this->debug($query, $start);
 
             $result = new MySQLiResult($mysqliResult);
 
@@ -142,7 +174,7 @@ class MySQLiAdapter extends AdapterAbstract
                 ? Result::fromInterface($result)
                 : $result;
         } catch (Throwable $exception) {
-            $this->debug($dialect, $query, $start, $exception);
+            $this->debug($query, $start, $exception);
 
             throw $exception;
         } finally {
@@ -159,7 +191,7 @@ class MySQLiAdapter extends AdapterAbstract
         $queryWithParams->namedParamsToQuestionMarks();
 
         if ($emulatePrepare) {
-            return $this->query($dialect, $queryWithParams->toSql($dialect));
+            return $this->query($queryWithParams->toSql($dialect));
         }
 
         $start = microtime(true);
@@ -171,7 +203,11 @@ class MySQLiAdapter extends AdapterAbstract
                 $this->disconnect();
             }
 
-            $this->debug($dialect, $queryWithParams, $start, $exception);
+            $this->debug(
+                $queryWithParams->toSql($dialect),
+                $start,
+                $exception
+            );
 
             throw $exception;
         }
@@ -211,14 +247,18 @@ class MySQLiAdapter extends AdapterAbstract
                 $this->disconnect();
             }
 
-            $this->debug($dialect, $queryWithParams, $start, $exception);
+            $this->debug(
+                $queryWithParams->toSql($dialect),
+                $start,
+                $exception
+            );
 
             throw $exception;
         }
 
         $mysqliResult = $mysqliStmt->get_result();
 
-        $this->debug($dialect, $queryWithParams, $start);
+        $this->debug($queryWithParams->toSql($dialect), $start);
 
         $result = new MySQLiResult($mysqliResult);
 

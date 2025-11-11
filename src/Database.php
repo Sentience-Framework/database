@@ -7,7 +7,6 @@ use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Adapters\PDOAdapter;
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\AlterTableQuery;
 use Sentience\Database\Queries\CreateTableQuery;
 use Sentience\Database\Queries\DeleteQuery;
@@ -36,10 +35,6 @@ class Database
         bool $lazy = false,
         int $retries = 0
     ): static {
-        if (!$driver->isSupportedBySentience()) {
-            throw new DriverException('this driver requires ::pdo()');
-        }
-
         for ($i = 0; $i <= $retries; $i++) {
             try {
                 $adapter = $driver->getAdapter(
@@ -117,12 +112,12 @@ class Database
 
     public function exec(string $query): void
     {
-        $this->adapter->exec($this->dialect, $query);
+        $this->adapter->exec($query);
     }
 
     public function query(string $query): ResultInterface
     {
-        return $this->adapter->query($this->dialect, $query);
+        return $this->adapter->query($query);
     }
 
     public function prepared(string $query, array $params = [], bool $emulatePrepare = false): ResultInterface
@@ -137,7 +132,7 @@ class Database
     {
         return count($queryWithParams->params) > 0
             ? $this->adapter->queryWithParams($this->dialect, $queryWithParams, $emulatePrepare)
-            : $this->adapter->query($this->dialect, $queryWithParams->query);
+            : $this->adapter->query($queryWithParams->query);
     }
 
     public function beginTransaction(): void
@@ -219,7 +214,7 @@ class Database
 
     public function ping(bool $reconnect = false): bool
     {
-        return $this->adapter->ping($this->dialect, $reconnect);
+        return $this->adapter->ping($reconnect);
     }
 
     public function enableLazy(bool $disconnect = true): void

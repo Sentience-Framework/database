@@ -4,9 +4,7 @@ namespace Sentience\Database\Adapters;
 
 use Closure;
 use Throwable;
-use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
-use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Query;
 
 abstract class AdapterAbstract implements AdapterInterface
@@ -30,7 +28,7 @@ abstract class AdapterAbstract implements AdapterInterface
         $this->connect();
     }
 
-    public function ping(DialectInterface $dialect, bool $reconnect = false): bool
+    public function ping(bool $reconnect = false): bool
     {
         if (!$this->isConnected()) {
             return false;
@@ -39,7 +37,7 @@ abstract class AdapterAbstract implements AdapterInterface
         $isConnected = false;
 
         try {
-            $this->exec($dialect, 'SELECT 1');
+            $this->exec('SELECT 1');
 
             return true;
         } catch (Throwable $exception) {
@@ -160,17 +158,13 @@ abstract class AdapterAbstract implements AdapterInterface
         );
     }
 
-    protected function debug(DialectInterface $dialect, string|QueryWithParams $query, float $start, null|string|Throwable $error = null): void
+    protected function debug(string $query, float $start, null|string|Throwable $error = null): void
     {
         if (!$this->debug) {
             return;
         }
 
-        ($this->debug)(
-            $query instanceof QueryWithParams ? $query->toSql($dialect) : $query,
-            $start,
-            $error instanceof Throwable ? $error->getMessage() : $error
-        );
+        ($this->debug)($query, $start, $error instanceof Throwable ? $error->getMessage() : $error);
     }
 
     public function __destruct()
