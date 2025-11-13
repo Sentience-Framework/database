@@ -9,6 +9,7 @@ use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\ConditionGroup;
 use Sentience\Database\Queries\Objects\RawCondition;
 use Sentience\Database\Queries\Query;
+use Sentience\Database\Queries\SelectQuery;
 
 trait WhereTrait
 {
@@ -24,12 +25,22 @@ trait WhereTrait
         return $this->notEquals($column, $value, ChainEnum::AND);
     }
 
-    public function whereLike(string|array $column, string $value): static
+    public function whereIsNull(string|array $column): static
+    {
+        return $this->isNull($column, ChainEnum::AND);
+    }
+
+    public function whereIsNotNull(string|array $column): static
+    {
+        return $this->isNotNull($column, ChainEnum::AND);
+    }
+
+    public function whereLike(string|array $column, string|SelectQuery $value): static
     {
         return $this->like($column, $value, ChainEnum::AND);
     }
 
-    public function whereNotLike(string|array $column, string $value): static
+    public function whereNotLike(string|array $column, string|SelectQuery $value): static
     {
         return $this->notLike($column, $value, ChainEnum::AND);
     }
@@ -54,32 +65,32 @@ trait WhereTrait
         return $this->notContains($column, $value, $escapeBackslash, ChainEnum::AND);
     }
 
-    public function whereIn(string|array $column, array $values): static
+    public function whereIn(string|array $column, array|SelectQuery $values): static
     {
         return $this->in($column, $values, ChainEnum::AND);
     }
 
-    public function whereNotIn(string|array $column, array $values): static
+    public function whereNotIn(string|array $column, array|SelectQuery $values): static
     {
         return $this->notIn($column, $values, ChainEnum::AND);
     }
 
-    public function whereLessThan(string|array $column, int|float|string|DateTimeInterface $value): static
+    public function whereLessThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value): static
     {
         return $this->lessThan($column, $value, ChainEnum::AND);
     }
 
-    public function whereLessThanOrEquals(string|array $column, int|float|string|DateTimeInterface $value): static
+    public function whereLessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value): static
     {
         return $this->lessThanOrEquals($column, $value, ChainEnum::AND);
     }
 
-    public function whereGreaterThan(string|array $column, int|float|string|DateTimeInterface $value): static
+    public function whereGreaterThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value): static
     {
         return $this->greaterThan($column, $value, ChainEnum::AND);
     }
 
-    public function whereGreaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface $value): static
+    public function whereGreaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value): static
     {
         return $this->greaterThanOrEquals($column, $value, ChainEnum::AND);
     }
@@ -92,16 +103,6 @@ trait WhereTrait
     public function whereNotBetween(string|array $column, int|float|string|DateTimeInterface $min, int|float|string|DateTimeInterface $max): static
     {
         return $this->notBetween($column, $min, $max, ChainEnum::AND);
-    }
-
-    public function whereIsNull(string|array $column): static
-    {
-        return $this->isNull($column, ChainEnum::AND);
-    }
-
-    public function whereIsNotNull(string|array $column): static
-    {
-        return $this->isNotNull($column, ChainEnum::AND);
     }
 
     public function whereEmpty(string|array $column): static
@@ -124,6 +125,16 @@ trait WhereTrait
         return $this->notRegex($column, $pattern, ChainEnum::AND);
     }
 
+    public function whereExists(SelectQuery $selectQuery): static
+    {
+        return $this->exists($selectQuery, ChainEnum::AND);
+    }
+
+    public function whereNotExists(SelectQuery $selectQuery): static
+    {
+        return $this->notExists($selectQuery, ChainEnum::AND);
+    }
+
     public function whereGroup(callable $callback): static
     {
         return $this->group($callback, ChainEnum::AND);
@@ -144,12 +155,22 @@ trait WhereTrait
         return $this->notEquals($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereLike(string|array $column, string $value): static
+    public function orWhereIsNull(string|array $column): static
+    {
+        return $this->isNull($column, ChainEnum::OR);
+    }
+
+    public function orWhereIsNotNull(string|array $column): static
+    {
+        return $this->isNotNull($column, ChainEnum::OR);
+    }
+
+    public function orWhereLike(string|array $column, string|SelectQuery $value): static
     {
         return $this->like($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereNotLike(string|array $column, string $value): static
+    public function orWhereNotLike(string|array $column, string|SelectQuery $value): static
     {
         return $this->notLike($column, $value, ChainEnum::OR);
     }
@@ -174,32 +195,32 @@ trait WhereTrait
         return $this->notContains($column, $value, $escapeBackslash, ChainEnum::OR);
     }
 
-    public function orWhereIn(string|array $column, array $values): static
+    public function orWhereIn(string|array $column, array|SelectQuery $values): static
     {
         return $this->in($column, $values, ChainEnum::OR);
     }
 
-    public function orWhereNotIn(string|array $column, array $values): static
+    public function orWhereNotIn(string|array $column, array|SelectQuery $values): static
     {
         return $this->notIn($column, $values, ChainEnum::OR);
     }
 
-    public function orWhereLessThan(string|array $column, int|float|string|DateTimeInterface $value): static
+    public function orWhereLessThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value): static
     {
         return $this->lessThan($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereLessThanOrEquals(string|array $column, int|float|string|DateTimeInterface $value): static
+    public function orWhereLessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value): static
     {
         return $this->lessThanOrEquals($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereGreaterThan(string|array $column, int|float|string|DateTimeInterface $value): static
+    public function orWhereGreaterThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value): static
     {
         return $this->greaterThan($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereGreaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface $value): static
+    public function orWhereGreaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value): static
     {
         return $this->greaterThanOrEquals($column, $value, ChainEnum::OR);
     }
@@ -212,16 +233,6 @@ trait WhereTrait
     public function orWhereNotBetween(string|array $column, int|float|string|DateTimeInterface $min, int|float|string|DateTimeInterface $max): static
     {
         return $this->notBetween($column, $min, $max, ChainEnum::OR);
-    }
-
-    public function orWhereIsNull(string|array $column): static
-    {
-        return $this->isNull($column, ChainEnum::OR);
-    }
-
-    public function orWhereIsNotNull(string|array $column): static
-    {
-        return $this->isNotNull($column, ChainEnum::OR);
     }
 
     public function orWhereEmpty(string|array $column): static
@@ -244,6 +255,16 @@ trait WhereTrait
         return $this->notRegex($column, $pattern, ChainEnum::OR);
     }
 
+    public function orWhereExists(SelectQuery $selectQuery): static
+    {
+        return $this->exists($selectQuery, ChainEnum::OR);
+    }
+
+    public function orWhereNotExists(SelectQuery $selectQuery): static
+    {
+        return $this->notExists($selectQuery, ChainEnum::OR);
+    }
+
     public function orWhereGroup(callable $callback): static
     {
         return $this->group($callback, ChainEnum::OR);
@@ -264,12 +285,22 @@ trait WhereTrait
         return $this->addCondition(ConditionEnum::NOT_EQUALS, $column, $value, $chain);
     }
 
-    protected function like(string|array $column, string $value, ChainEnum $chain): static
+    protected function isNull(string|array $column, ChainEnum $chain): static
+    {
+        return $this->addCondition(ConditionEnum::EQUALS, $column, null, $chain);
+    }
+
+    protected function isNotNull(string|array $column, ChainEnum $chain): static
+    {
+        return $this->addCondition(ConditionEnum::NOT_EQUALS, $column, null, $chain);
+    }
+
+    protected function like(string|array $column, string|SelectQuery $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::LIKE, $column, $value, $chain);
     }
 
-    protected function notLike(string|array $column, string $value, ChainEnum $chain): static
+    protected function notLike(string|array $column, string|SelectQuery $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::NOT_LIKE, $column, $value, $chain);
     }
@@ -294,32 +325,32 @@ trait WhereTrait
         return $this->notLike($column, '%' . Query::escapeLikeChars($value, $escapeBackslash) . '%', $chain);
     }
 
-    protected function in(string|array $column, array $values, ChainEnum $chain): static
+    protected function in(string|array $column, array|SelectQuery $values, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::IN, $column, $values, $chain);
     }
 
-    protected function notIn(string|array $column, array $values, ChainEnum $chain): static
+    protected function notIn(string|array $column, array|SelectQuery $values, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::NOT_IN, $column, $values, $chain);
     }
 
-    protected function lessThan(string|array $column, int|float|string|DateTimeInterface $value, ChainEnum $chain): static
+    protected function lessThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::LESS_THAN, $column, $value, $chain);
     }
 
-    protected function lessThanOrEquals(string|array $column, int|float|string|DateTimeInterface $value, ChainEnum $chain): static
+    protected function lessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::LESS_THAN_OR_EQUALS, $column, $value, $chain);
     }
 
-    protected function greaterThan(string|array $column, int|float|string|DateTimeInterface $value, ChainEnum $chain): static
+    protected function greaterThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::GREATER_THAN, $column, $value, $chain);
     }
 
-    protected function greaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface $value, ChainEnum $chain): static
+    protected function greaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::GREATER_THAN_OR_EQUALS, $column, $value, $chain);
     }
@@ -332,16 +363,6 @@ trait WhereTrait
     protected function notBetween(string|array $column, int|float|string|DateTimeInterface $min, int|float|string|DateTimeInterface $max, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::NOT_BETWEEN, $column, [$min, $max], $chain);
-    }
-
-    protected function isNull(string|array $column, ChainEnum $chain): static
-    {
-        return $this->addCondition(ConditionEnum::EQUALS, $column, null, $chain);
-    }
-
-    protected function isNotNull(string|array $column, ChainEnum $chain): static
-    {
-        return $this->addCondition(ConditionEnum::NOT_EQUALS, $column, null, $chain);
     }
 
     protected function empty(string|array $column, ChainEnum $chain): static
@@ -376,6 +397,16 @@ trait WhereTrait
         return $this->addCondition(ConditionEnum::NOT_REGEX, $column, $this->parsePregPattern($pattern), $chain);
     }
 
+    protected function exists(SelectQuery $selectQuery, ChainEnum $chain): static
+    {
+        return $this->addCondition(ConditionEnum::EXISTS, null, $selectQuery, $chain);
+    }
+
+    protected function notExists(SelectQuery $selectQuery, ChainEnum $chain): static
+    {
+        return $this->addCondition(ConditionEnum::NOT_EXISTS, null, $selectQuery, $chain);
+    }
+
     protected function group(callable $callback, ChainEnum $chain): static
     {
         $conditionGroup = new ConditionGroup($chain);
@@ -393,7 +424,7 @@ trait WhereTrait
         return $this->addConditionGroup($conditionGroup);
     }
 
-    protected function addCondition(ConditionEnum $condition, string|array $identifier, mixed $value, ChainEnum $chain): static
+    protected function addCondition(ConditionEnum $condition, null|string|array $identifier, mixed $value, ChainEnum $chain): static
     {
         $this->where[] = new Condition($condition, $identifier, $value, $chain);
 

@@ -18,5 +18,7 @@ enum ConditionEnum: string
     case NOT_IN = 'NOT IN';
     case REGEX = 'REGEX';
     case NOT_REGEX = 'NOT REGEX';
+    case EXISTS = 'EXISTS';
+    case NOT_EXISTS = 'NOT EXISTS';
     case RAW = 'RAW';
 }
