@@ -95,12 +95,12 @@ trait WhereTrait
         return $this->greaterThanOrEquals($column, $value, ChainEnum::AND);
     }
 
-    public function whereBetween(string|array $column, int|float|string|DateTimeInterface $min, int|float|string|DateTimeInterface $max): static
+    public function whereBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery $min, int|float|string|DateTimeInterface|SelectQuery $max): static
     {
         return $this->between($column, $min, $max, ChainEnum::AND);
     }
 
-    public function whereNotBetween(string|array $column, int|float|string|DateTimeInterface $min, int|float|string|DateTimeInterface $max): static
+    public function whereNotBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery $min, int|float|string|DateTimeInterface|SelectQuery $max): static
     {
         return $this->notBetween($column, $min, $max, ChainEnum::AND);
     }
@@ -225,12 +225,12 @@ trait WhereTrait
         return $this->greaterThanOrEquals($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereBetween(string|array $column, int|float|string|DateTimeInterface $min, int|float|string|DateTimeInterface $max): static
+    public function orWhereBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery $min, int|float|string|DateTimeInterface|SelectQuery $max): static
     {
         return $this->between($column, $min, $max, ChainEnum::OR);
     }
 
-    public function orWhereNotBetween(string|array $column, int|float|string|DateTimeInterface $min, int|float|string|DateTimeInterface $max): static
+    public function orWhereNotBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery $min, int|float|string|DateTimeInterface|SelectQuery $max): static
     {
         return $this->notBetween($column, $min, $max, ChainEnum::OR);
     }
@@ -355,12 +355,12 @@ trait WhereTrait
         return $this->addCondition(ConditionEnum::GREATER_THAN_OR_EQUALS, $column, $value, $chain);
     }
 
-    protected function between(string|array $column, int|float|string|DateTimeInterface $min, int|float|string|DateTimeInterface $max, ChainEnum $chain): static
+    protected function between(string|array $column, int|float|string|DateTimeInterface|SelectQuery $min, int|float|string|DateTimeInterface|SelectQuery $max, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::BETWEEN, $column, [$min, $max], $chain);
     }
 
-    protected function notBetween(string|array $column, int|float|string|DateTimeInterface $min, int|float|string|DateTimeInterface $max, ChainEnum $chain): static
+    protected function notBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery $min, int|float|string|DateTimeInterface|SelectQuery $max, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::NOT_BETWEEN, $column, [$min, $max], $chain);
     }
