@@ -389,3 +389,4 @@ This database abstraction was created for the Sentience V3 framework, but will c
 1. Both named and unnamed parameters are supported for query building. The `QueryWithParams` automatically converts named params to placeholders.
 2. Mysqli does not officially support named params, so the `QueryWithParams` object automatically handles that for Mysqli.
 3. PHP's SQLite3 Result objects have a bug that re-executes the query when calling `->fetchArray()`. PDO does not have this bug, so it is recommended to use the PDOAdapter for SQLite.
+4. Emulated prepares are disabled by default, and can only be enabled on a query by query basis to prevent security issues.
