@@ -390,3 +390,8 @@ This database abstraction was created for the Sentience V3 framework, but will c
 2. Mysqli does not officially support named params, so the `QueryWithParams` object automatically handles that for Mysqli.
 3. PHP's SQLite3 Result objects have a bug that re-executes the query when calling `->fetchArray()`. PDO does not have this bug, so it is recommended to use the PDOAdapter for SQLite.
 4. Emulated prepares are disabled by default, and can only be enabled on a query by query basis to prevent security issues.
+5. Escaping columns with namespace works using arrays. `['public', 'users', 'email']` translates to `"public"."users"."email"`, or ``public`.`users`.`email`` for MySQL dialects.
+6. Query::alias() can be used to create aliasses for your tables or columns, without having to resort to using raw statements.
+7. Query::raw() offers a way to use raw unparameterized SQL in your queries.
+8. Query::now() spawns a new DateTime object.
+9. Empty IN or NOT IN lists compile to 1 <> 1 or 1 = 1
