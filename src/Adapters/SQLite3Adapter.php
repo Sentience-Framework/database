@@ -8,7 +8,6 @@ use SQLite3Stmt;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
-use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Results\SQLite3Result;
@@ -112,6 +111,8 @@ class SQLite3Adapter extends AdapterAbstract
         $this->sqlite3->close();
 
         $this->sqlite3 = null;
+
+        parent::disconnect();
     }
 
     public function isConnected(): bool
@@ -132,12 +133,16 @@ class SQLite3Adapter extends AdapterAbstract
 
         try {
             $this->sqlite3->exec($query);
+
+            if ($this->lazy && $this->isInsertQuery($query)) {
+                $this->lastInsertId();
+            }
         } catch (Throwable $exception) {
             $this->debug($query, $start, $exception);
 
             throw $exception;
         } finally {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
         }
@@ -156,6 +161,10 @@ class SQLite3Adapter extends AdapterAbstract
 
             $this->debug($query, $start);
 
+            if ($this->lazy && $this->isInsertQuery($query)) {
+                $this->lastInsertId();
+            }
+
             $result = new SQLite3Result($sqlite3Result);
 
             return $this->lazy
@@ -166,7 +175,7 @@ class SQLite3Adapter extends AdapterAbstract
 
             throw $exception;
         } finally {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
         }
@@ -185,7 +194,7 @@ class SQLite3Adapter extends AdapterAbstract
         try {
             $sqlite3Stmt = $this->sqlite3->prepare($queryWithParams->query);
         } catch (Throwable $exception) {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
 
@@ -217,7 +226,7 @@ class SQLite3Adapter extends AdapterAbstract
         try {
             $sqlite3Result = $sqlite3Stmt->execute();
         } catch (Throwable $exception) {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
 
@@ -232,9 +241,13 @@ class SQLite3Adapter extends AdapterAbstract
 
         $this->debug($queryWithParams->toSql($dialect), $start);
 
+        if ($this->lazy && $this->isInsertQuery($queryWithParams)) {
+            $this->lastInsertId();
+        }
+
         $result = new SQLite3Result($sqlite3Result);
 
-        if ($this->lazy) {
+        if ($this->lazy && !$this->inTransaction()) {
             $result = Result::fromInterface($result);
 
             $this->disconnect();
@@ -272,6 +285,10 @@ class SQLite3Adapter extends AdapterAbstract
             throw $exception;
         } finally {
             $this->inTransaction = false;
+
+            if ($this->lazy) {
+                $this->disconnect();
+            }
         }
     }
 
@@ -291,6 +308,10 @@ class SQLite3Adapter extends AdapterAbstract
             throw $exception;
         } finally {
             $this->inTransaction = false;
+
+            if ($this->lazy) {
+                $this->disconnect();
+            }
         }
     }
 
@@ -305,15 +326,19 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function lastInsertId(?string $name = null): ?int
     {
-        if ($this->lazy) {
-            throw new AdapterException('last insert id is not supported in lazy mode');
+        if ($this->lazy && $this->lastInsertId) {
+            return $this->lastInsertId;
         }
 
         if (!$this->isConnected()) {
             return null;
         }
 
-        return $this->sqlite3->lastInsertRowID();
+        $lastInsertId = $this->sqlite3->lastInsertRowID();
+
+        $this->lastInsertId = $this->lazy ? $lastInsertId : null;
+
+        return $lastInsertId;
     }
 
     protected function bindValue(SQLite3Stmt $sqlite3Stmt, int $key, mixed $value, int $type): void

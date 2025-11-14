@@ -8,7 +8,6 @@ use PDOStatement;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
-use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\PDOResult;
@@ -129,6 +128,8 @@ class PDOAdapter extends AdapterAbstract
         }
 
         $this->pdo = null;
+
+        parent::disconnect();
     }
 
     public function isConnected(): bool
@@ -241,7 +242,7 @@ class PDOAdapter extends AdapterAbstract
 
         $version = $this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
 
-        if ($this->lazy) {
+        if ($this->lazy && !$this->inTransaction()) {
             $this->disconnect();
         }
 
@@ -256,12 +257,16 @@ class PDOAdapter extends AdapterAbstract
 
         try {
             $this->pdo->exec($query);
+
+            if ($this->lazy && $this->isInsertQuery($query)) {
+                $this->lastInsertId();
+            }
         } catch (Throwable $exception) {
             $this->debug($query, $start, $exception);
 
             throw $exception;
         } finally {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
         }
@@ -280,6 +285,10 @@ class PDOAdapter extends AdapterAbstract
 
             $this->debug($query, $start);
 
+            if ($this->lazy && $this->isInsertQuery($query)) {
+                $this->lastInsertId();
+            }
+
             $result = new PDOResult($pdoStatement);
 
             return $this->lazy
@@ -290,7 +299,7 @@ class PDOAdapter extends AdapterAbstract
 
             throw $exception;
         } finally {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
         }
@@ -309,7 +318,7 @@ class PDOAdapter extends AdapterAbstract
 
             $pdoStatement = $this->pdo->prepare($queryWithParams->query);
         } catch (Throwable $exception) {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
 
@@ -346,7 +355,7 @@ class PDOAdapter extends AdapterAbstract
         try {
             $pdoStatement->execute();
         } catch (Throwable $exception) {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
 
@@ -365,9 +374,13 @@ class PDOAdapter extends AdapterAbstract
 
         $this->debug($queryWithParams->toSql($dialect), $start);
 
+        if ($this->lazy && $this->isInsertQuery($queryWithParams)) {
+            $this->lastInsertId();
+        }
+
         $result = new PDOResult($pdoStatement);
 
-        if ($this->lazy) {
+        if ($this->lazy && !$this->inTransaction()) {
             $result = Result::fromInterface($result);
 
             $this->disconnect();
@@ -440,8 +453,8 @@ class PDOAdapter extends AdapterAbstract
 
     public function lastInsertId(?string $name = null): null|int|string
     {
-        if ($this->lazy) {
-            throw new AdapterException('last insert id is not supported in lazy mode');
+        if ($this->lazy && $this->lastInsertId) {
+            return $this->lastInsertId;
         }
 
         if (!$this->isConnected()) {
@@ -449,6 +462,8 @@ class PDOAdapter extends AdapterAbstract
         }
 
         $lastInsertId = $this->pdo->lastInsertId($name);
+
+        $this->lastInsertId = $this->lazy ? $lastInsertId : null;
 
         if (is_bool($lastInsertId)) {
             return null;

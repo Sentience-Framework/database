@@ -5,10 +5,13 @@ namespace Sentience\Database\Adapters;
 use Closure;
 use Throwable;
 use Sentience\Database\Driver;
+use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Query;
 
 abstract class AdapterAbstract implements AdapterInterface
 {
+    protected null|int|string $lastInsertId = null;
+
     public function __construct(
         protected Closure $connect,
         protected Driver $driver,
@@ -20,6 +23,11 @@ abstract class AdapterAbstract implements AdapterInterface
         if (!$lazy) {
             $this->connect();
         }
+    }
+
+    public function disconnect(): void
+    {
+        $this->lastInsertId = null;
     }
 
     public function reconnect(): void
@@ -155,6 +163,14 @@ abstract class AdapterAbstract implements AdapterInterface
                 $flags
             ),
             $value
+        );
+    }
+
+    protected function isInsertQuery(string|QueryWithParams $query): bool
+    {
+        return str_starts_with(
+            strtoupper($query instanceof QueryWithParams ? $query->query : $query),
+            'INSERT'
         );
     }
 

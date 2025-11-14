@@ -7,7 +7,6 @@ use mysqli;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
-use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\MySQLiResult;
 use Sentience\Database\Results\Result;
@@ -95,6 +94,8 @@ class MySQLiAdapter extends AdapterAbstract
         $this->mysqli->close();
 
         $this->mysqli = null;
+
+        parent::disconnect();
     }
 
     public function isConnected(): bool
@@ -129,7 +130,7 @@ class MySQLiAdapter extends AdapterAbstract
 
         $version = $this->mysqli->server_version;
 
-        if ($this->lazy) {
+        if ($this->lazy && !$this->inTransaction()) {
             $this->disconnect();
         }
 
@@ -144,12 +145,16 @@ class MySQLiAdapter extends AdapterAbstract
 
         try {
             $this->mysqli->query($query);
+
+            if ($this->lazy && $this->isInsertQuery($query)) {
+                $this->lastInsertId();
+            }
         } catch (Throwable $exception) {
             $this->debug($query, $start, $exception);
 
             throw $exception;
         } finally {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
         }
@@ -168,6 +173,10 @@ class MySQLiAdapter extends AdapterAbstract
 
             $this->debug($query, $start);
 
+            if ($this->lazy && $this->isInsertQuery($query)) {
+                $this->lastInsertId();
+            }
+
             $result = new MySQLiResult($mysqliResult);
 
             return $this->lazy
@@ -178,7 +187,7 @@ class MySQLiAdapter extends AdapterAbstract
 
             throw $exception;
         } finally {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
         }
@@ -199,7 +208,7 @@ class MySQLiAdapter extends AdapterAbstract
         try {
             $mysqliStmt = $this->mysqli->prepare($queryWithParams->query);
         } catch (Throwable $exception) {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
 
@@ -243,7 +252,7 @@ class MySQLiAdapter extends AdapterAbstract
         try {
             $mysqliStmt->execute();
         } catch (Throwable $exception) {
-            if ($this->lazy) {
+            if ($this->lazy && !$this->inTransaction()) {
                 $this->disconnect();
             }
 
@@ -256,13 +265,17 @@ class MySQLiAdapter extends AdapterAbstract
             throw $exception;
         }
 
+        if ($this->lazy && $this->isInsertQuery($queryWithParams)) {
+            $this->lastInsertId();
+        }
+
         $mysqliResult = $mysqliStmt->get_result();
 
         $this->debug($queryWithParams->toSql($dialect), $start);
 
         $result = new MySQLiResult($mysqliResult);
 
-        if ($this->lazy) {
+        if ($this->lazy && !$this->inTransaction()) {
             $result = Result::fromInterface($result);
 
             $this->disconnect();
@@ -341,14 +354,18 @@ class MySQLiAdapter extends AdapterAbstract
 
     public function lastInsertId(?string $name = null): null|int|string
     {
-        if ($this->lazy) {
-            throw new AdapterException('last insert id is not supported in lazy mode');
+        if ($this->lazy && $this->lastInsertId) {
+            return $this->lastInsertId;
         }
 
         if (!$this->isConnected()) {
             return null;
         }
 
-        return $this->mysqli->insert_id;
+        $lastInsertId = $this->mysqli->insert_id;
+
+        $this->lastInsertId = $this->lazy ? $lastInsertId : null;
+
+        return $lastInsertId;
     }
 }
