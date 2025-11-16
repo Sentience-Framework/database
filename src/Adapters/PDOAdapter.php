@@ -442,6 +442,15 @@ class PDOAdapter extends AdapterAbstract
         }
     }
 
+    public function inTransaction(): bool
+    {
+        if (!$this->isConnected()) {
+            return false;
+        }
+
+        return $this->pdo->inTransaction();
+    }
+
     public function lastInsertId(?string $name = null): null|int|string
     {
         if ($this->lazy && $this->lastInsertId) {

@@ -51,8 +51,8 @@ enum Driver: string
             }
         : PDOAdapter::class;
 
-        return match (true) {
-            $adapter instanceof MySQLiAdapter => MySQLiAdapter::mysqli(
+        return match ($adapter) {
+            MySQLiAdapter::class => MySQLiAdapter::mysqli(
                 $this,
                 $host,
                 $port,
@@ -64,7 +64,7 @@ enum Driver: string
                 $debug,
                 $lazy
             ),
-            $adapter instanceof SQLite3Adapter => SQLite3Adapter::sqlite3(
+            SQLite3Adapter::class => SQLite3Adapter::sqlite3(
                 $name,
                 $queries,
                 $options,

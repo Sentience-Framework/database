@@ -137,7 +137,11 @@ class Database
 
     public function commitTransaction(bool $releaseSavepoints = false): void
     {
-        if ($releaseSavepoints || !$this->inTransaction() || count($this->savepoints) == 0) {
+        if (!$this->inTransaction()) {
+            return;
+        }
+
+        if ($releaseSavepoints || count($this->savepoints) == 0) {
             $this->adapter->commitTransaction($this->dialect);
 
             return;
@@ -151,7 +155,11 @@ class Database
 
     public function rollbackTransaction(bool $releaseSavepoints = false): void
     {
-        if ($releaseSavepoints || !$this->inTransaction() || count($this->savepoints) == 0) {
+        if (!$this->inTransaction()) {
+            return;
+        }
+
+        if ($releaseSavepoints || count($this->savepoints) == 0) {
             $this->adapter->rollbackTransaction($this->dialect);
 
             return;
