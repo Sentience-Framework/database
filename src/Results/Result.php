@@ -4,6 +4,7 @@ namespace Sentience\Database\Results;
 
 class Result extends ResultAbstract
 {
+    protected array $columns;
     protected array $rows;
 
     public static function fromInterface(ResultInterface $interface): static
@@ -15,9 +16,10 @@ class Result extends ResultAbstract
     }
 
     public function __construct(
-        protected array $columns,
+        array $columns,
         array $rows
     ) {
+        $this->columns = array_values($columns);
         $this->rows = array_values($rows);
     }
 

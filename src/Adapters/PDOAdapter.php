@@ -389,7 +389,7 @@ class PDOAdapter extends AdapterAbstract
         return $result;
     }
 
-    public function beginTransaction(DialectInterface $dialect): void
+    public function beginTransaction(DialectInterface $dialect, ?string $name = null): void
     {
         $this->connect();
 
@@ -400,7 +400,7 @@ class PDOAdapter extends AdapterAbstract
         $this->pdo->beginTransaction();
     }
 
-    public function commitTransaction(DialectInterface $dialect): void
+    public function commitTransaction(DialectInterface $dialect, ?string $name = null): void
     {
         if (!$this->isConnected()) {
             return;
@@ -421,7 +421,7 @@ class PDOAdapter extends AdapterAbstract
         }
     }
 
-    public function rollbackTransaction(DialectInterface $dialect): void
+    public function rollbackTransaction(DialectInterface $dialect, ?string $name = null): void
     {
         if (!$this->isConnected()) {
             return;
@@ -440,15 +440,6 @@ class PDOAdapter extends AdapterAbstract
                 $this->disconnect();
             }
         }
-    }
-
-    public function inTransaction(): bool
-    {
-        if (!$this->isConnected()) {
-            return false;
-        }
-
-        return $this->pdo->inTransaction();
     }
 
     public function lastInsertId(?string $name = null): null|int|string

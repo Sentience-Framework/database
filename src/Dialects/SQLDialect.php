@@ -40,6 +40,7 @@ class SQLDialect extends DialectAbstract
     protected const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
     protected const bool ON_CONFLICT = false;
     protected const bool RETURNING = false;
+    protected const bool SAVEPOINTS = false;
 
     public function select(
         bool $distinct,
@@ -308,6 +309,78 @@ class SQLDialect extends DialectAbstract
         $this->buildTable($query, $params, $table);
 
         return new QueryWithParams($query, $params);
+    }
+
+    public function beginTransaction(
+        ?string $name
+    ): QueryWithParams {
+        $query = 'BEGIN TRANSACTION';
+
+        if ($name) {
+            $query .= ' ';
+            $query .= $this->escapeIdentifier($name);
+        }
+
+        return new QueryWithParams($query);
+    }
+
+    public function commitTransaction(
+        ?string $name
+    ): QueryWithParams {
+        $query = 'COMMIT';
+
+        if ($name) {
+            $query .= ' ';
+            $query .= $this->escapeIdentifier($name);
+        }
+
+        return new QueryWithParams($query);
+    }
+
+    public function rollbackTransaction(
+        ?string $name
+    ): QueryWithParams {
+        $query = 'ROLLBACK';
+
+        if ($name) {
+            $query .= ' ';
+            $query .= $this->escapeIdentifier($name);
+        }
+
+        return new QueryWithParams($query);
+    }
+
+    public function beginSavepoint(
+        string $name
+    ): QueryWithParams {
+        return new QueryWithParams(
+            sprintf(
+                'SAVEPOINT %s',
+                $this->escapeIdentifier($name)
+            )
+        );
+    }
+
+    public function commitSavepoint(
+        string $name
+    ): QueryWithParams {
+        return new QueryWithParams(
+            sprintf(
+                'RELEASE SAVEPOINT %s',
+                $this->escapeIdentifier($name)
+            )
+        );
+    }
+
+    public function rollbackSavepoint(
+        string $name
+    ): QueryWithParams {
+        return new QueryWithParams(
+            sprintf(
+                'ROLLBACK TO %s',
+                $this->escapeIdentifier($name)
+            )
+        );
     }
 
     protected function buildTable(string &$query, &$params, string|array|Alias|Raw|SelectQuery $table): void
@@ -1006,5 +1079,10 @@ class SQLDialect extends DialectAbstract
     public function returning(): bool
     {
         return static::RETURNING;
+    }
+
+    public function savepoints(): bool
+    {
+        return static::SAVEPOINTS;
     }
 }

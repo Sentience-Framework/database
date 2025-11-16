@@ -284,7 +284,7 @@ class MySQLiAdapter extends AdapterAbstract
         return $result;
     }
 
-    public function beginTransaction(DialectInterface $dialect): void
+    public function beginTransaction(DialectInterface $dialect, ?string $name = null): void
     {
         $this->connect();
 
@@ -292,12 +292,12 @@ class MySQLiAdapter extends AdapterAbstract
             return;
         }
 
-        $this->mysqli->begin_transaction();
+        $this->mysqli->begin_transaction(0, $name);
 
         $this->inTransaction = true;
     }
 
-    public function commitTransaction(DialectInterface $dialect): void
+    public function commitTransaction(DialectInterface $dialect, ?string $name = null): void
     {
         if (!$this->isConnected()) {
             return;
@@ -308,7 +308,7 @@ class MySQLiAdapter extends AdapterAbstract
         }
 
         try {
-            $this->mysqli->commit();
+            $this->mysqli->commit(0, $name);
         } catch (Throwable $exception) {
             throw $exception;
         } finally {
@@ -320,7 +320,7 @@ class MySQLiAdapter extends AdapterAbstract
         }
     }
 
-    public function rollbackTransaction(DialectInterface $dialect): void
+    public function rollbackTransaction(DialectInterface $dialect, ?string $name = null): void
     {
         if (!$this->isConnected()) {
             return;
@@ -331,7 +331,7 @@ class MySQLiAdapter extends AdapterAbstract
         }
 
         try {
-            $this->mysqli->rollback();
+            $this->mysqli->rollback(0, $name);
         } catch (Throwable $exception) {
             throw $exception;
         } finally {
@@ -341,15 +341,6 @@ class MySQLiAdapter extends AdapterAbstract
                 $this->disconnect();
             }
         }
-    }
-
-    public function inTransaction(): bool
-    {
-        if (!$this->isConnected()) {
-            return false;
-        }
-
-        return $this->inTransaction;
     }
 
     public function lastInsertId(?string $name = null): null|int|string

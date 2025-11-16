@@ -82,6 +82,8 @@ class Database
         return new static($adapter, $dialect);
     }
 
+    protected array $savepoints = [];
+
     public function __construct(
         protected AdapterInterface $adapter,
         protected DialectInterface $dialect
@@ -113,19 +115,52 @@ class Database
             : $this->adapter->query($queryWithParams->query);
     }
 
-    public function beginTransaction(): void
+    public function beginTransaction(?string $name = null): void
     {
-        $this->adapter->beginTransaction($this->dialect);
+        if (!$this->inTransaction()) {
+            $this->adapter->beginTransaction($this->dialect);
+
+            return;
+        }
+
+        $name = !$name ?
+            sprintf(
+                'safepoint_%d',
+                count($this->savepoints) + 1
+            )
+            : $name;
+
+        $this->savepoints[] = $name;
+
+        $this->adapter->beginSavepoint($this->dialect, $name);
     }
 
-    public function commitTransaction(): void
+    public function commitTransaction(bool $releaseSavepoints = false): void
     {
-        $this->adapter->commitTransaction($this->dialect);
+        if ($releaseSavepoints || !$this->inTransaction() || count($this->savepoints) == 0) {
+            $this->adapter->commitTransaction($this->dialect);
+
+            return;
+        }
+
+        $this->adapter->commitSavepoint(
+            $this->dialect,
+            array_pop($this->savepoints)
+        );
     }
 
-    public function rollbackTransaction(): void
+    public function rollbackTransaction(bool $releaseSavepoints = false): void
     {
-        $this->adapter->rollbackTransaction($this->dialect);
+        if ($releaseSavepoints || !$this->inTransaction() || count($this->savepoints) == 0) {
+            $this->adapter->rollbackTransaction($this->dialect);
+
+            return;
+        }
+
+        $this->adapter->rollbackSavepoint(
+            $this->dialect,
+            array_pop($this->savepoints)
+        );
     }
 
     public function inTransaction(): bool

@@ -4,12 +4,14 @@ namespace Sentience\Database\Adapters;
 
 use Closure;
 use Throwable;
+use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Query;
 
 abstract class AdapterAbstract implements AdapterInterface
 {
+    protected bool $inTransaction = false;
     protected null|int|string $lastInsertId = null;
 
     public function __construct(
@@ -174,13 +176,120 @@ abstract class AdapterAbstract implements AdapterInterface
         );
     }
 
-    protected function debug(string $query, float $start, null|string|Throwable $error = null): void
+    public function beginTransaction(DialectInterface $dialect, ?string $name = null): void
+    {
+        $this->connect();
+
+        if ($this->inTransaction()) {
+            return;
+        }
+
+        $this->exec($dialect->beginTransaction($name)->query);
+
+        $this->inTransaction = true;
+    }
+
+    public function commitTransaction(DialectInterface $dialect, ?string $name = null): void
+    {
+        if (!$this->isConnected()) {
+            return;
+        }
+
+        if (!$this->inTransaction()) {
+            return;
+        }
+
+        try {
+            $this->exec($dialect->commitTransaction($name)->query);
+        } catch (Throwable $exception) {
+            throw $exception;
+        } finally {
+            $this->inTransaction = false;
+
+            if ($this->lazy) {
+                $this->disconnect();
+            }
+        }
+    }
+
+    public function rollbackTransaction(DialectInterface $dialect, ?string $name = null): void
+    {
+        if (!$this->isConnected()) {
+            return;
+        }
+
+        if (!$this->inTransaction()) {
+            return;
+        }
+
+        try {
+            $this->exec($dialect->rollbackTransaction($name)->query);
+        } catch (Throwable $exception) {
+            throw $exception;
+        } finally {
+            $this->inTransaction = false;
+
+            if ($this->lazy) {
+                $this->disconnect();
+            }
+        }
+    }
+
+    public function beginSavepoint(DialectInterface $dialect, string $name): void
+    {
+        if (!$this->isConnected()) {
+            return;
+        }
+
+        if (!$this->inTransaction()) {
+            return;
+        }
+
+        $this->exec($dialect->beginSavepoint($name)->query);
+    }
+
+    public function commitSavepoint(DialectInterface $dialect, string $name): void
+    {
+        if (!$this->isConnected()) {
+            return;
+        }
+
+        if (!$this->inTransaction()) {
+            return;
+        }
+
+        $this->exec($dialect->commitSavepoint($name)->query);
+    }
+
+    public function rollbackSavepoint(DialectInterface $dialect, string $name): void
+    {
+        if (!$this->isConnected()) {
+            return;
+        }
+
+        if (!$this->inTransaction()) {
+            return;
+        }
+
+        $this->exec($dialect->rollbackSavepoint($name)->query);
+    }
+
+    public function inTransaction(): bool
+    {
+        if (!$this->isConnected()) {
+            return false;
+        }
+
+        return $this->inTransaction;
+    }
+
+    protected function debug(string|callable $query, float $start, null|string|Throwable $error = null): void
     {
         if (!$this->debug) {
             return;
         }
 
-        ($this->debug)($query, $start, $error instanceof Throwable ? $error->getMessage() : $error);
+        ($this->debug)(is_callable($query) ? $query() : $query, $start, $error instanceof Throwable ? $error->getMessage() : $error);
     }
 
     public function __destruct()

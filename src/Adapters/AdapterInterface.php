@@ -37,9 +37,12 @@ interface AdapterInterface
     public function exec(string $query): void;
     public function query(string $query): ResultInterface;
     public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): ResultInterface;
-    public function beginTransaction(DialectInterface $dialect): void;
-    public function commitTransaction(DialectInterface $dialect): void;
-    public function rollbackTransaction(DialectInterface $dialect): void;
+    public function beginTransaction(DialectInterface $dialect, ?string $name = null): void;
+    public function commitTransaction(DialectInterface $dialect, ?string $name = null): void;
+    public function rollbackTransaction(DialectInterface $dialect, ?string $name = null): void;
+    public function beginSavepoint(DialectInterface $dialect, string $name): void;
+    public function commitSavepoint(DialectInterface $dialect, string $name): void;
+    public function rollbackSavepoint(DialectInterface $dialect, string $name): void;
     public function inTransaction(): bool;
     public function lastInsertId(?string $name = null): null|int|string;
 }
