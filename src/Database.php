@@ -125,7 +125,7 @@ class Database
 
         $name = !$name ?
             sprintf(
-                'safepoint_%d',
+                'savepoint_%d',
                 count($this->savepoints) + 1
             )
             : $name;
