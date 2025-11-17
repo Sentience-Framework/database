@@ -255,6 +255,21 @@ class SQLite3Adapter extends AdapterAbstract
         return $result;
     }
 
+    public function beginTransaction(DialectInterface $dialect, ?string $name = null): void
+    {
+        parent::beginTransaction($dialect, null);
+    }
+
+    public function commitTransaction(DialectInterface $dialect, ?string $name = null): void
+    {
+        parent::commitTransaction($dialect, null);
+    }
+
+    public function rollbackTransaction(DialectInterface $dialect, ?string $name = null): void
+    {
+        parent::rollbackTransaction($dialect, null);
+    }
+
     public function lastInsertId(?string $name = null): ?int
     {
         if ($this->lazy && $this->lastInsertId) {
