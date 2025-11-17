@@ -21,6 +21,7 @@ class MySQLDialect extends SQLDialect
     protected const string ESCAPE_STRING = '"';
     protected const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
     protected const bool ON_CONFLICT = true;
+    protected const bool SAVEPOINTS = true;
 
     public function createTable(
         bool $ifNotExists,

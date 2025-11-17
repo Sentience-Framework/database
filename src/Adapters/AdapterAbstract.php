@@ -245,6 +245,10 @@ abstract class AdapterAbstract implements AdapterInterface
             return;
         }
 
+        if (!$dialect->savepoints()) {
+            return;
+        }
+
         $this->exec($dialect->beginSavepoint($name)->query);
     }
 
@@ -258,6 +262,10 @@ abstract class AdapterAbstract implements AdapterInterface
             return;
         }
 
+        if (!$dialect->savepoints()) {
+            return;
+        }
+
         $this->exec($dialect->commitSavepoint($name)->query);
     }
 
@@ -268,6 +276,10 @@ abstract class AdapterAbstract implements AdapterInterface
         }
 
         if (!$this->inTransaction()) {
+            return;
+        }
+
+        if (!$dialect->savepoints()) {
             return;
         }
 

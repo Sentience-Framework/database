@@ -99,4 +99,5 @@ interface DialectInterface
     public function generatedByDefaultAsIdentity(): bool;
     public function onConflict(): bool;
     public function returning(): bool;
+    public function savepoints(): bool;
 }
