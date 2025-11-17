@@ -15,7 +15,6 @@ use Sentience\Database\Results\SQLite3Result;
 class SQLite3Adapter extends AdapterAbstract
 {
     protected ?SQLite3 $sqlite3 = null;
-    protected bool $inTransaction = false;
 
     public static function sqlite3(
         string $file,

@@ -19,7 +19,6 @@ class MySQLiAdapter extends AdapterAbstract
     public const string MYSQLI_STRING = 's';
 
     protected ?mysqli $mysqli = null;
-    protected bool $inTransaction = false;
 
     public static function mysqli(
         Driver $driver,
