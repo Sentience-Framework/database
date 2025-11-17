@@ -137,6 +137,27 @@ class PDOAdapter extends AdapterAbstract
         return !is_null($this->pdo);
     }
 
+    public function ping(bool $reconnect = false): bool
+    {
+        if (!$this->isConnected()) {
+            return false;
+        }
+
+        try {
+            $this->pdo->exec('SELECT 1');
+
+            return true;
+        } catch (Throwable $exception) {
+            if ($reconnect) {
+                $this->reconnect();
+
+                return true;
+            }
+
+            return false;
+        }
+    }
+
     protected function configurePdoForMySQL(array $options): void
     {
         if (array_key_exists(static::OPTIONS_MYSQL_CHARSET, $options)) {

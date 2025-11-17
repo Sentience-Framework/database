@@ -38,34 +38,6 @@ abstract class AdapterAbstract implements AdapterInterface
         $this->connect();
     }
 
-    public function ping(bool $reconnect = false): bool
-    {
-        if (!$this->isConnected()) {
-            return false;
-        }
-
-        $isConnected = false;
-
-        try {
-            $this->exec('SELECT 1');
-
-            return true;
-        } catch (Throwable $exception) {
-        }
-
-        if ($isConnected) {
-            return true;
-        }
-
-        if (!$reconnect) {
-            return false;
-        }
-
-        $this->reconnect();
-
-        return true;
-    }
-
     public function enableLazy(bool $disconnect = true): void
     {
         $this->lazy = true;

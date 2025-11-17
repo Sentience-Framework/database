@@ -119,6 +119,27 @@ class SQLite3Adapter extends AdapterAbstract
         return !is_null($this->sqlite3);
     }
 
+    public function ping(bool $reconnect = false): bool
+    {
+        if (!$this->isConnected()) {
+            return false;
+        }
+
+        try {
+            $this->sqlite3->exec('SELECT 1');
+
+            return true;
+        } catch (Throwable $exception) {
+            if ($reconnect) {
+                $this->reconnect();
+
+                return true;
+            }
+
+            return false;
+        }
+    }
+
     public function version(): string
     {
         return SQLite3::version()['versionString'];
