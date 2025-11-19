@@ -40,7 +40,7 @@ class SQLDialect extends DialectAbstract
     protected const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
     protected const bool ON_CONFLICT = false;
     protected const bool RETURNING = false;
-    protected const bool SAVEPOINTS = false;
+    protected const bool SAVEPOINTS = true;
 
     public function select(
         bool $distinct,

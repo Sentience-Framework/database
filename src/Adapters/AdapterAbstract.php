@@ -156,7 +156,7 @@ abstract class AdapterAbstract implements AdapterInterface
             return;
         }
 
-        $this->exec($dialect->beginTransaction($name)->query);
+        $this->exec($dialect->beginTransaction($name)->toSql($dialect));
 
         $this->inTransaction = true;
     }
@@ -172,7 +172,7 @@ abstract class AdapterAbstract implements AdapterInterface
         }
 
         try {
-            $this->exec($dialect->commitTransaction($name)->query);
+            $this->exec($dialect->commitTransaction($name)->toSql($dialect));
         } catch (Throwable $exception) {
             throw $exception;
         } finally {
@@ -195,7 +195,7 @@ abstract class AdapterAbstract implements AdapterInterface
         }
 
         try {
-            $this->exec($dialect->rollbackTransaction($name)->query);
+            $this->exec($dialect->rollbackTransaction($name)->toSql($dialect));
         } catch (Throwable $exception) {
             throw $exception;
         } finally {
@@ -221,7 +221,7 @@ abstract class AdapterAbstract implements AdapterInterface
             return;
         }
 
-        $this->exec($dialect->beginSavepoint($name)->query);
+        $this->exec($dialect->beginSavepoint($name)->toSql($dialect));
     }
 
     public function commitSavepoint(DialectInterface $dialect, string $name): void
@@ -238,7 +238,7 @@ abstract class AdapterAbstract implements AdapterInterface
             return;
         }
 
-        $this->exec($dialect->commitSavepoint($name)->query);
+        $this->exec($dialect->commitSavepoint($name)->toSql($dialect));
     }
 
     public function rollbackSavepoint(DialectInterface $dialect, string $name): void
@@ -255,7 +255,7 @@ abstract class AdapterAbstract implements AdapterInterface
             return;
         }
 
-        $this->exec($dialect->rollbackSavepoint($name)->query);
+        $this->exec($dialect->rollbackSavepoint($name)->toSql($dialect));
     }
 
     public function inTransaction(): bool
@@ -273,7 +273,11 @@ abstract class AdapterAbstract implements AdapterInterface
             return;
         }
 
-        ($this->debug)(is_callable($query) ? $query() : $query, $start, $error instanceof Throwable ? $error->getMessage() : $error);
+        ($this->debug)(
+            is_callable($query) ? $query() : $query,
+            $start,
+            $error instanceof Throwable ? $error->getMessage() : $error
+        );
     }
 
     public function __destruct()

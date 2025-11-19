@@ -13,7 +13,6 @@ class PgSQLDialect extends SQLDialect
     protected const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
     protected const bool ON_CONFLICT = true;
     protected const bool RETURNING = true;
-    protected const bool SAVEPOINTS = true;
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
     {
