@@ -5,7 +5,9 @@ namespace Sentience\Database;
 use Closure;
 use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
+use Sentience\Database\Adapters\MySQLiAdapter;
 use Sentience\Database\Adapters\PDOAdapter;
+use Sentience\Database\Adapters\SQLite3Adapter;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\AlterTableQuery;
 use Sentience\Database\Queries\CreateTableQuery;
@@ -34,24 +36,48 @@ class Database
         bool $usePdoAdapter = false,
         bool $lazy = false
     ): static {
-        $adapter = $driver->getAdapter(
-            $host,
-            $port,
-            $name,
-            $username,
-            $password,
-            $queries,
-            $options,
-            $debug,
-            $usePdoAdapter,
-            $lazy
-        );
+        $adapter = !$usePdoAdapter ? $driver->getAdapter() : PDOAdapter::class;
+        $dialect = $driver->getDialect();
+
+        $adapter = match ($adapter) {
+            MySQLiAdapter::class => MySQLiAdapter::mysqli(
+                $driver,
+                $host,
+                $port,
+                $name,
+                $username,
+                $password,
+                $queries,
+                $options,
+                $debug,
+                $lazy
+            ),
+            SQLite3Adapter::class => SQLite3Adapter::sqlite3(
+                $name,
+                $queries,
+                $options,
+                $debug,
+                $lazy
+            ),
+            default => PDOAdapter::pdo(
+                $driver,
+                $host,
+                $port,
+                $name,
+                $username,
+                $password,
+                $queries,
+                $options,
+                $debug,
+                $lazy
+            )
+        };
 
         $version = ($options[AdapterInterface::OPTIONS_VERSION] ?? null)
             ? (string) $options[AdapterInterface::OPTIONS_VERSION]
             : $adapter->version();
 
-        $dialect = $driver->getDialect($version);
+        $dialect = new $dialect($driver, $version);
 
         return new static($adapter, $dialect);
     }
@@ -72,12 +98,14 @@ class Database
             $debug,
             $lazy
         );
+        $dialect = $driver->getDialect();
 
-        $version = ($options[AdapterInterface::OPTIONS_VERSION] ?? null)
+        $dialect = new $dialect(
+            $driver,
+            ($options[AdapterInterface::OPTIONS_VERSION] ?? null)
             ? (string) $options[AdapterInterface::OPTIONS_VERSION]
-            : $adapter->version();
-
-        $dialect = $driver->getDialect($version);
+            : $adapter->version()
+        );
 
         return new static($adapter, $dialect);
     }

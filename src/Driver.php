@@ -2,12 +2,9 @@
 
 namespace Sentience\Database;
 
-use Closure;
-use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Adapters\MySQLiAdapter;
 use Sentience\Database\Adapters\PDOAdapter;
 use Sentience\Database\Adapters\SQLite3Adapter;
-use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Dialects\FirebirdDialect;
 use Sentience\Database\Dialects\MySQLDialect;
 use Sentience\Database\Dialects\PgSQLDialect;
@@ -30,71 +27,25 @@ enum Driver: string
     case ORACLE = 'oci';
     case SQLSRV = 'sqlsrv';
 
-    public function getAdapter(
-        string $host,
-        int $port,
-        string $name,
-        string $username,
-        string $password,
-        array $queries,
-        array $options,
-        ?Closure $debug,
-        bool $usePdoAdapter = false,
-        bool $lazy = false
-    ): AdapterInterface {
-        $adapter = !$usePdoAdapter
-            ? match ($this) {
-                static::MARIADB,
-                static::MYSQL => MySQLiAdapter::class,
-                static::SQLITE => SQLite3Adapter::class,
-                default => PDOAdapter::class
-            }
-        : PDOAdapter::class;
-
-        return match ($adapter) {
-            MySQLiAdapter::class => MySQLiAdapter::mysqli(
-                $this,
-                $host,
-                $port,
-                $name,
-                $username,
-                $password,
-                $queries,
-                $options,
-                $debug,
-                $lazy
-            ),
-            SQLite3Adapter::class => SQLite3Adapter::sqlite3(
-                $name,
-                $queries,
-                $options,
-                $debug,
-                $lazy
-            ),
-            default => PDOAdapter::pdo(
-                $this,
-                $host,
-                $port,
-                $name,
-                $username,
-                $password,
-                $queries,
-                $options,
-                $debug,
-                $lazy
-            )
+    public function getAdapter(): string
+    {
+        return match ($this) {
+            static::MARIADB,
+            static::MYSQL => MySQLiAdapter::class,
+            static::SQLITE => SQLite3Adapter::class,
+            default => PDOAdapter::class
         };
     }
 
-    public function getDialect(int|string $version): DialectInterface
+    public function getDialect(): string
     {
         return match ($this) {
-            static::FIREBIRD => new FirebirdDialect($this, $version),
+            static::FIREBIRD => FirebirdDialect::class,
             static::MARIADB,
-            static::MYSQL => new MySQLDialect($this, $version),
-            static::PGSQL => new PgSQLDialect($this, $version),
-            static::SQLITE => new SQLiteDialect($this, $version),
-            default => new SQLDialect($this, $version)
+            static::MYSQL => MySQLDialect::class,
+            static::PGSQL => PgSQLDialect::class,
+            static::SQLITE => SQLiteDialect::class,
+            default => SQLDialect::class
         };
     }
 }
