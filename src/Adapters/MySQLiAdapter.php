@@ -32,15 +32,20 @@ class MySQLiAdapter extends AdapterAbstract
         ?Closure $debug,
         bool $lazy = false
     ): static {
+        $isSocket = str_starts_with($host, '/');
+
+        $hostname = ($options[static::OPTIONS_PERSISTENT] ?? false)
+            ? sprintf('p:%s', $host)
+            : $host;
+
         return new static(
-            fn (): mysqli => new mysqli(
-                ($options[static::OPTIONS_PERSISTENT] ?? false)
-                ? sprintf('p:%s', $host)
-                : $host,
+            fn(): mysqli => new mysqli(
+                !$isSocket ? $hostname : null,
                 $username,
                 $password,
                 $name,
-                $port
+                $port,
+                $isSocket ? $host : null
             ),
             $driver,
             $queries,
