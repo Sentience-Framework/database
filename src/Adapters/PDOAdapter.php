@@ -35,6 +35,10 @@ class PDOAdapter extends AdapterAbstract
                         return (string) $options[static::OPTIONS_PDO_DSN];
                     }
 
+                    if (!in_array($driver, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
+                        throw new DriverException('this driver requires a dsn');
+                    }
+
                     if ($driver == Driver::SQLITE) {
                         return sprintf(
                             '%s:%s',
@@ -47,15 +51,18 @@ class PDOAdapter extends AdapterAbstract
                         throw new DriverException('this driver requires a socket');
                     }
 
-                    if (!in_array($driver, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
-                        throw new DriverException('this driver requires a dsn');
+                    $isNetworkSocket = $socket instanceof NetworkSocket;
+
+                    if ($isNetworkSocket) {
+                        [$host, $port] = $socket->address();
                     }
 
-                    $dsn = $socket instanceof NetworkSocket
+                    $dsn = $isNetworkSocket
                         ? sprintf(
                             '%s:host=%s;port=%s;dbname=%s',
                             $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
-                            ...$socket->address(),
+                            $host,
+                            $port,
                             $name
                         )
                         : sprintf(
@@ -63,8 +70,7 @@ class PDOAdapter extends AdapterAbstract
                             $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
                             $socket->address(),
                             $name
-                        )
-                    ;
+                        );
 
                     if ($driver == Driver::PGSQL) {
                         if (array_key_exists(static::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
@@ -80,8 +86,8 @@ class PDOAdapter extends AdapterAbstract
 
                 return new PDO(
                     $dsn,
-                    $socket->username(),
-                    $socket->password()
+                    $socket?->username(),
+                    $socket?->password()
                 );
             },
             $driver,

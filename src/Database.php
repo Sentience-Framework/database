@@ -18,15 +18,14 @@ use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
 use Sentience\Database\Queries\UpdateQuery;
 use Sentience\Database\Results\ResultInterface;
-use Sentience\Database\Sockets\NetworkSocket;
-use Sentience\Database\Sockets\UnixSocket;
+use Sentience\Database\Sockets\SocketInterface;
 
 class Database
 {
     public static function connect(
         Driver $driver,
         string $name,
-        null|NetworkSocket|UnixSocket $socket,
+        ?SocketInterface $socket,
         array $queries,
         array $options,
         ?Closure $debug,

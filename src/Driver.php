@@ -13,8 +13,7 @@ use Sentience\Database\Dialects\MySQLDialect;
 use Sentience\Database\Dialects\PgSQLDialect;
 use Sentience\Database\Dialects\SQLDialect;
 use Sentience\Database\Dialects\SQLiteDialect;
-use Sentience\Database\Sockets\NetworkSocket;
-use Sentience\Database\Sockets\UnixSocket;
+use Sentience\Database\Sockets\SocketInterface;
 
 enum Driver: string
 {
@@ -34,7 +33,7 @@ enum Driver: string
 
     public function getAdapter(
         string $name,
-        null|NetworkSocket|UnixSocket $socket,
+        ?SocketInterface $socket,
         array $queries,
         array $options,
         ?Closure $debug,
