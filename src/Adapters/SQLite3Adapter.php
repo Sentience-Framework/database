@@ -113,8 +113,6 @@ class SQLite3Adapter extends AdapterAbstract
         $this->sqlite3->close();
 
         $this->sqlite3 = null;
-
-        parent::disconnect();
     }
 
     public function isConnected(): bool
@@ -158,7 +156,7 @@ class SQLite3Adapter extends AdapterAbstract
             $this->sqlite3->exec($query);
 
             if ($this->lazy && $this->isInsertQuery($query)) {
-                $this->lastInsertId();
+                $this->cacheLastInsertId();
             }
         } catch (Throwable $exception) {
             $this->debug($query, $start, $exception);
@@ -185,7 +183,7 @@ class SQLite3Adapter extends AdapterAbstract
             $this->debug($query, $start);
 
             if ($this->lazy && $this->isInsertQuery($query)) {
-                $this->lastInsertId();
+                $this->cacheLastInsertId();
             }
 
             $result = new SQLite3Result($sqlite3Result);
@@ -265,7 +263,7 @@ class SQLite3Adapter extends AdapterAbstract
         $this->debug($queryWithParams->toSql($dialect), $start);
 
         if ($this->lazy && $this->isInsertQuery($queryWithParams)) {
-            $this->lastInsertId();
+            $this->cacheLastInsertId();
         }
 
         $result = new SQLite3Result($sqlite3Result);

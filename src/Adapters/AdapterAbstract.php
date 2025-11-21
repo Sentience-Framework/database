@@ -27,11 +27,6 @@ abstract class AdapterAbstract implements AdapterInterface
         }
     }
 
-    public function disconnect(): void
-    {
-        $this->lastInsertId = null;
-    }
-
     public function reconnect(): void
     {
         $this->disconnect();
@@ -265,6 +260,12 @@ abstract class AdapterAbstract implements AdapterInterface
         }
 
         return $this->inTransaction;
+    }
+
+    protected function cacheLastInsertId(): void
+    {
+        $this->lastInsertId = null;
+        $this->lastInsertId();
     }
 
     protected function debug(string|callable $query, float $start, null|string|Throwable $error = null): void

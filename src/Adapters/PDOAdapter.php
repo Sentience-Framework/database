@@ -29,7 +29,7 @@ class PDOAdapter extends AdapterAbstract
         bool $lazy = false
     ): static {
         return new static(
-            function () use ($driver, $socket, $name, $options): PDO {
+            function () use ($driver, $name, $socket, $options): PDO {
                 $dsn = (function (Driver $driver, string $name, ?SocketInterface $socket, array $options): string {
                     if (array_key_exists(static::OPTIONS_PDO_DSN, $options)) {
                         return (string) $options[static::OPTIONS_PDO_DSN];
@@ -144,8 +144,6 @@ class PDOAdapter extends AdapterAbstract
         }
 
         $this->pdo = null;
-
-        parent::disconnect();
     }
 
     public function isConnected(): bool
@@ -296,7 +294,7 @@ class PDOAdapter extends AdapterAbstract
             $this->pdo->exec($query);
 
             if ($this->lazy && $this->isInsertQuery($query)) {
-                $this->lastInsertId();
+                $this->cacheLastInsertId();
             }
         } catch (Throwable $exception) {
             $this->debug($query, $start, $exception);
@@ -323,7 +321,7 @@ class PDOAdapter extends AdapterAbstract
             $this->debug($query, $start);
 
             if ($this->lazy && $this->isInsertQuery($query)) {
-                $this->lastInsertId();
+                $this->cacheLastInsertId();
             }
 
             $result = new PDOResult($pdoStatement);
@@ -412,7 +410,7 @@ class PDOAdapter extends AdapterAbstract
         $this->debug($queryWithParams->toSql($dialect), $start);
 
         if ($this->lazy && $this->isInsertQuery($queryWithParams)) {
-            $this->lastInsertId();
+            $this->cacheLastInsertId();
         }
 
         $result = new PDOResult($pdoStatement);

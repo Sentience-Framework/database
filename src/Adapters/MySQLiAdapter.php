@@ -106,8 +106,6 @@ class MySQLiAdapter extends AdapterAbstract
         $this->mysqli->close();
 
         $this->mysqli = null;
-
-        parent::disconnect();
     }
 
     public function isConnected(): bool
@@ -159,7 +157,7 @@ class MySQLiAdapter extends AdapterAbstract
             $this->mysqli->query($query);
 
             if ($this->lazy && $this->isInsertQuery($query)) {
-                $this->lastInsertId();
+                $this->cacheLastInsertId();
             }
         } catch (Throwable $exception) {
             $this->debug($query, $start, $exception);
@@ -186,7 +184,7 @@ class MySQLiAdapter extends AdapterAbstract
             $this->debug($query, $start);
 
             if ($this->lazy && $this->isInsertQuery($query)) {
-                $this->lastInsertId();
+                $this->cacheLastInsertId();
             }
 
             $result = new MySQLiResult($mysqliResult);
@@ -278,7 +276,7 @@ class MySQLiAdapter extends AdapterAbstract
         }
 
         if ($this->lazy && $this->isInsertQuery($queryWithParams)) {
-            $this->lastInsertId();
+            $this->cacheLastInsertId();
         }
 
         $mysqliResult = $mysqliStmt->get_result();
