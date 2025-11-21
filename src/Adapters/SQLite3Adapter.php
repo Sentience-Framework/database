@@ -11,13 +11,16 @@ use Sentience\Database\Driver;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Results\SQLite3Result;
+use Sentience\Database\Sockets\SocketInterface;
 
 class SQLite3Adapter extends AdapterAbstract
 {
     protected ?SQLite3 $sqlite3 = null;
 
-    public static function sqlite3(
-        string $file,
+    public static function fromSocket(
+        Driver $driver,
+        string $name,
+        ?SocketInterface $socket,
         array $queries,
         array $options,
         ?Closure $debug,
@@ -25,7 +28,7 @@ class SQLite3Adapter extends AdapterAbstract
     ): static {
         return new static(
             fn (): SQLite3 => new SQLite3(
-                $file,
+                $name,
                 !($options[AdapterInterface::OPTIONS_SQLITE_READ_ONLY] ?? false)
                 ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
                 : SQLITE3_OPEN_READONLY,

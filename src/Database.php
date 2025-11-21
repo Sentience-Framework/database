@@ -5,9 +5,7 @@ namespace Sentience\Database;
 use Closure;
 use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
-use Sentience\Database\Adapters\MySQLiAdapter;
 use Sentience\Database\Adapters\PDOAdapter;
-use Sentience\Database\Adapters\SQLite3Adapter;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\AlterTableQuery;
 use Sentience\Database\Queries\CreateTableQuery;
@@ -20,64 +18,36 @@ use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
 use Sentience\Database\Queries\UpdateQuery;
 use Sentience\Database\Results\ResultInterface;
+use Sentience\Database\Sockets\NetworkSocket;
+use Sentience\Database\Sockets\UnixSocket;
 
 class Database
 {
     public static function connect(
         Driver $driver,
-        string $host,
-        int $port,
         string $name,
-        string $username,
-        string $password,
+        null|NetworkSocket|UnixSocket $socket,
         array $queries,
         array $options,
         ?Closure $debug,
         bool $usePdoAdapter = false,
         bool $lazy = false
     ): static {
-        $adapter = !$usePdoAdapter ? $driver->getAdapter() : PDOAdapter::class;
-        $dialect = $driver->getDialect();
-
-        $adapter = match ($adapter) {
-            MySQLiAdapter::class => MySQLiAdapter::mysqli(
-                $driver,
-                $host,
-                $port,
-                $name,
-                $username,
-                $password,
-                $queries,
-                $options,
-                $debug,
-                $lazy
-            ),
-            SQLite3Adapter::class => SQLite3Adapter::sqlite3(
-                $name,
-                $queries,
-                $options,
-                $debug,
-                $lazy
-            ),
-            default => PDOAdapter::pdo(
-                $driver,
-                $host,
-                $port,
-                $name,
-                $username,
-                $password,
-                $queries,
-                $options,
-                $debug,
-                $lazy
-            )
-        };
+        $adapter = $driver->getAdapter(
+            $name,
+            $socket,
+            $queries,
+            $options,
+            $debug,
+            $usePdoAdapter,
+            $lazy
+        );
 
         $version = ($options[AdapterInterface::OPTIONS_VERSION] ?? null)
             ? (string) $options[AdapterInterface::OPTIONS_VERSION]
             : $adapter->version();
 
-        $dialect = new $dialect($driver, $version);
+        $dialect = $driver->getDialect($version);
 
         return new static($adapter, $dialect);
     }
@@ -98,14 +68,12 @@ class Database
             $debug,
             $lazy
         );
-        $dialect = $driver->getDialect();
 
-        $dialect = new $dialect(
-            $driver,
-            ($options[AdapterInterface::OPTIONS_VERSION] ?? null)
+        $version = ($options[AdapterInterface::OPTIONS_VERSION] ?? null)
             ? (string) $options[AdapterInterface::OPTIONS_VERSION]
-            : $adapter->version()
-        );
+            : $adapter->version();
+
+        $dialect = $driver->getDialect($version);
 
         return new static($adapter, $dialect);
     }

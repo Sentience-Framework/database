@@ -2,14 +2,19 @@
 
 namespace Sentience\Database;
 
+use Closure;
+use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Adapters\MySQLiAdapter;
 use Sentience\Database\Adapters\PDOAdapter;
 use Sentience\Database\Adapters\SQLite3Adapter;
+use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Dialects\FirebirdDialect;
 use Sentience\Database\Dialects\MySQLDialect;
 use Sentience\Database\Dialects\PgSQLDialect;
 use Sentience\Database\Dialects\SQLDialect;
 use Sentience\Database\Dialects\SQLiteDialect;
+use Sentience\Database\Sockets\NetworkSocket;
+use Sentience\Database\Sockets\UnixSocket;
 
 enum Driver: string
 {
@@ -27,25 +32,44 @@ enum Driver: string
     case ORACLE = 'oci';
     case SQLSRV = 'sqlsrv';
 
-    public function getAdapter(): string
-    {
-        return match ($this) {
-            static::MARIADB,
-            static::MYSQL => MySQLiAdapter::class,
-            static::SQLITE => SQLite3Adapter::class,
-            default => PDOAdapter::class
-        };
+    public function getAdapter(
+        string $name,
+        null|NetworkSocket|UnixSocket $socket,
+        array $queries,
+        array $options,
+        ?Closure $debug,
+        bool $usePdoAdapter = false,
+        bool $lazy = false
+    ): AdapterInterface {
+        $adapter = !$usePdoAdapter ?
+            match ($this) {
+                static::MARIADB,
+                static::MYSQL => MySQLiAdapter::class,
+                static::SQLITE => SQLite3Adapter::class,
+                default => PDOAdapter::class
+            }
+        : PDOAdapter::class;
+
+        return $adapter::fromSocket(
+            $this,
+            $name,
+            $socket,
+            $queries,
+            $options,
+            $debug,
+            $lazy
+        );
     }
 
-    public function getDialect(): string
+    public function getDialect(int|string $version): DialectInterface
     {
         return match ($this) {
-            static::FIREBIRD => FirebirdDialect::class,
+            static::FIREBIRD => new FirebirdDialect($this, $version),
             static::MARIADB,
-            static::MYSQL => MySQLDialect::class,
-            static::PGSQL => PgSQLDialect::class,
-            static::SQLITE => SQLiteDialect::class,
-            default => SQLDialect::class
+            static::MYSQL => new MySQLDialect($this, $version),
+            static::PGSQL => new PgSQLDialect($this, $version),
+            static::SQLITE => new SQLiteDialect($this, $version),
+            default => new SQLDialect($this, $version)
         };
     }
 }

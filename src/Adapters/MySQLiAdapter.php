@@ -7,9 +7,12 @@ use mysqli;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
+use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\MySQLiResult;
 use Sentience\Database\Results\Result;
+use Sentience\Database\Sockets\NetworkSocket;
+use Sentience\Database\Sockets\SocketInterface;
 
 class MySQLiAdapter extends AdapterAbstract
 {
@@ -20,32 +23,37 @@ class MySQLiAdapter extends AdapterAbstract
 
     protected ?mysqli $mysqli = null;
 
-    public static function mysqli(
+    public static function fromSocket(
         Driver $driver,
-        string $host,
-        int $port,
         string $name,
-        string $username,
-        string $password,
+        ?SocketInterface $socket,
         array $queries,
         array $options,
         ?Closure $debug,
         bool $lazy = false
     ): static {
-        $isSocket = str_starts_with($host, '/');
+        if (!$socket) {
+            throw new DriverException('this driver requires a socket');
+        }
 
-        $hostname = ($options[static::OPTIONS_PERSISTENT] ?? false)
-            ? sprintf('p:%s', $host)
-            : $host;
+        $isNetworkSocket = $socket instanceof NetworkSocket;
+
+        if ($isNetworkSocket) {
+            [$host, $port] = $socket->address();
+        }
+
+        $hostname = $isNetworkSocket
+            ? ($options[static::OPTIONS_PERSISTENT] ?? false) ? sprintf('p:%s', $host) : $host
+            : null;
 
         return new static(
-            fn(): mysqli => new mysqli(
-                !$isSocket ? $hostname : null,
-                $username,
-                $password,
+            fn (): mysqli => new mysqli(
+                $hostname,
+                $socket->username(),
+                $socket->password(),
                 $name,
-                $port,
-                $isSocket ? $host : null
+                $isNetworkSocket ? $port : null,
+                !$isNetworkSocket ? $socket->address() : null
             ),
             $driver,
             $queries,

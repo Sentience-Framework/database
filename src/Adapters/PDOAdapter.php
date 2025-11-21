@@ -12,32 +12,27 @@ use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\PDOResult;
 use Sentience\Database\Results\Result;
+use Sentience\Database\Sockets\NetworkSocket;
+use Sentience\Database\Sockets\SocketInterface;
 
 class PDOAdapter extends AdapterAbstract
 {
     protected ?PDO $pdo = null;
 
-    public static function pdo(
+    public static function fromSocket(
         Driver $driver,
-        string $host,
-        int $port,
         string $name,
-        string $username,
-        string $password,
+        ?SocketInterface $socket,
         array $queries,
         array $options,
         ?Closure $debug,
         bool $lazy = false
     ): static {
         return new static(
-            function () use ($driver, $host, $port, $name, $username, $password, $options): PDO {
-                $dsn = (function (Driver $driver, string $host, int $port, string $name, array $options): string {
+            function () use ($driver, $socket, $name, $options): PDO {
+                $dsn = (function (Driver $driver, string $name, ?SocketInterface $socket, array $options): string {
                     if (array_key_exists(static::OPTIONS_PDO_DSN, $options)) {
                         return (string) $options[static::OPTIONS_PDO_DSN];
-                    }
-
-                    if (!in_array($driver, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
-                        throw new DriverException('this driver requires a dsn');
                     }
 
                     if ($driver == Driver::SQLITE) {
@@ -48,13 +43,28 @@ class PDOAdapter extends AdapterAbstract
                         );
                     }
 
-                    $dsn = sprintf(
-                        '%s:host=%s;port=%s;dbname=%s',
-                        $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
-                        $host,
-                        $port,
-                        $name
-                    );
+                    if (!$socket) {
+                        throw new DriverException('this driver requires a socket');
+                    }
+
+                    if (!in_array($driver, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
+                        throw new DriverException('this driver requires a dsn');
+                    }
+
+                    $dsn = $socket instanceof NetworkSocket
+                        ? sprintf(
+                            '%s:host=%s;port=%s;dbname=%s',
+                            $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
+                            ...$socket->address(),
+                            $name
+                        )
+                        : sprintf(
+                            '%s:unix_socket=%s;dbname=%s',
+                            $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
+                            $socket->address(),
+                            $name
+                        )
+                    ;
 
                     if ($driver == Driver::PGSQL) {
                         if (array_key_exists(static::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
@@ -66,12 +76,12 @@ class PDOAdapter extends AdapterAbstract
                     }
 
                     return $dsn;
-                })($driver, $host, $port, $name, $options);
+                })($driver, $name, $socket, $options);
 
                 return new PDO(
                     $dsn,
-                    $username,
-                    $password
+                    $socket->username(),
+                    $socket->password()
                 );
             },
             $driver,

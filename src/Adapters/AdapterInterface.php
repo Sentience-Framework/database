@@ -2,9 +2,12 @@
 
 namespace Sentience\Database\Adapters;
 
+use Closure;
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Driver;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\ResultInterface;
+use Sentience\Database\Sockets\SocketInterface;
 
 interface AdapterInterface
 {
@@ -24,6 +27,16 @@ interface AdapterInterface
     public const string OPTIONS_SQLITE_FOREIGN_KEYS = 'foreign_keys';
     public const string OPTIONS_SQLITE_OPTIMIZE = 'optimize';
     public const string REGEXP_LIKE_FUNCTION = 'REGEXP_LIKE';
+
+    public static function fromSocket(
+        Driver $driver,
+        string $name,
+        ?SocketInterface $socket,
+        array $queries,
+        array $options,
+        ?Closure $debug,
+        bool $lazy = false
+    ): static;
 
     public function connect(): void;
     public function disconnect(): void;
