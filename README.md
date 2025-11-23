@@ -15,13 +15,13 @@
 The Sentience database abstraction offers a lightweight, no dependencies, database implementation. Through the use of adapter classes it can wrap around PDO, mysqli, and SQLite3. Through the use of easy to extend interfaces it's easy to add your adapters and dialects and use them natively in the Sentience database implementation.
 
 ### Natively supported database dialects
-- Firebird
-- MariaDB
-- MySQL
-- Postgres
-- SQLite
+- Firebird (PDO)
+- MariaDB (PDO / Mysqli)
+- MySQL (PDO / Mysqli)
+- Postgres (PDO)
+- SQLite (PDO / SQLite3)
 
-### Unofficially supported through standard SQL dialect
+### Unofficially supported through standard SQL dialect with PDO
 - Cubrid
 - IBM DB2
 - Informix
@@ -101,10 +101,8 @@ use Sentience\Database\Database;
 
 $database = Database::connect(
     $driver,
-    $host,
-    $port,
-    $username,
-    $password,
+    $name,
+    $socket, // NetworkSocket, UnixSocket, or null for SQLite
     $queries, // A list of queries to execute when initializing the session
     $options, // An associative array of extra options (more on that in #4),
     $debug, // A callback that takes (string $query, float $startTime, ?string $error) as arguments
@@ -112,6 +110,8 @@ $database = Database::connect(
     $lazy // Disconnect after each query, reconnect when ->exec(), ->query(), or ->queryWithParams() is called
 );
 ```
+
+The socket constructor arg should be a `NetworkSocket` or `UnixSocket` class.
 
 If you wish the connect a custom PDO implementation, you can use `::pdo`. The first argument is a callback that should return a new instance of PDO. The reason it requires a callback, is because lazy mode uses this callback to reinitialize the connection after terminating it.
 

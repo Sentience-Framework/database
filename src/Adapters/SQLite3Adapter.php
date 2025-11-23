@@ -29,10 +29,10 @@ class SQLite3Adapter extends AdapterAbstract
         return new static(
             fn (): SQLite3 => new SQLite3(
                 $name,
-                !($options[AdapterInterface::OPTIONS_SQLITE_READ_ONLY] ?? false)
+                !($options[static::OPTIONS_SQLITE_READ_ONLY] ?? false)
                 ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
                 : SQLITE3_OPEN_READONLY,
-                (string) ($options[AdapterInterface::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
+                (string) ($options[static::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
             ),
             Driver::SQLITE,
             $queries,

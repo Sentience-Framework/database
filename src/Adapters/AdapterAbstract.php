@@ -11,6 +11,8 @@ use Sentience\Database\Queries\Query;
 
 abstract class AdapterAbstract implements AdapterInterface
 {
+    public const string REGEXP_LIKE_FUNCTION = 'REGEXP_LIKE';
+
     protected bool $inTransaction = false;
     protected null|int|string $lastInsertId = null;
 

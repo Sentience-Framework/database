@@ -26,7 +26,6 @@ interface AdapterInterface
     public const string OPTIONS_SQLITE_JOURNAL_MODE = 'journal_mode';
     public const string OPTIONS_SQLITE_FOREIGN_KEYS = 'foreign_keys';
     public const string OPTIONS_SQLITE_OPTIMIZE = 'optimize';
-    public const string REGEXP_LIKE_FUNCTION = 'REGEXP_LIKE';
 
     public static function fromSocket(
         Driver $driver,

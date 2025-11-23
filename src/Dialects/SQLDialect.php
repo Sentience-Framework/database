@@ -139,7 +139,7 @@ class SQLDialect extends DialectAbstract
                 ', ',
                 array_map(
                     function (mixed $value) use (&$params): string {
-                        return $this->buildPlaceholder($params, $value);
+                        return $this->buildQuestionMark($params, $value);
                     },
                     $values
                 )
@@ -175,7 +175,7 @@ class SQLDialect extends DialectAbstract
                     return sprintf(
                         '%s = %s',
                         $this->escapeIdentifier($key),
-                        $this->buildPlaceholder($params, $value)
+                        $this->buildQuestionMark($params, $value)
                     );
                 },
                 $values,
@@ -508,7 +508,7 @@ class SQLDialect extends DialectAbstract
             $condition->condition->value,
             $condition->value instanceof SelectQuery
             ? $this->buildSubSelectQuery($params, $condition->value)
-            : $this->buildPlaceholder($params, $condition->value)
+            : $this->buildQuestionMark($params, $condition->value)
         );
     }
 
@@ -516,11 +516,11 @@ class SQLDialect extends DialectAbstract
     {
         $min = $condition->value[0] instanceof SelectQuery
             ? $this->buildSubSelectQuery($params, $condition->value[0])
-            : $this->buildPlaceholder($params, $condition->value[0]);
+            : $this->buildQuestionMark($params, $condition->value[0]);
 
         $max = $condition->value[0] instanceof SelectQuery
             ? $this->buildSubSelectQuery($params, $condition->value[1])
-            : $this->buildPlaceholder($params, $condition->value[1]);
+            : $this->buildQuestionMark($params, $condition->value[1]);
 
         $query .= sprintf(
             '%s %s %s AND %s',
@@ -539,7 +539,7 @@ class SQLDialect extends DialectAbstract
             $condition->condition->value,
             $condition->value instanceof SelectQuery
             ? $this->buildSubSelectQuery($params, $condition->value)
-            : $this->buildPlaceholder($params, $condition->value)
+            : $this->buildQuestionMark($params, $condition->value)
         );
     }
 
@@ -557,7 +557,7 @@ class SQLDialect extends DialectAbstract
             $condition->condition->value,
             $condition->value instanceof SelectQuery
             ? $this->buildSubSelectQuery($params, $condition->value)
-            : $this->buildPlaceholder($params, $condition->value)
+            : $this->buildQuestionMark($params, $condition->value)
         );
     }
 
@@ -570,8 +570,8 @@ class SQLDialect extends DialectAbstract
         $query .= sprintf(
             'REGEXP_LIKE(%s, %s, %s)',
             $this->escapeIdentifier($condition->identifier),
-            $this->buildPlaceholder($params, $condition->value[0]),
-            $this->buildPlaceholder($params, $condition->value[1])
+            $this->buildQuestionMark($params, $condition->value[0]),
+            $this->buildQuestionMark($params, $condition->value[1])
         );
     }
 
@@ -583,7 +583,7 @@ class SQLDialect extends DialectAbstract
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
             $condition->condition == ConditionEnum::REGEX ? $equals : $notEquals,
-            $this->buildPlaceholder(
+            $this->buildQuestionMark(
                 $params,
                 !empty($flags)
                 ? sprintf(
@@ -731,7 +731,7 @@ class SQLDialect extends DialectAbstract
         $query .= ' RETURNING ' . $columns;
     }
 
-    protected function buildPlaceholder(array &$params, mixed $value): string
+    protected function buildQuestionMark(array &$params, mixed $value): string
     {
         if ($value instanceof Raw) {
             return $value;
