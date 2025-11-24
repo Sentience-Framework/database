@@ -121,26 +121,33 @@ class InsertQuery extends Query
 
     protected function update(array $conflict, bool $emulatePrepare): ResultInterface
     {
-        if (!is_null($this->onConflict->updates)) {
-            $updateQuery = $this->database->update($this->table);
+        if (is_null($this->onConflict->updates) && $this->lastInsertId) {
+            return $this->database->update($this->table)
+                ->values($conflict)
+                ->whereIn($this->lastInsertId, [])
+                ->execute($emulatePrepare);
+        }
 
-            $updates = count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values;
+        $updateQuery = $this->database->update($this->table);
 
-            $updateQuery->values($updates);
+        $updates = !is_null($this->onConflict->updates)
+            ? count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values
+            : $conflict;
 
-            foreach ($conflict as $column => $value) {
-                $updateQuery->whereEquals($column, $value);
-            }
+        $updateQuery->values($updates);
 
-            if (!is_null($this->returning)) {
-                $updateQuery->returning($this->returning);
-            }
+        foreach ($conflict as $column => $value) {
+            $updateQuery->whereEquals($column, $value);
+        }
 
-            $result = $updateQuery->execute($emulatePrepare);
+        if (!is_null($this->returning)) {
+            $updateQuery->returning($this->returning);
+        }
 
-            if (is_null($this->returning) || $this->dialect->returning()) {
-                return $result;
-            }
+        $result = $updateQuery->execute($emulatePrepare);
+
+        if (is_null($this->returning) || $this->dialect->returning()) {
+            return $result;
         }
 
         return $this->select(
