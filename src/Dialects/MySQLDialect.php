@@ -20,7 +20,6 @@ class MySQLDialect extends SQLDialect
     protected const string ESCAPE_IDENTIFIER = '`';
     protected const string ESCAPE_STRING = '"';
     protected const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
-    protected const bool ON_CONFLICT = true;
 
     public function createTable(
         bool $ifNotExists,
@@ -153,16 +152,21 @@ class MySQLDialect extends SQLDialect
         );
     }
 
+    public function onConflict(): bool
+    {
+        if ($this->driver == Driver::MARIADB) {
+            return true;
+        }
+
+        return $this->version >= 0401;
+    }
+
     public function returning(): bool
     {
         if ($this->driver != Driver::MARIADB) {
             return false;
         }
 
-        if ($this->version < 100500) {
-            return false;
-        }
-
-        return true;
+        return $this->version >= 100500;
     }
 }
