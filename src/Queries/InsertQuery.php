@@ -88,7 +88,7 @@ class InsertQuery extends Query
         return $this->database->select($this->table)
             ->columns(
                 count($this->returning) > 0
-                ? array_unique([$this->lastInsertId, ...$this->returning])
+                ? array_unique(array_filter([$this->lastInsertId, ...$this->returning]))
                 : []
             )
             ->whereGroup($whereGroup)
@@ -121,13 +121,6 @@ class InsertQuery extends Query
 
     protected function update(array $conflict, bool $emulatePrepare): ResultInterface
     {
-        if (is_null($this->onConflict->updates) && $this->lastInsertId) {
-            return $this->database->update($this->table)
-                ->values($conflict)
-                ->whereIn($this->lastInsertId, [])
-                ->execute($emulatePrepare);
-        }
-
         $updateQuery = $this->database->update($this->table);
 
         $updates = !is_null($this->onConflict->updates)
