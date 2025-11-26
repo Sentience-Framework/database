@@ -734,7 +734,7 @@ class SQLDialect extends DialectAbstract
     protected function buildQuestionMark(array &$params, mixed $value): string
     {
         if ($value instanceof Raw) {
-            return $value;
+            return (string) $value;
         }
 
         if (is_array($value)) {
