@@ -34,7 +34,7 @@ class FirebirdDialect extends SQLDialect
 
     protected function buildOffset(string &$query, ?int $limit, ?int $offset): void
     {
-        if (is_null($offset)) {
+        if (in_array(null, [$limit, $offset], true)) {
             return;
         }
 
