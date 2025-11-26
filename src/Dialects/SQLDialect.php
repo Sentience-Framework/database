@@ -22,6 +22,7 @@ use Sentience\Database\Queries\Objects\DropColumn;
 use Sentience\Database\Queries\Objects\DropConstraint;
 use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\Having;
+use Sentience\Database\Queries\Objects\Identifier;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\OrderBy;
 use Sentience\Database\Queries\Objects\QueryWithParams;
@@ -85,7 +86,7 @@ class SQLDialect extends DialectAbstract
         $query .= ' FROM';
 
         $this->buildTable($query, $params, $table);
-        $this->buildJoins($query, $joins);
+        $this->buildJoins($query, $params, $joins);
         $this->buildWhere($query, $params, $where);
         $this->buildGroupBy($query, $groupBy);
         $this->buildHaving($query, $params, $having);
@@ -415,7 +416,7 @@ class SQLDialect extends DialectAbstract
         $query .= $this->escapeIdentifier($table);
     }
 
-    protected function buildJoins(string &$query, array $joins): void
+    protected function buildJoins(string &$query, array &$params, array $joins): void
     {
         if (count($joins) == 0) {
             return;
@@ -434,22 +435,21 @@ class SQLDialect extends DialectAbstract
                 continue;
             }
 
-            $joinTableHasAlias = $join->joinTable instanceof Alias;
-            $joinTable = $joinTableHasAlias ? $join->joinTable->identifier : $join->joinTable;
-            $joinTableAlias = $joinTableHasAlias ? $join->joinTable->alias : null;
-            $joinTableColumn = $join->joinTableColumn;
-            $onTable = $join->onTable;
-            $onTableColumn = $join->onTableColumn;
-
             $query .= sprintf(
-                '%s %s ON %s.%s = %s.%s',
+                '%s %s ON ',
                 $join->join->value,
-                $this->escapeIdentifierWithAlias($joinTable, $joinTableAlias),
-                $this->escapeIdentifier($joinTableAlias ?? $joinTable),
-                $this->escapeIdentifier($joinTableColumn),
-                $this->escapeIdentifier($onTable),
-                $this->escapeIdentifier($onTableColumn)
+                $join->table instanceof Alias
+                ? $this->escapeIdentifierWithAlias($join->table->identifier, $join->table->alias)
+                : $this->escapeIdentifier($join->table)
             );
+
+            $conditions = $join->getConditions();
+
+            foreach ($conditions as $index => $condition) {
+                $condition instanceof Condition
+                    ? $this->buildCondition($query, $params, $index, $condition)
+                    : $this->buildConditionGroup($query, $params, $index, $condition);
+            }
         }
     }
 
@@ -735,6 +735,10 @@ class SQLDialect extends DialectAbstract
     {
         if ($value instanceof Raw) {
             return (string) $value;
+        }
+
+        if ($value instanceof Identifier) {
+            return $this->escapeIdentifier($value->identifier);
         }
 
         if (is_array($value)) {

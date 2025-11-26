@@ -12,18 +12,14 @@ trait JoinsTrait
 {
     protected array $joins = [];
 
-    public function leftJoin(string|array|Alias|Raw $joinTable, string $joinTableColumn, string|array|Raw $onTable, string $onTableColumn): static
+    public function leftJoin(string|array|Alias|Raw $table, callable $on): static
     {
-        $this->addJoin(JoinEnum::LEFT_JOIN, $joinTable, $joinTableColumn, $onTable, $onTableColumn);
-
-        return $this;
+        return $this->addJoin(JoinEnum::LEFT_JOIN, $table, $on);
     }
 
-    public function innerJoin(string|array|Alias|Raw $joinTable, string $joinTableColumn, string|array|Raw $onTable, string $onTableColumn): static
+    public function innerJoin(string|array|Alias|Raw $table, callable $on): static
     {
-        $this->addJoin(JoinEnum::INNER_JOIN, $joinTable, $joinTableColumn, $onTable, $onTableColumn);
-
-        return $this;
+        return $this->addJoin(JoinEnum::INNER_JOIN, $table, $on);
     }
 
     public function join(string $join): static
@@ -33,8 +29,22 @@ trait JoinsTrait
         return $this;
     }
 
-    protected function addJoin(JoinEnum $join, string|array|Alias|Raw $joinTable, string $joinTableColumn, string|array|Raw $onTable, string $onTableColumn): void
+    protected function addJoin(JoinEnum $join, string|array|Alias|Raw $table, callable $on): static
     {
-        $this->joins[] = new Join($join, $joinTable, $joinTableColumn, $onTable, $onTableColumn);
+        $join = new Join($join, $table);
+
+        $join = $on($join) ?? $join;
+
+        if (!($join instanceof Join)) {
+            return $this;
+        }
+
+        if (count($join->getConditions()) == 0) {
+            return $this;
+        }
+
+        $this->joins[] = $join;
+
+        return $this;
     }
 }

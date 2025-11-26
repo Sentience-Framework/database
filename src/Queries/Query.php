@@ -6,6 +6,7 @@ use DateTime;
 use Sentience\Database\Database;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Objects\Alias;
+use Sentience\Database\Queries\Objects\Identifier;
 use Sentience\Database\Queries\Objects\Raw;
 
 abstract class Query implements QueryInterface
@@ -29,9 +30,14 @@ abstract class Query implements QueryInterface
         return $this->database->queryWithParams($queryWithParams, $emulatePrepare);
     }
 
-    public static function alias(string|array|Raw $identifier, string $alias): Alias
+    public static function alias(string|array|Raw|SelectQuery $identifier, string $alias): Alias
     {
         return new Alias($identifier, $alias);
+    }
+
+    public static function identifier(string|array|Raw $identifier): Identifier
+    {
+        return new Identifier($identifier);
     }
 
     public static function raw(string $sql): Raw
