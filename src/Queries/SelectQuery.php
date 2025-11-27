@@ -83,20 +83,4 @@ class SelectQuery extends Query
 
         return $count;
     }
-
-    public function exists(bool $emulatePrepare = false): bool
-    {
-        $previousLimit = $this->limit;
-        $previousOffset = $this->offset;
-
-        $this->limit = 1;
-        $this->offset = null;
-
-        $count = $this->count(null, $emulatePrepare);
-
-        $this->limit = $previousLimit;
-        $this->offset = $previousOffset;
-
-        return $count > 0;
-    }
 }

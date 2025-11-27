@@ -26,9 +26,9 @@ class Database
         Driver $driver,
         string $name,
         ?SocketInterface $socket,
-        array $queries,
-        array $options,
-        ?Closure $debug,
+        array $queries = [],
+        array $options = [],
+        ?Closure $debug = null,
         bool $usePdoAdapter = false,
         bool $lazy = false
     ): static {
