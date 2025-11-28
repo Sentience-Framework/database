@@ -10,6 +10,7 @@ use Sentience\Database\Queries\Traits\LastInsertIdTrait;
 use Sentience\Database\Queries\Traits\OnConflictTrait;
 use Sentience\Database\Queries\Traits\ReturningTrait;
 use Sentience\Database\Queries\Traits\ValuesTrait;
+use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
 
 class InsertQuery extends Query
@@ -121,35 +122,39 @@ class InsertQuery extends Query
 
     protected function update(array $conflict, bool $emulatePrepare): ResultInterface
     {
-        $updateQuery = $this->database->update($this->table);
+        if (!is_null($this->onConflict->conflict)) {
+            $updateQuery = $this->database->update($this->table);
 
-        $updates = !is_null($this->onConflict->updates)
-            ? count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values
-            : $conflict;
+            $updates = count($this->onConflict->updates) > 0
+                ? $this->onConflict->updates
+                : $this->values;
 
-        $updateQuery->values($updates);
+            $updateQuery->values($updates);
 
-        foreach ($conflict as $column => $value) {
-            $updateQuery->whereEquals($column, $value);
+            foreach ($conflict as $column => $value) {
+                $updateQuery->whereEquals($column, $value);
+            }
+
+            if (!is_null($this->returning)) {
+                $updateQuery->returning($this->returning);
+            }
+
+            $result = $updateQuery->execute($emulatePrepare);
+
+            if ($this->dialect->returning()) {
+                return $result;
+            }
         }
 
-        if (!is_null($this->returning)) {
-            $updateQuery->returning($this->returning);
-        }
-
-        $result = $updateQuery->execute($emulatePrepare);
-
-        if (is_null($this->returning) || $this->dialect->returning()) {
-            return $result;
-        }
-
-        return $this->select(
-            function (ConditionGroup $conditionGroup) use ($conflict): void {
-                foreach ($conflict as $column => $value) {
-                    $conditionGroup->whereEquals($column, $value);
-                }
-            },
-            $emulatePrepare
-        );
+        return !is_null($this->returning)
+            ? $this->select(
+                function (ConditionGroup $conditionGroup) use ($conflict): void {
+                    foreach ($conflict as $column => $value) {
+                        $conditionGroup->whereEquals($column, $value);
+                    }
+                },
+                $emulatePrepare
+            )
+            : new Result([], []);
     }
 }
