@@ -19,8 +19,19 @@ class Result extends ResultAbstract
         array $columns,
         array $rows
     ) {
-        $this->columns = array_values($columns);
-        $this->rows = array_values($rows);
+        $this->columns = array_values(
+            array_map(
+                fn (mixed $column): string => (string) $column,
+                $columns
+            )
+        );
+
+        $this->rows = array_values(
+            array_map(
+                fn (mixed $row): array => (array) $row,
+                $rows
+            )
+        );
     }
 
     public function columns(): array
