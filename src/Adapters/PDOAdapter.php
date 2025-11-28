@@ -35,7 +35,7 @@ class PDOAdapter extends AdapterAbstract
                         return (string) $options[static::OPTIONS_PDO_DSN];
                     }
 
-                    if (!in_array($driver, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
+                    if (!in_array($driver, [Driver::FIREBIRD, Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
                         throw new DriverException('this driver requires a dsn');
                     }
 
@@ -55,21 +55,35 @@ class PDOAdapter extends AdapterAbstract
 
                     if ($isNetworkSocket) {
                         [$host, $port] = $socket->address();
+                    } else {
+                        $unixSocket = $socket->address();
                     }
 
-                    $dsn = $isNetworkSocket
-                        ? sprintf(
-                            '%s:host=%s;port=%s;dbname=%s',
-                            $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
+                    if ($driver == Driver::FIREBIRD) {
+                        return sprintf(
+                            '%s:dbname=%s/%d:%s',
+                            $driver->value,
                             $host,
                             $port,
                             $name
+                        );
+                    }
+
+                    $dsn = sprintf(
+                        '%s:dbname=%s',
+                        $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
+                        $name
+                    );
+
+                    $dsn .= $socket instanceof NetworkSocket
+                        ? sprintf(
+                            ';host=%s;port=%d',
+                            $host,
+                            $port
                         )
                         : sprintf(
-                            '%s:unix_socket=%s;dbname=%s',
-                            $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
-                            $socket->address(),
-                            $name
+                            ';unix_socket=%s',
+                            $unixSocket
                         );
 
                     if ($driver == Driver::PGSQL) {
@@ -496,7 +510,11 @@ class PDOAdapter extends AdapterAbstract
             return null;
         }
 
-        $lastInsertId = $this->pdo->lastInsertId($name);
+        try {
+            $lastInsertId = $this->pdo->lastInsertId($name);
+        } catch (Throwable $exception) {
+            return null;
+        }
 
         $this->lastInsertId = $this->lazy ? $lastInsertId : null;
 
