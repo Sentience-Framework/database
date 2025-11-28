@@ -58,7 +58,19 @@ class InsertQuery extends Query
             $conflict[$column] = $value;
         }
 
-        $count = $this->count($conflict, $emulatePrepare);
+        $result = $this->select(
+            function (ConditionGroup $conditionGroup) use ($conflict): void {
+                foreach ($conflict as $column => $value) {
+                    $conditionGroup->whereEquals($column, $value);
+                }
+            },
+            2,
+            $emulatePrepare
+        );
+
+        $rows = $result->fetchAssocs();
+
+        $count = count($rows);
 
         if ($count == 0) {
             return $this->insert($emulatePrepare);
@@ -68,32 +80,21 @@ class InsertQuery extends Query
             throw new QueryException('multiple rows in constraint');
         }
 
-        return $this->update($conflict, $emulatePrepare);
+        return !is_null($this->onConflict->updates)
+            ? $this->update($conflict, $emulatePrepare)
+            : $this->ignore($result, $rows);
     }
 
-    protected function count(array $conflict, bool $emulatePrepare): int
-    {
-        $selectQuery = $this->database->select($this->table);
-
-        foreach ($conflict as $column => $value) {
-            $selectQuery->whereEquals($column, $value);
-        }
-
-        $selectQuery->limit(2);
-
-        return $selectQuery->count(null, $emulatePrepare);
-    }
-
-    protected function select(Closure $whereGroup, bool $emulatePrepare): ResultInterface
+    protected function select(Closure $whereGroup, int $limit, bool $emulatePrepare): ResultInterface
     {
         return $this->database->select($this->table)
             ->columns(
-                count($this->returning) > 0
+                !empty($this->returning)
                 ? array_unique(array_filter([$this->lastInsertId, ...$this->returning]))
                 : []
             )
             ->whereGroup($whereGroup)
-            ->limit(1)
+            ->limit($limit)
             ->execute($emulatePrepare);
     }
 
@@ -116,45 +117,53 @@ class InsertQuery extends Query
                 $this->lastInsertId,
                 $lastInsertId
             ),
+            1,
             $emulatePrepare
+        );
+    }
+
+    protected function ignore(ResultInterface $result, array $rows): ResultInterface
+    {
+        $returning = !is_null($this->returning);
+
+        return new Result(
+            $returning ? $result->columns() : [],
+            $returning ? $rows : []
         );
     }
 
     protected function update(array $conflict, bool $emulatePrepare): ResultInterface
     {
-        if (!is_null($this->onConflict->updates)) {
-            $updateQuery = $this->database->update($this->table);
+        $updateQuery = $this->database->update($this->table);
 
-            $updates = count($this->onConflict->updates) > 0
-                ? $this->onConflict->updates
-                : $this->values;
+        $updates = !is_null($this->onConflict->updates)
+            ? count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values
+            : $conflict;
 
-            $updateQuery->values($updates);
+        $updateQuery->values($updates);
 
-            foreach ($conflict as $column => $value) {
-                $updateQuery->whereEquals($column, $value);
-            }
-
-            if (!is_null($this->returning)) {
-                $updateQuery->returning($this->returning);
-            }
-
-            $result = $updateQuery->execute($emulatePrepare);
-
-            if ($this->dialect->returning()) {
-                return $result;
-            }
+        foreach ($conflict as $column => $value) {
+            $updateQuery->whereEquals($column, $value);
         }
 
-        return !is_null($this->returning)
-            ? $this->select(
-                function (ConditionGroup $conditionGroup) use ($conflict): void {
-                    foreach ($conflict as $column => $value) {
-                        $conditionGroup->whereEquals($column, $value);
-                    }
-                },
-                $emulatePrepare
-            )
-            : new Result([], []);
+        if (!is_null($this->returning)) {
+            $updateQuery->returning($this->returning);
+        }
+
+        $result = $updateQuery->execute($emulatePrepare);
+
+        if (is_null($this->returning) || $this->dialect->returning()) {
+            return $result;
+        }
+
+        return $this->select(
+            function (ConditionGroup $conditionGroup) use ($conflict): void {
+                foreach ($conflict as $column => $value) {
+                    $conditionGroup->whereEquals($column, $value);
+                }
+            },
+            1,
+            $emulatePrepare
+        );
     }
 }
