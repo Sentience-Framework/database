@@ -96,6 +96,7 @@ interface DialectInterface
     public function castDateTime(DateTimeInterface $dateTime): mixed;
     public function parseBool(mixed $bool): bool;
     public function parseDateTime(string $string): ?DateTime;
+    public function bool(): bool;
     public function generatedByDefaultAsIdentity(): bool;
     public function onConflict(): bool;
     public function returning(): bool;

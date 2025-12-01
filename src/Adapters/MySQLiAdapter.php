@@ -69,9 +69,9 @@ class MySQLiAdapter extends AdapterAbstract
             return;
         }
 
-        $this->mysqli = ($this->connect)();
-
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+        $this->mysqli = ($this->connect)();
 
         if (array_key_exists(static::OPTIONS_MYSQL_CHARSET, $this->options)) {
             $this->mysqlNames(

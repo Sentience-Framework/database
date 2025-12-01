@@ -2,6 +2,7 @@
 
 namespace Sentience\Database\Dialects;
 
+use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Column;
@@ -12,7 +13,21 @@ use Sentience\Database\Queries\Objects\Raw;
 class FirebirdDialect extends SQLDialect
 {
     protected const string DATETIME_FORMAT = 'Y-m-d H:i:s.v';
+    protected const bool BOOL = true;
     protected const bool RETURNING = true;
+
+    public function __construct(Driver $driver, int|string $version)
+    {
+        if (is_int($version)) {
+            parent::__construct($driver, $version);
+
+            return;
+        }
+
+        preg_match('/Firebird\s(\d+\.\d+)/', $version, $match);
+
+        parent::__construct($driver, $match[1] ?? $version);
+    }
 
     public function createTable(
         bool $ifNotExists,
@@ -117,30 +132,11 @@ class FirebirdDialect extends SQLDialect
         $typeIsUppercase = (bool) preg_match('/[A-Z]/', $column->type);
 
         $column->type = match (strtoupper($column->type)) {
-            'TEXT' => $typeIsUppercase ? 'VARCHAR(255)' : 'timestamp',
+            'TEXT' => $typeIsUppercase ? 'VARCHAR(255)' : 'varchar(255)',
             'DATETIME' => $typeIsUppercase ? 'TIMESTAMP' : 'timestamp',
             default => $column->type
         };
 
         return parent::buildColumn($column);
-    }
-
-    public function castToQuery(mixed $value): mixed
-    {
-        if (is_bool($value)) {
-            return $value ? 'TRUE' : 'FALSE';
-        }
-
-        return parent::castToQuery($value);
-    }
-
-    public function castBool(bool $bool): bool
-    {
-        return $bool;
-    }
-
-    public function parseBool(mixed $bool): bool
-    {
-        return $bool;
     }
 }

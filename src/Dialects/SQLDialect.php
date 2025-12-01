@@ -38,6 +38,7 @@ class SQLDialect extends DialectAbstract
     protected const bool ESCAPE_ANSI = true;
     protected const string ESCAPE_IDENTIFIER = '"';
     protected const string ESCAPE_STRING = "'";
+    protected const bool BOOL = false;
     protected const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
     protected const bool ON_CONFLICT = false;
     protected const bool RETURNING = false;
@@ -986,6 +987,10 @@ class SQLDialect extends DialectAbstract
         }
 
         if (is_bool($value)) {
+            if ($this->bool()) {
+                return $value ? 'TRUE' : 'FALSE';
+            }
+
             $bool = $this->castBool($value);
 
             return is_string($bool)
@@ -1006,7 +1011,9 @@ class SQLDialect extends DialectAbstract
 
     public function castBool(bool $bool): mixed
     {
-        return $bool ? 1 : 0;
+        return !$this->bool()
+            ? $bool ? 1 : 0
+            : $bool;
     }
 
     public function castDateTime(DateTimeInterface $dateTimeInterface): mixed
@@ -1016,7 +1023,9 @@ class SQLDialect extends DialectAbstract
 
     public function parseBool(mixed $value): bool
     {
-        return $value == 1 ? true : false;
+        return !$this->bool()
+            ? $value == 1 ? true : false
+            : $value;
     }
 
     public function parseDateTime(string $string): ?DateTime
@@ -1068,6 +1077,11 @@ class SQLDialect extends DialectAbstract
         }
 
         return $dateTime;
+    }
+
+    public function bool(): bool
+    {
+        return static::BOOL;
     }
 
     public function generatedByDefaultAsIdentity(): bool
