@@ -4,6 +4,17 @@ namespace Sentience\Database\Results;
 
 abstract class ResultAbstract implements ResultInterface
 {
+    public function scalar(): mixed
+    {
+        $assoc = $this->fetchAssoc();
+
+        if (!$assoc) {
+            return null;
+        }
+
+        return current($assoc);
+    }
+
     public function fetchObject(string $class = 'stdClass', array $constructorArgs = []): ?object
     {
         $assoc = $this->fetchAssoc();
