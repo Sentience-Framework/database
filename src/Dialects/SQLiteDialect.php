@@ -3,6 +3,7 @@
 namespace Sentience\Database\Dialects;
 
 use Sentience\Database\Exceptions\QueryException;
+use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\AddPrimaryKeys;
 use Sentience\Database\Queries\Objects\AddUniqueConstraint;
@@ -148,6 +149,14 @@ class SQLiteDialect extends SQLDialect
     protected function buildAlterTableDropConstraint(DropConstraint $dropConstraint): string
     {
         throw new QueryException('SQLite does not support dropping constraints by altering the table');
+    }
+
+    public function type(TypeEnum $type, ?int $size = null): string
+    {
+        return match ($type) {
+            TypeEnum::FLOAT => 'REAL',
+            default => parent::type($type, $size)
+        };
     }
 
     public function onConflict(): bool

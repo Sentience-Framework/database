@@ -26,6 +26,8 @@ interface AdapterInterface
     public const string OPTIONS_SQLITE_JOURNAL_MODE = 'journal_mode';
     public const string OPTIONS_SQLITE_FOREIGN_KEYS = 'foreign_keys';
     public const string OPTIONS_SQLITE_OPTIMIZE = 'optimize';
+    public const string OPTIONS_SQLSRV_ENCRYPT = 'encrypt';
+    public const string OPTIONS_SQLSRV_TRUST_SERVER_CERTIFICATE = 'trust_server_certificate';
 
     public static function fromSocket(
         Driver $driver,

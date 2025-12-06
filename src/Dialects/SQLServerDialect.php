@@ -2,33 +2,19 @@
 
 namespace Sentience\Database\Dialects;
 
-use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\QueryException;
-use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
+use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
+use Sentience\Database\Queries\Query;
 
-class FirebirdDialect extends SQLDialect
+class SQLServerDialect extends SQLDialect
 {
     protected const string DATETIME_FORMAT = 'Y-m-d H:i:s.v';
-    protected const bool BOOL = true;
-    protected const bool RETURNING = true;
-
-    public function __construct(Driver $driver, int|string $version)
-    {
-        if (is_int($version)) {
-            parent::__construct($driver, $version);
-
-            return;
-        }
-
-        preg_match('/Firebird\s(\d+\.\d+)/', $version, $match);
-
-        parent::__construct($driver, $match[1] ?? $version);
-    }
+    protected const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 
     public function createTable(
         bool $ifNotExists,
@@ -37,6 +23,12 @@ class FirebirdDialect extends SQLDialect
         array $primaryKeys,
         array $constraints
     ): QueryWithParams {
+        foreach ($columns as $column) {
+            if ($column->generatedByDefaultAsIdentity && !in_array($column->name, $primaryKeys)) {
+                $primaryKeys[] = $column->name;
+            }
+        }
+
         $createTableQuery = parent::createTable(
             false,
             $table,
@@ -50,16 +42,16 @@ class FirebirdDialect extends SQLDialect
         }
 
         if (!is_string($table)) {
-            throw new QueryException('Firebird create table query requires table as string');
+            throw new QueryException('SQL Server create table query requires table as string');
         }
 
         $query = sprintf(
-            'EXECUTE BLOCK AS BEGIN IF(NOT EXISTS(SELECT 1 FROM rdb$relations WHERE rdb$relation_name = %s)) THEN BEGIN EXECUTE STATEMENT %s; END END',
+            "IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = %s AND schema_id = SCHEMA_ID('dbo')) BEGIN %s END",
             $this->escapeString($table),
-            $this->escapeString($createTableQuery->toSql($this))
+            $createTableQuery->query
         );
 
-        return new QueryWithParams($query);
+        return new QueryWithParams($query, $createTableQuery->params);
     }
 
     public function dropTable(
@@ -76,16 +68,16 @@ class FirebirdDialect extends SQLDialect
         }
 
         if (!is_string($table)) {
-            throw new QueryException('Firebird drop table query requires table as string');
+            throw new QueryException('SQL Server drop table query requires table as string');
         }
 
         $query = sprintf(
-            'EXECUTE BLOCK AS BEGIN IF(EXISTS(SELECT 1 FROM rdb$relations WHERE rdb$relation_name = %s)) THEN BEGIN EXECUTE STATEMENT %s; END END',
+            "IF EXISTS (SELECT 1 FROM sys.tables WHERE name = %s AND schema_id = SCHEMA_ID('dbo')) BEGIN %s END",
             $this->escapeString($table),
-            $this->escapeString($dropTableQuery->toSql($this))
+            $dropTableQuery->query
         );
 
-        return new QueryWithParams($query);
+        return new QueryWithParams($query, $dropTableQuery->params);
     }
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
@@ -94,8 +86,8 @@ class FirebirdDialect extends SQLDialect
             $query,
             $params,
             $condition,
-            'SIMILAR TO',
-            'NOT SIMILAR TO'
+            'LIKE',
+            'NOT LIKE'
         );
     }
 
@@ -109,7 +101,15 @@ class FirebirdDialect extends SQLDialect
             return;
         }
 
-        $query .= ' ROWS ' . $limit;
+        $query = substr_replace(
+            $query,
+            sprintf(
+                'SELECT TOP(%d)',
+                $limit
+            ),
+            0,
+            6
+        );
     }
 
     protected function buildOffset(string &$query, ?int $limit, ?int $offset): void
@@ -118,27 +118,46 @@ class FirebirdDialect extends SQLDialect
             return;
         }
 
-        $rows = $offset + 1;
-        $to = $rows + $limit - 1;
-
         $query .= sprintf(
-            ' ROWS %d TO %d',
-            $rows,
-            $to
+            'OFFSET %d ROWS FETCH NEXT %d ROWS ONLY',
+            $offset,
+            $limit
         );
+    }
+
+    protected function buildOnConflict(string &$query, array &$params, ?OnConflict $onConflict, array $values, ?string $lastInsertId): void
+    {
+        /**
+         * SQL Server relies on Sentience's returning fallback
+         */
+
+        return;
+    }
+
+    protected function buildReturning(string &$query, ?array $returning): void
+    {
+        /**
+         * SQL Server relies on Sentience's returning fallback
+         */
+
+        return;
     }
 
     protected function buildColumn(Column $column): string
     {
+        if ($column->generatedByDefaultAsIdentity) {
+            $column->type .= ' IDENTITY(1,1)';
+        }
+
         return parent::buildColumn($column);
     }
 
-    public function type(TypeEnum $type, ?int $size = null): string
+    protected function escape(string $string, string $char): string
     {
-        return match ($type) {
-            TypeEnum::BOOL => 'BOOLEAN',
-            TypeEnum::STRING => sprintf('VARCHAR(%d)', $size > 255 ? 255 : $size ?? 255),
-            default => parent::type($type, $size)
-        };
+        if ($char == static::ESCAPE_IDENTIFIER) {
+            return '[' . Query::escapeAnsi($string, ['[', ']']) . ']';
+        }
+
+        return parent::escape($string, $char);
     }
 }

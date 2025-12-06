@@ -9,6 +9,7 @@ use DateTimeZone;
 use Throwable;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\ConditionEnum;
+use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\AddColumn;
 use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\AddPrimaryKeys;
@@ -70,7 +71,7 @@ class SQLDialect extends DialectAbstract
                 array_map(
                     function (string|array|Alias|Raw $column): string {
                         if ($column instanceof Alias) {
-                            return $this->escapeIdentifierWithAlias($column->identifier, $column->alias);
+                            return $this->escapeIdentifier($column->identifier, $column->alias);
                         }
 
                         if ($column instanceof Raw) {
@@ -403,7 +404,7 @@ class SQLDialect extends DialectAbstract
                 );
             }
 
-            $query .= $this->escapeIdentifierWithAlias($table->identifier, $table->alias);
+            $query .= $this->escapeIdentifier($table->identifier, $table->alias);
 
             return;
         }
@@ -440,7 +441,7 @@ class SQLDialect extends DialectAbstract
                 '%s %s ON ',
                 $join->join->value,
                 $join->table instanceof Alias
-                ? $this->escapeIdentifierWithAlias($join->table->identifier, $join->table->alias)
+                ? $this->escapeIdentifier($join->table->identifier, $join->table->alias)
                 : $this->escapeIdentifier($join->table)
             );
 
@@ -925,19 +926,16 @@ class SQLDialect extends DialectAbstract
         );
     }
 
-    protected function escapeIdentifierWithAlias(string|array|Raw $identifier, ?string $alias): string
+    public function escapeIdentifier(string|array|Raw $identifier, ?string $alias = null): string
     {
-        $escapedIdentifier = $this->escapeIdentifier($identifier);
-
-        if (!$alias) {
-            return $escapedIdentifier;
+        if ($alias) {
+            return sprintf(
+                '%s AS %s',
+                $this->escapeIdentifier($identifier),
+                $this->escapeIdentifier($alias)
+            );
         }
 
-        return sprintf('%s AS %s', $escapedIdentifier, $this->escapeIdentifier($alias));
-    }
-
-    public function escapeIdentifier(string|array|Raw $identifier): string
-    {
         if ($identifier instanceof Raw) {
             return (string) $identifier;
         }
@@ -1077,6 +1075,17 @@ class SQLDialect extends DialectAbstract
         }
 
         return $dateTime;
+    }
+
+    public function type(TypeEnum $type, ?int $size = null): string
+    {
+        return match ($type) {
+            TypeEnum::BOOL => $this->bool() ? 'BOOLEAN' : 'INTEGER',
+            TypeEnum::INT => $size > 32 ? 'BIGINT' : 'INTEGER',
+            TypeEnum::FLOAT => $size > 32 ? 'DECIMAL(30, 15)' : 'DECIMAL(15, 7)',
+            TypeEnum::STRING => $size > 255 ? 'TEXT' : sprintf('VARCHAR(%d)', $size ?? 255),
+            TypeEnum::DATETIME => 'DATETIME'
+        };
     }
 
     public function bool(): bool

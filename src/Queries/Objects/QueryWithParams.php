@@ -68,7 +68,7 @@ class QueryWithParams
         );
 
         foreach ($params as $key => $value) {
-            if (!is_numeric($key)) {
+            if (!ctype_digit((string) $key)) {
                 return $this->toSqlNamedParams($params);
             }
         }

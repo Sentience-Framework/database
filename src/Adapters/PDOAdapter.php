@@ -35,7 +35,7 @@ class PDOAdapter extends AdapterAbstract
                         return (string) $options[static::OPTIONS_PDO_DSN];
                     }
 
-                    if (!in_array($driver, [Driver::FIREBIRD, Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE])) {
+                    if (!in_array($driver, [Driver::FIREBIRD, Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE, Driver::SQLSRV])) {
                         throw new DriverException('this driver requires a dsn');
                     }
 
@@ -66,6 +66,18 @@ class PDOAdapter extends AdapterAbstract
                             $host,
                             $port,
                             $name
+                        );
+                    }
+
+                    if ($driver == Driver::SQLSRV) {
+                        return sprintf(
+                            '%s:Server=%s,%d;Database=%s;Encrypt=%s;TrustServerCertificate=yes',
+                            $driver->value,
+                            $host,
+                            $port,
+                            $name,
+                            ($options[static::OPTIONS_SQLSRV_ENCRYPT] ?? true) ? 'yes' : 'no',
+                            ($options[static::OPTIONS_SQLSRV_TRUST_SERVER_CERTIFICATE] ?? false) ? 'yes' : 'no'
                         );
                     }
 
@@ -121,9 +133,12 @@ class PDOAdapter extends AdapterAbstract
         $this->pdo = ($this->connect)();
 
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->pdo->setAttribute(PDO::ATTR_PERSISTENT, $this->options[static::OPTIONS_PERSISTENT] ?? false);
         $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         $this->pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
+
+        if (!in_array($this->driver, [Driver::DBLIB, Driver::SQLSRV])) {
+            $this->pdo->setAttribute(PDO::ATTR_PERSISTENT, $this->options[static::OPTIONS_PERSISTENT] ?? false);
+        }
 
         if (in_array($this->driver, [Driver::MARIADB, Driver::MYSQL])) {
             $this->configurePdoForMySQL($this->options);
@@ -396,7 +411,7 @@ class PDOAdapter extends AdapterAbstract
                 default => PDO::PARAM_STR
             };
 
-            is_numeric($key)
+            ctype_digit((string) $key)
                 ? $this->bindValue($pdoStatement, $key, $value, $type)
                 : $this->bindParam($pdoStatement, $key, $value, $type);
         }
@@ -522,7 +537,7 @@ class PDOAdapter extends AdapterAbstract
             return null;
         }
 
-        if (preg_match('/[0-9]+/', $lastInsertId)) {
+        if (ctype_digit($lastInsertId)) {
             return (int) $lastInsertId;
         }
 

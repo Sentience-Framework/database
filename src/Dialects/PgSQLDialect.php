@@ -3,6 +3,7 @@
 namespace Sentience\Database\Dialects;
 
 use DateTime;
+use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\OnConflict;
@@ -114,6 +115,15 @@ class PgSQLDialect extends SQLDialect
         }
 
         return parent::parseDateTime($string);
+    }
+
+    public function type(TypeEnum $type, ?int $size = null): string
+    {
+        return match ($type) {
+            TypeEnum::FLOAT => $size > 32 ? 'REAL' : 'DOUBLE PRECISION',
+            TypeEnum::DATETIME => 'TIMESTAMP',
+            default => parent::type($type, $size)
+        };
     }
 
     public function generatedByDefaultAsIdentity(): bool

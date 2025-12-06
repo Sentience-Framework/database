@@ -3,6 +3,7 @@
 namespace Sentience\Database\Dialects;
 
 use Sentience\Database\Driver;
+use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\Column;
@@ -154,6 +155,22 @@ class MySQLDialect extends SQLDialect
             5,
             10
         );
+    }
+
+    public function type(TypeEnum $type, ?int $size = null): string
+    {
+        return match ($type) {
+            TypeEnum::BOOL => 'TINYINT',
+            TypeEnum::FLOAT => $size > 32 ? 'FLOAT' : 'DOUBLE',
+            TypeEnum::STRING => match (true) {
+                $size > 16777215 => 'LONGTEXT',
+                $size > 65535 => 'MEDIUMTEXT',
+                $size > 255 => 'TEXT',
+                default => sprintf('VARCHAR(%d)', $size ?? 255)
+            },
+            TypeEnum::DATETIME => $size > 0 ? sprintf('DATETIME(%d)', $size) : 'DATETIME',
+            default => parent::type($type, $size)
+        };
     }
 
     public function onConflict(): bool

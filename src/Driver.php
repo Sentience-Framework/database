@@ -13,6 +13,7 @@ use Sentience\Database\Dialects\MySQLDialect;
 use Sentience\Database\Dialects\PgSQLDialect;
 use Sentience\Database\Dialects\SQLDialect;
 use Sentience\Database\Dialects\SQLiteDialect;
+use Sentience\Database\Dialects\SQLServerDialect;
 use Sentience\Database\Sockets\SocketInterface;
 
 enum Driver: string
@@ -68,6 +69,7 @@ enum Driver: string
             static::MYSQL => new MySQLDialect($this, $version),
             static::PGSQL => new PgSQLDialect($this, $version),
             static::SQLITE => new SQLiteDialect($this, $version),
+            static::SQLSRV => new SQLServerDialect($this, $version),
             default => new SQLDialect($this, $version)
         };
     }

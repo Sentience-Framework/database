@@ -3,6 +3,7 @@
 namespace Sentience\Database\Queries;
 
 use DateTimeInterface;
+use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
@@ -45,5 +46,35 @@ class CreateTableQuery extends Query
         $this->columns[] = new Column($name, $type, $notNull, $default, $generatedByDefaultAsIdentity);
 
         return $this;
+    }
+
+    public function identity(string $name, int $bits = 32): static
+    {
+        return $this->int($name, $bits, true, null, true);
+    }
+
+    public function bool(string $name, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null): static
+    {
+        return $this->column($name, $this->dialect->type(TypeEnum::BOOL), $notNull, $default);
+    }
+
+    public function int(string $name, int $bits = 64, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null, bool $generatedByDefaultAsIdentity = false): static
+    {
+        return $this->column($name, $this->dialect->type(TypeEnum::INT, $bits), $notNull, $default, $generatedByDefaultAsIdentity);
+    }
+
+    public function float(string $name, int $bits = 64, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null): static
+    {
+        return $this->column($name, $this->dialect->type(TypeEnum::FLOAT, $bits), $notNull, $default);
+    }
+
+    public function string(string $name, int $size = 255, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null): static
+    {
+        return $this->column($name, $this->dialect->type(TypeEnum::STRING, $size), $notNull, $default);
+    }
+
+    public function dateTime(string $name, int $size = 6, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null): static
+    {
+        return $this->column($name, $this->dialect->type(TypeEnum::DATETIME, $size), $notNull, $default);
     }
 }

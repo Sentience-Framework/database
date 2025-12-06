@@ -239,7 +239,7 @@ class SQLite3Adapter extends AdapterAbstract
                 default => SQLITE3_TEXT
             };
 
-            is_numeric($key)
+            ctype_digit((string) $key)
                 ? $this->bindValue($sqlite3Stmt, $key, $value, $type)
                 : $this->bindParam($sqlite3Stmt, $key, $value, $type);
         }

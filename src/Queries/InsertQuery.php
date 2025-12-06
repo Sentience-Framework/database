@@ -147,6 +147,14 @@ class InsertQuery extends Query
             ? count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values
             : $conflict;
 
+        if ($this->lastInsertId) {
+            $updates = array_filter(
+                $updates,
+                fn (string $column): bool => $column != $this->lastInsertId,
+                ARRAY_FILTER_USE_KEY
+            );
+        }
+
         $updateQuery->values($updates);
 
         foreach ($conflict as $column => $value) {
