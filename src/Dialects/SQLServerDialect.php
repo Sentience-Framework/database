@@ -3,6 +3,7 @@
 namespace Sentience\Database\Dialects;
 
 use Sentience\Database\Exceptions\QueryException;
+use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
@@ -159,5 +160,15 @@ class SQLServerDialect extends SQLDialect
         }
 
         return parent::escape($string, $char);
+    }
+
+    public function type(TypeEnum $type, ?int $size = null): string
+    {
+        return match ($type) {
+            TypeEnum::BOOL => 'SMALLINT',
+            TypeEnum::FLOAT => $size > 32 ? 'FLOAT(8)' : 'FLOAT(4)',
+            TypeEnum::DATETIME => $size > 3 ? sprintf('DATETIME2', $size) : 'DATETIME',
+            default => parent::type($type, $size)
+        };
     }
 }

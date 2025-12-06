@@ -23,6 +23,7 @@ enum Driver: string
     case MYSQL = 'mysql';
     case PGSQL = 'pgsql';
     case SQLITE = 'sqlite';
+    case SQLSRV = 'sqlsrv';
 
     case CUBRID = 'cubrid';
     case DB2 = 'ibm';
@@ -30,7 +31,6 @@ enum Driver: string
     case INFORMIX = 'informix';
     case ODBC = 'odbc';
     case ORACLE = 'oci';
-    case SQLSRV = 'sqlsrv';
 
     public function getAdapter(
         string $name,

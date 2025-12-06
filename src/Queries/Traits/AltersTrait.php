@@ -82,32 +82,37 @@ trait AltersTrait
         return $this;
     }
 
+    public function addAutoIncrement(string $name, int $bits = 32): static
+    {
+        return $this->addIdentity($name, $bits);
+    }
+
     public function addIdentity(string $name, int $bits = 32): static
     {
         return $this->addInt($name, $bits, true, null, true);
     }
 
-    public function addBool(string $name, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null): static
+    public function addBool(string $name, bool $notNull = false, null|bool|Raw $default = null): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::BOOL), $notNull, $default);
     }
 
-    public function addInt(string $name, int $bits = 64, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null, bool $generatedByDefaultAsIdentity = false): static
+    public function addInt(string $name, int $bits = 64, bool $notNull = false, null|int|Raw $default = null, bool $generatedByDefaultAsIdentity = false): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::INT, $bits), $notNull, $default, $generatedByDefaultAsIdentity);
     }
 
-    public function addFloat(string $name, int $bits = 64, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null): static
+    public function addFloat(string $name, int $bits = 64, bool $notNull = false, null|int|float|Raw $default = null): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::FLOAT, $bits), $notNull, $default);
     }
 
-    public function addString(string $name, int $size = 255, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null): static
+    public function addString(string $name, int $size = 255, bool $notNull = false, null|string|Raw $default = null): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::STRING, $size), $notNull, $default);
     }
 
-    public function addDateTime(string $name, int $size = 6, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null): static
+    public function addDateTime(string $name, int $size = 6, bool $notNull = false, null|DateTimeInterface|Raw $default = null): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::DATETIME, $size), $notNull, $default);
     }

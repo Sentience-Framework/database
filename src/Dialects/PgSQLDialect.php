@@ -90,6 +90,10 @@ class PgSQLDialect extends SQLDialect
 
     protected function buildColumn(Column $column): string
     {
+        if (!$column->generatedByDefaultAsIdentity) {
+            return parent::buildColumn($column);
+        }
+
         if (!$this->generatedByDefaultAsIdentity()) {
             $typeIsUppercase = (bool) preg_match('/[A-Z]/', $column->type);
 
@@ -120,7 +124,7 @@ class PgSQLDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::FLOAT => $size > 32 ? 'REAL' : 'DOUBLE PRECISION',
+            TypeEnum::FLOAT => $size > 32 ? 'DOUBLE PRECISION' : 'REAL',
             TypeEnum::DATETIME => 'TIMESTAMP',
             default => parent::type($type, $size)
         };

@@ -4,6 +4,7 @@ namespace Sentience\Database\Results;
 
 use PDO;
 use PDOStatement;
+use Throwable;
 
 class PDOResult extends ResultAbstract
 {
@@ -24,7 +25,11 @@ class PDOResult extends ResultAbstract
 
     public function fetchObject(string $class = 'stdClass', array $constructorArgs = []): ?object
     {
-        $object = $this->pdoStatement->fetchObject($class, $constructorArgs);
+        try {
+            $object = $this->pdoStatement->fetchObject($class, $constructorArgs);
+        } catch (Throwable $exception) {
+            return null;
+        }
 
         if (is_bool($object)) {
             return null;
@@ -35,12 +40,20 @@ class PDOResult extends ResultAbstract
 
     public function fetchObjects(string $class = 'stdClass', array $constructorArgs = []): array
     {
-        return $this->pdoStatement->fetchAll(PDO::FETCH_CLASS, $class, $constructorArgs);
+        try {
+            return $this->pdoStatement->fetchAll(PDO::FETCH_CLASS, $class, $constructorArgs);
+        } catch (Throwable $exception) {
+            return [];
+        }
     }
 
     public function fetchAssoc(): ?array
     {
-        $assoc = $this->pdoStatement->fetch(PDO::FETCH_ASSOC);
+        try {
+            $assoc = $this->pdoStatement->fetch(PDO::FETCH_ASSOC);
+        } catch (Throwable $exception) {
+            return null;
+        }
 
         if (is_bool($assoc)) {
             return null;
@@ -51,6 +64,10 @@ class PDOResult extends ResultAbstract
 
     public function fetchAssocs(): array
     {
-        return $this->pdoStatement->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            return $this->pdoStatement->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $exception) {
+            return [];
+        }
     }
 }

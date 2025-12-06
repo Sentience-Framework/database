@@ -161,7 +161,7 @@ class MySQLDialect extends SQLDialect
     {
         return match ($type) {
             TypeEnum::BOOL => 'TINYINT',
-            TypeEnum::FLOAT => $size > 32 ? 'FLOAT' : 'DOUBLE',
+            TypeEnum::FLOAT => $size > 32 ? 'DOUBLE' : 'FLOAT',
             TypeEnum::STRING => match (true) {
                 $size > 16777215 => 'LONGTEXT',
                 $size > 65535 => 'MEDIUMTEXT',
