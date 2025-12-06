@@ -102,15 +102,25 @@ class SQLServerDialect extends SQLDialect
             return;
         }
 
-        $query = substr_replace(
-            $query,
-            sprintf(
-                'SELECT TOP(%d)',
-                $limit
-            ),
-            0,
-            6
-        );
+        $query = substr($query, 7, 8) == 'DISTINCT'
+            ? substr_replace(
+                $query,
+                sprintf(
+                    'SELECT DISTINCT TOP(%d)',
+                    $limit
+                ),
+                0,
+                15
+            )
+            : substr_replace(
+                $query,
+                sprintf(
+                    'SELECT TOP(%d)',
+                    $limit
+                ),
+                0,
+                6
+            );
     }
 
     protected function buildOffset(string &$query, ?int $limit, ?int $offset): void

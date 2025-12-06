@@ -18,15 +18,15 @@ The Sentience database abstraction offers a lightweight, no dependencies, databa
 - Firebird (PDO)
 - MariaDB (PDO / Mysqli)
 - MySQL (PDO / Mysqli)
+- Oracle OCI (PDO)
 - Postgres (PDO)
 - SQLite (PDO / SQLite3)
+- SQL Server (PDO)
 
 ### Unofficially supported through standard SQL dialect with PDO
 - Cubrid
 - IBM DB2
 - Informix
-- Oracle OCI
-- SQL Server (dblib / ODBC / sqlsrv)
 
 The goal of this database abstraction was to provide an interface that is universally supported across all the implemented database (with currently the only exception being table constraint altering in SQLite). This is achieved by adhering to the SQL standard as much as possible, with a few exception outside the standard such as RETURNING and REGEXP_LIKE. For databases that don't natively implement ON CONFLICT or RETURNING clauses, Sentience offers alternatives that emulate the feature.
 
@@ -83,15 +83,15 @@ $driver = Driver::from('pgsql');
 // - 'firebird'
 // - 'mariadb'
 // - 'mysql'
+// - 'oci'
 // - 'pgsql'
 // - 'sqlite'
+// - 'sqlsrv'
 // - 'cubrid' (Only SQL standard features + upsert)
 // - 'ibm' (Only SQL standard features + upsert)
 // - 'dblib' (Only SQL standard features + upsert)
 // - 'informix' (Only SQL standard features + upsert)
 // - 'odbc' (Only SQL standard features + upsert)
-// - 'oci' (Only SQL standard features + upsert)
-// - 'sqlsrv' (Only SQL standard features + upsert)
 ```
 
 Once the driver is initialized you can initialize a database instance using `::connect`, `::pdo`, or by passing in an `AdapterInterface` and `DialectInterface` manually.
@@ -174,21 +174,17 @@ $database->select(['public', 'table_1'], 'table1')
         )
     ])
     ->leftJoin(
-        Query::alias('table2', 'jt'),
-        'joinColumn',
-        ['public', 't1'],
-        't1Column'
+        'leftjoin_table',
+        fn (Join $join): Join => $join->on(
+            ['leftjoin_table', 'join_column'],
+            ['on_table', 'on_column']
+        )
     )->innerJoin(
-        ['public', 'table3'],
-        'joinColumn',
-        ['public', 'table1'],
-        't1Column'
-    )
-    ->innerJoin(
-        'table4',
-        'joinColumn',
-        'table1',
-        't1Column'
+        'innerjoin_table',
+        fn (Join $join): Join => $join->on(
+            ['innerjoin_table', 'join_column'],
+            ['on_table', 'on_column']
+        )->whereBetween(['innerjoin_table', 'join_column'], 0, 9999)
     )
     ->join('RIGHT JOIN table2 jt ON jt.column1 = table1.column1 AND jt.column2 = table2.column2')
     ->whereEquals('column1', 10)
