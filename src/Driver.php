@@ -21,6 +21,7 @@ enum Driver: string
     case FIREBIRD = 'firebird';
     case MARIADB = 'mariadb';
     case MYSQL = 'mysql';
+    case OCI = 'oci';
     case PGSQL = 'pgsql';
     case SQLITE = 'sqlite';
     case SQLSRV = 'sqlsrv';
@@ -30,7 +31,6 @@ enum Driver: string
     case DBLIB = 'dblib';
     case INFORMIX = 'informix';
     case ODBC = 'odbc';
-    case ORACLE = 'oci';
 
     public function getAdapter(
         string $name,

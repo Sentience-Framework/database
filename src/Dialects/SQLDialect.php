@@ -750,10 +750,11 @@ class SQLDialect extends DialectAbstract
                 '(%s)',
                 implode(
                     ', ',
-                    array_fill(
-                        0,
-                        count($value),
-                        '?'
+                    array_map(
+                        function (mixed $value) use (&$params): mixed {
+                            return $this->buildQuestionMark($params, $value);
+                        },
+                        $value
                     )
                 )
             );

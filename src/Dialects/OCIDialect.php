@@ -2,6 +2,7 @@
 
 namespace Sentience\Database\Dialects;
 
+use DateTimeInterface;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\OnConflict;
@@ -94,6 +95,17 @@ class OCIDialect extends SQLDialect
          */
 
         return;
+    }
+
+    protected function buildQuestionMark(array &$params, mixed $value): string
+    {
+        if ($value instanceof DateTimeInterface) {
+            array_push($params, $value);
+
+            return 'TO_DATE(?)';
+        }
+
+        return parent::buildQuestionMark($params, $value);
     }
 
     public function type(TypeEnum $type, ?int $size = null): string
