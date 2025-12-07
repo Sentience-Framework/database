@@ -30,7 +30,8 @@ class Database
         array $options = [],
         ?Closure $debug = null,
         bool $usePdoAdapter = false,
-        bool $lazy = false
+        bool $lazy = false,
+        null|int|string $version = null
     ): static {
         $adapter = $driver->getAdapter(
             $name,
@@ -42,9 +43,7 @@ class Database
             $lazy
         );
 
-        $version = ($options[AdapterInterface::OPTIONS_VERSION] ?? null)
-            ? (string) $options[AdapterInterface::OPTIONS_VERSION]
-            : $adapter->version();
+        $version ??= $adapter->version();
 
         $dialect = $driver->getDialect($version);
 
@@ -57,7 +56,8 @@ class Database
         array $queries,
         array $options,
         ?Closure $debug,
-        bool $lazy = false
+        bool $lazy = false,
+        null|int|string $version = null
     ): static {
         $adapter = new PDOAdapter(
             $connect,
@@ -68,9 +68,7 @@ class Database
             $lazy
         );
 
-        $version = ($options[AdapterInterface::OPTIONS_VERSION] ?? null)
-            ? (string) $options[AdapterInterface::OPTIONS_VERSION]
-            : $adapter->version();
+        $version ??= $adapter->version();
 
         $dialect = $driver->getDialect($version);
 

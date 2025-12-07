@@ -11,7 +11,7 @@ use Sentience\Database\Queries\Objects\Raw;
 
 class OCIDialect extends SQLDialect
 {
-    protected const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
+    public const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
 
     public function createTable(
         bool $ifNotExists,

@@ -35,15 +35,15 @@ use Sentience\Database\Queries\SelectQuery;
 
 class SQLDialect extends DialectAbstract
 {
-    protected const string DATETIME_FORMAT = 'Y-m-d H:i:s';
-    protected const bool ESCAPE_ANSI = true;
-    protected const string ESCAPE_IDENTIFIER = '"';
-    protected const string ESCAPE_STRING = "'";
-    protected const bool BOOL = false;
-    protected const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
-    protected const bool ON_CONFLICT = false;
-    protected const bool RETURNING = false;
-    protected const bool SAVEPOINTS = true;
+    public const string DATETIME_FORMAT = 'Y-m-d H:i:s';
+    public const bool ESCAPE_ANSI = true;
+    public const string ESCAPE_IDENTIFIER = '"';
+    public const string ESCAPE_STRING = "'";
+    public const bool BOOL = false;
+    public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
+    public const bool ON_CONFLICT = false;
+    public const bool RETURNING = false;
+    public const bool SAVEPOINTS = true;
 
     public function select(
         bool $distinct,
@@ -70,14 +70,6 @@ class SQLDialect extends DialectAbstract
                 ', ',
                 array_map(
                     function (string|array|Alias|Raw $column): string {
-                        if ($column instanceof Alias) {
-                            return $this->escapeIdentifier($column->identifier, $column->alias);
-                        }
-
-                        if ($column instanceof Raw) {
-                            return (string) $column;
-                        }
-
                         return $this->escapeIdentifier($column);
                     },
                     $columns
@@ -123,10 +115,6 @@ class SQLDialect extends DialectAbstract
                     function (string|array|Alias|Raw $column): string {
                         if ($column instanceof Alias) {
                             return $this->escapeIdentifier($column->identifier);
-                        }
-
-                        if ($column instanceof Raw) {
-                            return (string) $column;
                         }
 
                         return $this->escapeIdentifier($column);
@@ -255,7 +243,7 @@ class SQLDialect extends DialectAbstract
             $query .= match (true) {
                 $constraint instanceof UniqueConstraint => $this->buildUniqueConstraint($constraint),
                 $constraint instanceof ForeignKeyConstraint => $this->buildForeignKeyConstraint($constraint),
-                default => (string) $constraint
+                default => $constraint->sql
             };
         }
 
@@ -289,7 +277,7 @@ class SQLDialect extends DialectAbstract
                     $alter instanceof AddUniqueConstraint => $this->buildAlterTableAddUniqueConstraint($alter),
                     $alter instanceof AddForeignKeyConstraint => $this->buildAlterTableAddForeignKeyConstraint($alter),
                     $alter instanceof DropConstraint => $this->buildAlterTableDropConstraint($alter),
-                    default => (string) $alter
+                    default => $alter->sql
                 };
 
                 return new QueryWithParams($query, $params);
@@ -391,26 +379,26 @@ class SQLDialect extends DialectAbstract
         $query .= ' ';
 
         if ($table instanceof SelectQuery) {
-            throw new QueryException('table sub select requires an alias');
+            throw new QueryException('table select requires an alias');
         }
 
         if ($table instanceof Alias) {
             if ($table->identifier instanceof SelectQuery) {
                 $table->identifier = Query::raw(
-                    $this->buildSubSelectQuery(
+                    $this->buildSelectQuery(
                         $params,
                         $table->identifier
                     )
                 );
             }
 
-            $query .= $this->escapeIdentifier($table->identifier, $table->alias);
+            $query .= $this->escapeIdentifier($table);
 
             return;
         }
 
         if ($table instanceof Raw) {
-            $query .= (string) $table;
+            $query .= $table->sql;
 
             return;
         }
@@ -432,7 +420,7 @@ class SQLDialect extends DialectAbstract
             }
 
             if ($join instanceof Raw) {
-                $query .= (string) $join;
+                $query .= $join->sql;
 
                 continue;
             }
@@ -440,9 +428,7 @@ class SQLDialect extends DialectAbstract
             $query .= sprintf(
                 '%s %s ON ',
                 $join->join->value,
-                $join->table instanceof Alias
-                ? $this->escapeIdentifier($join->table->identifier, $join->table->alias)
-                : $this->escapeIdentifier($join->table)
+                $this->escapeIdentifier($join->table)
             );
 
             $conditions = $join->getConditions();
@@ -509,7 +495,7 @@ class SQLDialect extends DialectAbstract
             $this->escapeIdentifier($condition->identifier),
             $condition->condition->value,
             $condition->value instanceof SelectQuery
-            ? $this->buildSubSelectQuery($params, $condition->value)
+            ? $this->buildSelectQuery($params, $condition->value)
             : $this->buildQuestionMark($params, $condition->value)
         );
     }
@@ -517,11 +503,11 @@ class SQLDialect extends DialectAbstract
     protected function buildConditionBetween(string &$query, array &$params, Condition $condition): void
     {
         $min = $condition->value[0] instanceof SelectQuery
-            ? $this->buildSubSelectQuery($params, $condition->value[0])
+            ? $this->buildSelectQuery($params, $condition->value[0])
             : $this->buildQuestionMark($params, $condition->value[0]);
 
         $max = $condition->value[1] instanceof SelectQuery
-            ? $this->buildSubSelectQuery($params, $condition->value[1])
+            ? $this->buildSelectQuery($params, $condition->value[1])
             : $this->buildQuestionMark($params, $condition->value[1]);
 
         $query .= sprintf(
@@ -540,7 +526,7 @@ class SQLDialect extends DialectAbstract
             $this->escapeIdentifier($condition->identifier),
             $condition->condition->value,
             $condition->value instanceof SelectQuery
-            ? $this->buildSubSelectQuery($params, $condition->value)
+            ? $this->buildSelectQuery($params, $condition->value)
             : $this->buildQuestionMark($params, $condition->value)
         );
     }
@@ -558,7 +544,7 @@ class SQLDialect extends DialectAbstract
             $this->escapeIdentifier($condition->identifier),
             $condition->condition->value,
             $condition->value instanceof SelectQuery
-            ? $this->buildSubSelectQuery($params, $condition->value)
+            ? $this->buildSelectQuery($params, $condition->value)
             : $this->buildQuestionMark($params, $condition->value)
         );
     }
@@ -602,7 +588,7 @@ class SQLDialect extends DialectAbstract
         $query .= sprintf(
             '%s %s',
             $condition->condition->value,
-            $this->buildSubSelectQuery($params, $condition->value)
+            $this->buildSelectQuery($params, $condition->value)
         );
     }
 
@@ -707,7 +693,59 @@ class SQLDialect extends DialectAbstract
 
     protected function buildOnConflict(string &$query, array &$params, ?OnConflict $onConflict, array $values, ?string $lastInsertId): void
     {
-        return;
+        if (!$this->onConflict()) {
+            return;
+        }
+
+        if (is_null($onConflict)) {
+            return;
+        }
+
+        $conflict = is_string($onConflict->conflict)
+            ? sprintf('ON CONSTRAINT %s', $this->escapeIdentifier($onConflict->conflict))
+            : sprintf(
+                '(%s)',
+                implode(
+                    ', ',
+                    array_map(
+                        fn (string|Raw $column): string => $this->escapeIdentifier($column),
+                        $onConflict->conflict
+                    )
+                )
+            );
+
+        if (is_null($onConflict->updates)) {
+            $query .= sprintf(' ON CONFLICT %s DO NOTHING', $conflict);
+
+            return;
+        }
+
+        $updates = count($onConflict->updates) > 0 ? $onConflict->updates : $values;
+
+        $query .= sprintf(
+            ' ON CONFLICT %s DO UPDATE SET %s',
+            $conflict,
+            implode(
+                ', ',
+                array_map(
+                    function (mixed $value, string $key) use (&$params): string {
+                        if ($value instanceof Raw) {
+                            return sprintf(
+                                '%s = %s',
+                                $this->escapeIdentifier($key),
+                                $value->sql
+                            );
+                        }
+
+                        $params[] = $value;
+
+                        return sprintf('%s = ?', $this->escapeIdentifier($key));
+                    },
+                    $updates,
+                    array_keys($updates)
+                )
+            )
+        );
     }
 
     protected function buildReturning(string &$query, ?array $returning): void
@@ -735,12 +773,12 @@ class SQLDialect extends DialectAbstract
 
     protected function buildQuestionMark(array &$params, mixed $value): string
     {
-        if ($value instanceof Raw) {
-            return (string) $value;
-        }
-
         if ($value instanceof Identifier) {
             return $this->escapeIdentifier($value->identifier);
+        }
+
+        if ($value instanceof Raw) {
+            return $value->sql;
         }
 
         if (is_array($value)) {
@@ -765,7 +803,7 @@ class SQLDialect extends DialectAbstract
         return '?';
     }
 
-    protected function buildSubSelectQuery(array &$params, SelectQuery $selectQuery): string
+    protected function buildSelectQuery(array &$params, SelectQuery $selectQuery): string
     {
         $queryWithParams = $selectQuery->toQueryWithParams();
 
@@ -796,7 +834,7 @@ class SQLDialect extends DialectAbstract
         if (!is_null($column->default)) {
             $default = !($column->default instanceof Raw)
                 ? $this->castToQuery($column->default)
-                : (string) $column->default;
+                : $column->default->sql;
 
             $sql .= ' DEFAULT ' . $default;
         }
@@ -927,18 +965,18 @@ class SQLDialect extends DialectAbstract
         );
     }
 
-    public function escapeIdentifier(string|array|Raw $identifier, ?string $alias = null): string
+    public function escapeIdentifier(string|array|Alias|Raw $identifier): string
     {
-        if ($alias) {
+        if ($identifier instanceof Alias) {
             return sprintf(
                 '%s AS %s',
-                $this->escapeIdentifier($identifier),
-                $this->escapeIdentifier($alias)
+                $this->escapeIdentifier($identifier->identifier),
+                $this->escapeIdentifier($identifier->alias)
             );
         }
 
         if ($identifier instanceof Raw) {
-            return (string) $identifier;
+            return $identifier->sql;
         }
 
         return is_array($identifier)

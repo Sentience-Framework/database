@@ -11,7 +11,6 @@ use Sentience\Database\Sockets\SocketInterface;
 
 interface AdapterInterface
 {
-    public const string OPTIONS_VERSION = 'version';
     public const string OPTIONS_PERSISTENT = 'persistent';
     public const string OPTIONS_PDO_DSN = 'dsn';
     public const string OPTIONS_MYSQL_CHARSET = 'charset';

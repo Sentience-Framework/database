@@ -6,13 +6,11 @@ use DateTime;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
-use Sentience\Database\Queries\Objects\OnConflict;
-use Sentience\Database\Queries\Objects\Raw;
 
 class PgSQLDialect extends SQLDialect
 {
-    protected const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
-    protected const bool BOOL = true;
+    public const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
+    public const bool BOOL = true;
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
     {
@@ -28,63 +26,6 @@ class PgSQLDialect extends SQLDialect
             $condition,
             '~',
             '!~'
-        );
-    }
-
-    protected function buildOnConflict(string &$query, array &$params, ?OnConflict $onConflict, array $values, ?string $lastInsertId): void
-    {
-        if (!$this->onConflict()) {
-            return;
-        }
-
-        if (is_null($onConflict)) {
-            return;
-        }
-
-        $conflict = is_string($onConflict->conflict)
-            ? sprintf('ON CONSTRAINT %s', $this->escapeIdentifier($onConflict->conflict))
-            : sprintf(
-                '(%s)',
-                implode(
-                    ', ',
-                    array_map(
-                        fn (string|Raw $column): string => $this->escapeIdentifier($column),
-                        $onConflict->conflict
-                    )
-                )
-            );
-
-        if (is_null($onConflict->updates)) {
-            $query .= sprintf(' ON CONFLICT %s DO NOTHING', $conflict);
-
-            return;
-        }
-
-        $updates = count($onConflict->updates) > 0 ? $onConflict->updates : $values;
-
-        $query .= sprintf(
-            ' ON CONFLICT %s DO UPDATE SET %s',
-            $conflict,
-            implode(
-                ', ',
-                array_map(
-                    function (mixed $value, string $key) use (&$params): string {
-                        if ($value instanceof Raw) {
-                            return sprintf(
-                                '%s = %s',
-                                $this->escapeIdentifier($key),
-                                (string) $value
-                            );
-                        }
-
-                        $params[] = $value;
-
-                        return sprintf('%s = ?', $this->escapeIdentifier($key));
-                    },
-                    $updates,
-                    array_keys($updates)
-                )
-            )
         );
     }
 

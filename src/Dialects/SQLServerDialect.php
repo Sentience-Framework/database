@@ -14,8 +14,8 @@ use Sentience\Database\Queries\Query;
 
 class SQLServerDialect extends SQLDialect
 {
-    protected const string DATETIME_FORMAT = 'Y-m-d H:i:s.v';
-    protected const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
+    public const string DATETIME_FORMAT = 'Y-m-d H:i:s.v';
+    public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 
     public function createTable(
         bool $ifNotExists,
@@ -157,7 +157,7 @@ class SQLServerDialect extends SQLDialect
     protected function buildColumn(Column $column): string
     {
         if ($column->generatedByDefaultAsIdentity) {
-            $column->type .= ' IDENTITY(1,1)';
+            $column->type .= ' IDENTITY(1, 1)';
         }
 
         return parent::buildColumn($column);

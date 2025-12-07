@@ -13,9 +13,9 @@ use Sentience\Database\Queries\Objects\Raw;
 
 class FirebirdDialect extends SQLDialect
 {
-    protected const string DATETIME_FORMAT = 'Y-m-d H:i:s.v';
-    protected const bool BOOL = true;
-    protected const bool RETURNING = true;
+    public const string DATETIME_FORMAT = 'Y-m-d H:i:s.v';
+    public const bool BOOL = true;
+    public const bool RETURNING = true;
 
     public function __construct(Driver $driver, int|string $version)
     {
