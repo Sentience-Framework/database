@@ -714,8 +714,10 @@ class SQLDialect extends DialectAbstract
                 )
             );
 
+        $query .= sprintf(' ON CONFLICT %s DO ', $conflict);
+
         if (is_null($onConflict->updates)) {
-            $query .= sprintf(' ON CONFLICT %s DO NOTHING', $conflict);
+            $query .= 'NOTHING';
 
             return;
         }
@@ -723,8 +725,7 @@ class SQLDialect extends DialectAbstract
         $updates = count($onConflict->updates) > 0 ? $onConflict->updates : $values;
 
         $query .= sprintf(
-            ' ON CONFLICT %s DO UPDATE SET %s',
-            $conflict,
+            'UPDATE SET %s',
             implode(
                 ', ',
                 array_map(
