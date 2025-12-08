@@ -46,4 +46,9 @@ class SQLite3Result extends ResultAbstract
 
         return $assocs;
     }
+
+    public function result(): \SQLite3Result
+    {
+        return $this->sqlite3Result;
+    }
 }

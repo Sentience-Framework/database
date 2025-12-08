@@ -70,4 +70,9 @@ class PDOResult extends ResultAbstract
             return [];
         }
     }
+
+    public function result(): PDOStatement
+    {
+        return $this->pdoStatement;
+    }
 }

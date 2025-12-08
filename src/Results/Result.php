@@ -60,4 +60,9 @@ class Result extends ResultAbstract
 
         return $rows;
     }
+
+    public function result(): mixed
+    {
+        return null;
+    }
 }

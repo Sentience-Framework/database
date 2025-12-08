@@ -60,4 +60,9 @@ class MySQLiResult extends ResultAbstract
 
         return $this->mysqliResult->fetch_all(MYSQLI_ASSOC);
     }
+
+    public function result(): bool|mysqli_result
+    {
+        return $this->mysqliResult;
+    }
 }
