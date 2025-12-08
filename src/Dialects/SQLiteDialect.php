@@ -48,7 +48,7 @@ class SQLiteDialect extends SQLDialect
 
     protected function buildOnConflict(string &$query, array &$params, ?OnConflict $onConflict, array $values, ?string $lastInsertId): void
     {
-        if (is_string($onConflict->conflict)) {
+        if (is_string($onConflict?->conflict)) {
             throw new QueryException('SQLite does not support named constraints');
         }
 
