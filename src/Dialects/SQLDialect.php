@@ -783,8 +783,6 @@ class SQLDialect extends DialectAbstract
         }
 
         if (is_array($value)) {
-            array_push($params, ...$value);
-
             return sprintf(
                 '(%s)',
                 implode(
