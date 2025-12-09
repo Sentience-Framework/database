@@ -10,6 +10,7 @@ use Sentience\Database\Adapters\SQLite3Adapter;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Dialects\FirebirdDialect;
 use Sentience\Database\Dialects\MySQLDialect;
+use Sentience\Database\Dialects\OCIDialect;
 use Sentience\Database\Dialects\PgSQLDialect;
 use Sentience\Database\Dialects\SQLDialect;
 use Sentience\Database\Dialects\SQLiteDialect;
@@ -41,8 +42,8 @@ enum Driver: string
         bool $usePdoAdapter = false,
         bool $lazy = false
     ): AdapterInterface {
-        $adapter = !$usePdoAdapter ?
-            match ($this) {
+        $adapter = !$usePdoAdapter
+            ? match ($this) {
                 static::MARIADB,
                 static::MYSQL => MySQLiAdapter::class,
                 static::SQLITE => SQLite3Adapter::class,
@@ -67,6 +68,7 @@ enum Driver: string
             static::FIREBIRD => new FirebirdDialect($this, $version),
             static::MARIADB,
             static::MYSQL => new MySQLDialect($this, $version),
+            static::OCI => new OCIDialect($this, $version),
             static::PGSQL => new PgSQLDialect($this, $version),
             static::SQLITE => new SQLiteDialect($this, $version),
             static::SQLSRV => new SQLServerDialect($this, $version),
