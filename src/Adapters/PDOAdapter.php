@@ -564,7 +564,7 @@ class PDOAdapter extends AdapterAbstract
 
     protected function bindValue(PDOStatement $pdoStatement, int $key, mixed $value, int $type): void
     {
-        $pdoStatement->bindParam($key + 1, $value, $type);
+        $pdoStatement->bindValue($key + 1, $value, $type);
     }
 
     protected function bindParam(PDOStatement $pdoStatement, string $key, mixed $value, int $type): void
