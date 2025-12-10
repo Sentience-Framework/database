@@ -97,7 +97,7 @@ class OCIDialect extends SQLDialect
         return;
     }
 
-    protected function buildQuestionMark(array &$params, mixed $value): string
+    protected function buildQuestionMarks(array &$params, mixed $value): string
     {
         if ($value instanceof DateTimeInterface) {
             array_push($params, $value);
@@ -105,7 +105,7 @@ class OCIDialect extends SQLDialect
             return 'TO_DATE(?)';
         }
 
-        return parent::buildQuestionMark($params, $value);
+        return parent::buildQuestionMarks($params, $value);
     }
 
     public function type(TypeEnum $type, ?int $size = null): string

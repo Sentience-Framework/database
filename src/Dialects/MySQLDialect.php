@@ -30,9 +30,15 @@ class MySQLDialect extends SQLDialect
         array $constraints
     ): QueryWithParams {
         foreach ($columns as $column) {
-            if ($column->generatedByDefaultAsIdentity && !in_array($column->name, $primaryKeys)) {
-                $primaryKeys[] = $column->name;
+            if (!$column->generatedByDefaultAsIdentity) {
+                continue;
             }
+
+            if (in_array($column->name, $primaryKeys)) {
+                continue;
+            }
+
+            $primaryKeys[] = $column->name;
         }
 
         return parent::createTable(
@@ -98,17 +104,11 @@ class MySQLDialect extends SQLDialect
                 ', ',
                 array_map(
                     function (mixed $value, string $key) use (&$params): string {
-                        if ($value instanceof Raw) {
-                            return sprintf(
-                                '%s = %s',
-                                $this->escapeIdentifier($key),
-                                $value->sql
-                            );
-                        }
-
-                        $params[] = $value;
-
-                        return sprintf('%s = ?', $this->escapeIdentifier($key));
+                        return sprintf(
+                            '%s = %s',
+                            $this->escapeIdentifier($key),
+                            $this->buildQuestionMarks($params, $value)
+                        );
                     },
                     $updates,
                     array_keys($updates)

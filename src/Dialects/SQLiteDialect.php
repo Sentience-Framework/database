@@ -29,12 +29,14 @@ class SQLiteDialect extends SQLDialect
         array $constraints
     ): QueryWithParams {
         foreach ($columns as $column) {
-            if ($column->generatedByDefaultAsIdentity) {
-                $primaryKeys = array_filter(
-                    $primaryKeys,
-                    fn (string $primaryKey): bool => $primaryKey != $column->name
-                );
+            if (!$column->generatedByDefaultAsIdentity) {
+                continue;
             }
+
+            $primaryKeys = array_filter(
+                $primaryKeys,
+                fn (string $primaryKey): bool => $primaryKey != $column->name
+            );
         }
 
         return parent::createTable(

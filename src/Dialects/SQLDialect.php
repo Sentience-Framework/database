@@ -130,7 +130,7 @@ class SQLDialect extends DialectAbstract
                 ', ',
                 array_map(
                     function (mixed $value) use (&$params): string {
-                        return $this->buildQuestionMark($params, $value);
+                        return $this->buildQuestionMarks($params, $value);
                     },
                     $values
                 )
@@ -166,7 +166,7 @@ class SQLDialect extends DialectAbstract
                     return sprintf(
                         '%s = %s',
                         $this->escapeIdentifier($key),
-                        $this->buildQuestionMark($params, $value)
+                        $this->buildQuestionMarks($params, $value)
                     );
                 },
                 $values,
@@ -496,7 +496,7 @@ class SQLDialect extends DialectAbstract
             $condition->condition->value,
             $condition->value instanceof SelectQuery
             ? $this->buildSelectQuery($params, $condition->value)
-            : $this->buildQuestionMark($params, $condition->value)
+            : $this->buildQuestionMarks($params, $condition->value)
         );
     }
 
@@ -504,11 +504,11 @@ class SQLDialect extends DialectAbstract
     {
         $min = $condition->value[0] instanceof SelectQuery
             ? $this->buildSelectQuery($params, $condition->value[0])
-            : $this->buildQuestionMark($params, $condition->value[0]);
+            : $this->buildQuestionMarks($params, $condition->value[0]);
 
         $max = $condition->value[1] instanceof SelectQuery
             ? $this->buildSelectQuery($params, $condition->value[1])
-            : $this->buildQuestionMark($params, $condition->value[1]);
+            : $this->buildQuestionMarks($params, $condition->value[1]);
 
         $query .= sprintf(
             '%s %s %s AND %s',
@@ -521,14 +521,7 @@ class SQLDialect extends DialectAbstract
 
     protected function buildConditionLike(string &$query, array &$params, Condition $condition): void
     {
-        $query .= sprintf(
-            '%s %s %s',
-            $this->escapeIdentifier($condition->identifier),
-            $condition->condition->value,
-            $condition->value instanceof SelectQuery
-            ? $this->buildSelectQuery($params, $condition->value)
-            : $this->buildQuestionMark($params, $condition->value)
-        );
+        $this->buildConditionOperator($query, $params, $condition);
     }
 
     protected function buildConditionIn(string &$query, array &$params, Condition $condition): void
@@ -539,14 +532,7 @@ class SQLDialect extends DialectAbstract
             return;
         }
 
-        $query .= sprintf(
-            '%s %s %s',
-            $this->escapeIdentifier($condition->identifier),
-            $condition->condition->value,
-            $condition->value instanceof SelectQuery
-            ? $this->buildSelectQuery($params, $condition->value)
-            : $this->buildQuestionMark($params, $condition->value)
-        );
+        $this->buildConditionOperator($query, $params, $condition);
     }
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
@@ -558,8 +544,8 @@ class SQLDialect extends DialectAbstract
         $query .= sprintf(
             'REGEXP_LIKE(%s, %s, %s)',
             $this->escapeIdentifier($condition->identifier),
-            $this->buildQuestionMark($params, $condition->value[0]),
-            $this->buildQuestionMark($params, $condition->value[1])
+            $this->buildQuestionMarks($params, $condition->value[0]),
+            $this->buildQuestionMarks($params, $condition->value[1])
         );
     }
 
@@ -571,14 +557,11 @@ class SQLDialect extends DialectAbstract
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
             $condition->condition == ConditionEnum::REGEX ? $equals : $notEquals,
-            $this->buildQuestionMark(
+            $this->buildQuestionMarks(
                 $params,
                 !empty($flags)
-                ? sprintf(
-                    '(?%s)%s',
-                    $flags,
-                    $pattern
-                ) : $pattern
+                ? sprintf('(?%s)%s', $flags, $pattern)
+                : $pattern
             )
         );
     }
@@ -772,7 +755,7 @@ class SQLDialect extends DialectAbstract
         $query .= ' RETURNING ' . $columns;
     }
 
-    protected function buildQuestionMark(array &$params, mixed $value): string
+    protected function buildQuestionMarks(array &$params, mixed $value, bool $parentheses = true, string $separator = ', '): string
     {
         if ($value instanceof Identifier) {
             return $this->escapeIdentifier($value->identifier);
@@ -784,12 +767,12 @@ class SQLDialect extends DialectAbstract
 
         if (is_array($value)) {
             return sprintf(
-                '(%s)',
+                $parentheses ? '(%s)' : '%s',
                 implode(
-                    ', ',
+                    $separator,
                     array_map(
                         function (mixed $value) use (&$params): mixed {
-                            return $this->buildQuestionMark($params, $value);
+                            return $this->buildQuestionMarks($params, $value);
                         },
                         $value
                     )
