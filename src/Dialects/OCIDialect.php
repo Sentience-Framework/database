@@ -97,7 +97,7 @@ class OCIDialect extends SQLDialect
         return;
     }
 
-    protected function buildQuestionMarks(array &$params, mixed $value): string
+    protected function buildQuestionMarks(array &$params, mixed $value, bool $parentheses = true, string $separator = ', '): string
     {
         if ($value instanceof DateTimeInterface) {
             array_push($params, $value);

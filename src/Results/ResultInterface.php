@@ -10,5 +10,4 @@ interface ResultInterface
     public function fetchObjects(string $class = 'stdClass', array $constructorArgs = []): array;
     public function fetchAssoc(): ?array;
     public function fetchAssocs(): array;
-    public function result(): mixed;
 }

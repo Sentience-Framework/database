@@ -4,7 +4,6 @@ namespace Sentience\Database\Results;
 
 use PDO;
 use PDOStatement;
-use Throwable;
 
 class PDOResult extends ResultAbstract
 {
@@ -17,7 +16,12 @@ class PDOResult extends ResultAbstract
         $columns = [];
 
         for ($i = 0; $i < $this->pdoStatement->columnCount(); $i++) {
-            $columns[] = $this->pdoStatement->getColumnMeta($i)['name'];
+            $meta = $this->pdoStatement->getColumnMeta($i);
+
+            $name = $meta['name'];
+            $nativeType = strtoupper($meta['native_type']);
+
+            $columns[$name] = $nativeType;
         }
 
         return $columns;
@@ -25,11 +29,7 @@ class PDOResult extends ResultAbstract
 
     public function fetchObject(string $class = 'stdClass', array $constructorArgs = []): ?object
     {
-        try {
-            $object = $this->pdoStatement->fetchObject($class, $constructorArgs);
-        } catch (Throwable $exception) {
-            return null;
-        }
+        $object = $this->pdoStatement->fetchObject($class, $constructorArgs);
 
         if (is_bool($object)) {
             return null;
@@ -40,20 +40,12 @@ class PDOResult extends ResultAbstract
 
     public function fetchObjects(string $class = 'stdClass', array $constructorArgs = []): array
     {
-        try {
-            return $this->pdoStatement->fetchAll(PDO::FETCH_CLASS, $class, $constructorArgs);
-        } catch (Throwable $exception) {
-            return [];
-        }
+        return $this->pdoStatement->fetchAll(PDO::FETCH_CLASS, $class, $constructorArgs);
     }
 
     public function fetchAssoc(): ?array
     {
-        try {
-            $assoc = $this->pdoStatement->fetch(PDO::FETCH_ASSOC);
-        } catch (Throwable $exception) {
-            return null;
-        }
+        $assoc = $this->pdoStatement->fetch(PDO::FETCH_ASSOC);
 
         if (is_bool($assoc)) {
             return null;
@@ -64,15 +56,6 @@ class PDOResult extends ResultAbstract
 
     public function fetchAssocs(): array
     {
-        try {
-            return $this->pdoStatement->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Throwable $exception) {
-            return [];
-        }
-    }
-
-    public function result(): PDOStatement
-    {
-        return $this->pdoStatement;
+        return $this->pdoStatement->fetchAll(PDO::FETCH_ASSOC);
     }
 }

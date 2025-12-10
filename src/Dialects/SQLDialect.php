@@ -713,17 +713,11 @@ class SQLDialect extends DialectAbstract
                 ', ',
                 array_map(
                     function (mixed $value, string $key) use (&$params): string {
-                        if ($value instanceof Raw) {
-                            return sprintf(
-                                '%s = %s',
-                                $this->escapeIdentifier($key),
-                                $value->sql
-                            );
-                        }
-
-                        $params[] = $value;
-
-                        return sprintf('%s = ?', $this->escapeIdentifier($key));
+                        return sprintf(
+                            '%s = %s',
+                            $this->escapeIdentifier($key),
+                            $this->buildQuestionMarks($params, $value)
+                        );
                     },
                     $updates,
                     array_keys($updates)
@@ -1001,8 +995,8 @@ class SQLDialect extends DialectAbstract
 
     public function castToQuery(mixed $value): mixed
     {
-        if (is_string($value)) {
-            return $this->escapeString($value);
+        if (is_null($value)) {
+            return 'NULL';
         }
 
         if (is_bool($value)) {
@@ -1017,8 +1011,8 @@ class SQLDialect extends DialectAbstract
                 : $bool;
         }
 
-        if (is_null($value)) {
-            return 'NULL';
+        if (is_string($value)) {
+            return $this->escapeString($value);
         }
 
         if ($value instanceof DateTimeInterface) {
@@ -1042,9 +1036,11 @@ class SQLDialect extends DialectAbstract
 
     public function parseBool(mixed $value): bool
     {
-        return !$this->bool()
-            ? $value == 1 ? true : false
-            : $value;
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        return (int) $value > 0;
     }
 
     public function parseDateTime(string $string): ?DateTime
