@@ -91,11 +91,11 @@ interface DialectInterface
 
     public function escapeIdentifier(string|array|Alias|Raw $identifier): string;
     public function escapeString(string $string): string;
-    public function castToDriver(mixed $value): mixed;
-    public function castToQuery(mixed $value): mixed;
-    public function castBool(bool $bool): mixed;
-    public function castDateTime(DateTimeInterface $dateTime): mixed;
-    public function parseBool(mixed $bool): bool;
+    public function castToDriver(null|bool|int|float|string|DateTimeInterface $value): null|bool|int|float|string;
+    public function castToQuery(null|bool|int|float|string|DateTimeInterface $value): null|bool|int|float|string;
+    public function castBool(bool $bool): null|bool|int|float|string;
+    public function castDateTime(DateTimeInterface $dateTime): null|bool|int|float|string;
+    public function parseBool(null|bool|int|float|string $bool): bool;
     public function parseDateTime(string $string): ?DateTime;
     public function type(TypeEnum $type, ?int $size = null): string;
     public function bool(): bool;

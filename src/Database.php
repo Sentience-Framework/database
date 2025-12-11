@@ -75,7 +75,7 @@ class Database
         return new static($adapter, $dialect);
     }
 
-    protected array $transactions = [];
+    protected array $savepoints = [];
 
     public function __construct(
         protected AdapterInterface $adapter,
@@ -111,64 +111,60 @@ class Database
     public function beginTransaction(?string $name = null): void
     {
         if (!$this->inTransaction()) {
-            $this->transactions[] = $name ?? 'transaction';
-
             $this->adapter->beginTransaction($this->dialect, $name);
 
             return;
         }
 
-        $name = !$name ?
-            sprintf(
+        $name = !$name
+            ? sprintf(
                 'savepoint_%d',
-                count($this->transactions)
+                count($this->savepoints) + 1
             )
             : $name;
 
-        $this->transactions[] = $name;
+        $this->savepoints[] = $name;
 
         $this->adapter->beginSavepoint($this->dialect, $name);
     }
 
-    public function commitTransaction(bool $releaseSavepoints = false): void
+    public function commitTransaction(bool $releaseSavepoints = false, ?string $name = null): void
     {
         if (!$this->inTransaction()) {
             return;
         }
 
-        if ($releaseSavepoints || count($this->transactions) == 1) {
-            $this->adapter->commitTransaction(
-                $this->dialect,
-                array_pop($this->transactions)
-            );
+        if ($releaseSavepoints || count($this->savepoints) == 0) {
+            $this->savepoints = [];
+
+            $this->adapter->commitTransaction($this->dialect, $name);
 
             return;
         }
 
         $this->adapter->commitSavepoint(
             $this->dialect,
-            array_pop($this->transactions)
+            array_pop($this->savepoints)
         );
     }
 
-    public function rollbackTransaction(bool $releaseSavepoints = false): void
+    public function rollbackTransaction(bool $releaseSavepoints = false, ?string $name = null): void
     {
         if (!$this->inTransaction()) {
             return;
         }
 
-        if ($releaseSavepoints || count($this->transactions) == 1) {
-            $this->adapter->rollbackTransaction(
-                $this->dialect,
-                array_pop($this->transactions)
-            );
+        if ($releaseSavepoints || count($this->savepoints) == 0) {
+            $this->savepoints = [];
+
+            $this->adapter->rollbackTransaction($this->dialect, $name);
 
             return;
         }
 
         $this->adapter->rollbackSavepoint(
             $this->dialect,
-            array_pop($this->transactions)
+            array_pop($this->savepoints)
         );
     }
 

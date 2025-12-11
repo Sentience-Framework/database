@@ -309,12 +309,12 @@ class SQLite3Adapter extends AdapterAbstract
         return $lastInsertId;
     }
 
-    protected function bindValue(SQLite3Stmt $sqlite3Stmt, int $key, mixed $value, int $type): void
+    protected function bindValue(SQLite3Stmt $sqlite3Stmt, int $key, null|int|float|string $value, int $type): void
     {
         $sqlite3Stmt->bindValue($key + 1, $value, $type);
     }
 
-    protected function bindParam(SQLite3Stmt $sqlite3Stmt, string $key, mixed $value, int $type): void
+    protected function bindParam(SQLite3Stmt $sqlite3Stmt, string $key, null|int|float|string $value, int $type): void
     {
         $sqlite3Stmt->bindParam($key, $value, $type);
     }

@@ -21,6 +21,7 @@ class InsertQuery extends Query
     use ValuesTrait;
 
     protected bool $emulateOnConflict = false;
+    protected bool $emulateOnConflictInTransaction = false;
 
     public function toQueryWithParams(): QueryWithParams
     {
@@ -44,6 +45,13 @@ class InsertQuery extends Query
             return $this->insert($emulatePrepare);
         }
 
+        return $this->emulateOnConflictInTransaction
+            ? $this->database->transactionInCallback(fn(): ResultInterface => $this->upsert($emulatePrepare))
+            : $this->upsert($emulatePrepare);
+    }
+
+    protected function upsert(bool $emulatePrepare): ResultInterface
+    {
         if (is_string($this->onConflict->conflict)) {
             throw new QueryException('database does not support named constraints');
         }
@@ -89,20 +97,15 @@ class InsertQuery extends Query
 
     protected function select(Closure $whereGroup, int $limit, bool $emulatePrepare): ResultInterface
     {
-        $selectQuery = $this->database->select($this->table)
+        return $this->database->select($this->table)
             ->columns(
                 !empty($this->returning)
                 ? array_unique(array_filter([$this->lastInsertId, ...$this->returning]))
                 : []
             )
             ->whereGroup($whereGroup)
-            ->limit($limit);
-
-        if ($this->lastInsertId) {
-            $selectQuery->orderByDesc($this->lastInsertId);
-        }
-
-        return $selectQuery->execute($emulatePrepare);
+            ->limit($limit)
+            ->execute($emulatePrepare);
     }
 
     protected function insert(bool $emulatePrepare): ResultInterface
@@ -115,29 +118,17 @@ class InsertQuery extends Query
 
         $lastInsertId = $this->database->lastInsertId();
 
-        return $this->select(
-            function (ConditionGroup $conditionGroup) use ($lastInsertId): ConditionGroup {
-                if (empty($lastInsertId)) {
-                    return $conditionGroup;
-                }
+        if (empty($lastInsertId)) {
+            return $result;
+        }
 
-                return $conditionGroup->whereEquals(
-                    $this->lastInsertId,
-                    $lastInsertId
-                );
-            },
+        return $this->select(
+            fn(ConditionGroup $conditionGroup): ConditionGroup => $conditionGroup->whereEquals(
+                $this->lastInsertId,
+                $lastInsertId
+            ),
             1,
             $emulatePrepare
-        );
-    }
-
-    protected function ignore(ResultInterface $result, array $rows): ResultInterface
-    {
-        $returning = !is_null($this->returning);
-
-        return new Result(
-            $returning ? $result->columns() : [],
-            $returning ? $rows : []
         );
     }
 
@@ -148,14 +139,6 @@ class InsertQuery extends Query
         $updates = !is_null($this->onConflict->updates)
             ? count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values
             : $conflict;
-
-        if ($this->lastInsertId) {
-            $updates = array_filter(
-                $updates,
-                fn (string $column): bool => $column != $this->lastInsertId,
-                ARRAY_FILTER_USE_KEY
-            );
-        }
 
         $updateQuery->values($updates);
 
@@ -184,9 +167,21 @@ class InsertQuery extends Query
         );
     }
 
-    public function emulateOnConflict(string $lastInsertId): static
+    protected function ignore(ResultInterface $result, array $rows): ResultInterface
+    {
+        $returning = !is_null($this->returning);
+
+        return new Result(
+            $returning ? $result->columns() : [],
+            $returning ? $rows : []
+        );
+    }
+
+    public function emulateOnConflict(string $lastInsertId, bool $inTransaction = false): static
     {
         $this->emulateOnConflict = true;
+        $this->emulateOnConflictInTransaction = $inTransaction;
+
         $this->lastInsertId = $lastInsertId;
 
         return $this;

@@ -562,12 +562,12 @@ class PDOAdapter extends AdapterAbstract
         $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
     }
 
-    protected function bindValue(PDOStatement $pdoStatement, int $key, mixed $value, int $type): void
+    protected function bindValue(PDOStatement $pdoStatement, int $key, null|bool|int|float|string $value, int $type): void
     {
         $pdoStatement->bindValue($key + 1, $value, $type);
     }
 
-    protected function bindParam(PDOStatement $pdoStatement, string $key, mixed $value, int $type): void
+    protected function bindParam(PDOStatement $pdoStatement, string $key, null|bool|int|float|string $value, int $type): void
     {
         $pdoStatement->bindParam($key, $value, $type);
     }

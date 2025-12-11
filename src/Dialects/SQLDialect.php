@@ -5,7 +5,6 @@ namespace Sentience\Database\Dialects;
 use BackedEnum;
 use DateTime;
 use DateTimeInterface;
-use DateTimeZone;
 use Throwable;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\ConditionEnum;
@@ -129,8 +128,10 @@ class SQLDialect extends DialectAbstract
             implode(
                 ', ',
                 array_map(
-                    function (mixed $value) use (&$params): string {
-                        return $this->buildQuestionMarks($params, $value);
+                    function (null|bool|int|float|string|DateTimeInterface|Identifier|Raw|SelectQuery $value) use (&$params): string {
+                        return $value instanceof SelectQuery
+                            ? $this->buildSelectQuery($params, $value)
+                            : $this->buildQuestionMarks($params, $value);
                     },
                     $values
                 )
@@ -162,11 +163,13 @@ class SQLDialect extends DialectAbstract
         $query .= implode(
             ', ',
             array_map(
-                function (mixed $value, string $key) use (&$params): string {
+                function (null|bool|int|float|string|DateTimeInterface|Identifier|Raw|SelectQuery $value, string $key) use (&$params): string {
                     return sprintf(
                         '%s = %s',
                         $this->escapeIdentifier($key),
-                        $this->buildQuestionMarks($params, $value)
+                        $value instanceof SelectQuery
+                        ? $this->buildSelectQuery($params, $value)
+                        : $this->buildQuestionMarks($params, $value)
                     );
                 },
                 $values,
@@ -374,13 +377,9 @@ class SQLDialect extends DialectAbstract
         );
     }
 
-    protected function buildTable(string &$query, &$params, string|array|Alias|Raw|SelectQuery $table): void
+    protected function buildTable(string &$query, &$params, string|array|Alias|Raw $table): void
     {
         $query .= ' ';
-
-        if ($table instanceof SelectQuery) {
-            throw new QueryException('table select requires an alias');
-        }
 
         if ($table instanceof Alias) {
             if ($table->identifier instanceof SelectQuery) {
@@ -393,12 +392,6 @@ class SQLDialect extends DialectAbstract
             }
 
             $query .= $this->escapeIdentifier($table);
-
-            return;
-        }
-
-        if ($table instanceof Raw) {
-            $query .= $table->sql;
 
             return;
         }
@@ -712,11 +705,13 @@ class SQLDialect extends DialectAbstract
             implode(
                 ', ',
                 array_map(
-                    function (mixed $value, string $key) use (&$params): string {
+                    function (null|bool|int|float|string|DateTimeInterface|Identifier|Raw|SelectQuery $value, string $key) use (&$params): string {
                         return sprintf(
                             '%s = %s',
                             $this->escapeIdentifier($key),
-                            $this->buildQuestionMarks($params, $value)
+                            $value instanceof SelectQuery
+                            ? $this->buildSelectQuery($params, $value)
+                            : $this->buildQuestionMarks($params, $value)
                         );
                     },
                     $updates,
@@ -749,7 +744,7 @@ class SQLDialect extends DialectAbstract
         $query .= ' RETURNING ' . $columns;
     }
 
-    protected function buildQuestionMarks(array &$params, mixed $value, bool $parentheses = true, string $separator = ', '): string
+    protected function buildQuestionMarks(array &$params, null|bool|int|float|string|array|DateTimeInterface|Identifier|Raw $value, bool $parentheses = true, string $separator = ', '): string
     {
         if ($value instanceof Identifier) {
             return $this->escapeIdentifier($value->identifier);
@@ -765,8 +760,10 @@ class SQLDialect extends DialectAbstract
                 implode(
                     $separator,
                     array_map(
-                        function (mixed $value) use (&$params): mixed {
-                            return $this->buildQuestionMarks($params, $value);
+                        function (null|bool|int|float|string|DateTimeInterface|Identifier|Raw|SelectQuery $value) use (&$params): string {
+                            return $value instanceof SelectQuery
+                                ? $this->buildSelectQuery($params, $value)
+                                : $this->buildQuestionMarks($params, $value);
                         },
                         $value
                     )
@@ -861,9 +858,9 @@ class SQLDialect extends DialectAbstract
 
         foreach ($foreignKeyConstraint->referentialActions as $referentialAction) {
             $sql .= ' ';
-            $sql .= is_subclass_of($referentialAction, BackedEnum::class)
+            $sql .= (string) is_subclass_of($referentialAction, BackedEnum::class)
                 ? $referentialAction->value
-                : (string) $referentialAction;
+                : $referentialAction;
         }
 
         return $sql;
@@ -980,7 +977,7 @@ class SQLDialect extends DialectAbstract
         return $char . $escapedString . $char;
     }
 
-    public function castToDriver(mixed $value): mixed
+    public function castToDriver(null|bool|int|float|string|DateTimeInterface $value): null|bool|int|float|string
     {
         if (is_bool($value)) {
             return $this->castBool($value);
@@ -993,7 +990,7 @@ class SQLDialect extends DialectAbstract
         return $value;
     }
 
-    public function castToQuery(mixed $value): mixed
+    public function castToQuery(null|bool|int|float|string|DateTimeInterface $value): null|bool|int|float|string
     {
         if (is_null($value)) {
             return 'NULL';
@@ -1022,25 +1019,25 @@ class SQLDialect extends DialectAbstract
         return $value;
     }
 
-    public function castBool(bool $bool): mixed
+    public function castBool(bool $bool): null|bool|int|float|string
     {
         return !$this->bool()
             ? $bool ? 1 : 0
             : $bool;
     }
 
-    public function castDateTime(DateTimeInterface $dateTimeInterface): mixed
+    public function castDateTime(DateTimeInterface $dateTimeInterface): null|bool|int|float|string
     {
         return $dateTimeInterface->format($this::DATETIME_FORMAT);
     }
 
-    public function parseBool(mixed $value): bool
+    public function parseBool(null|bool|int|float|string $bool): bool
     {
-        if (is_bool($value)) {
-            return $value;
+        if (is_bool($bool)) {
+            return $bool;
         }
 
-        return (int) $value > 0;
+        return (int) $bool > 0;
     }
 
     public function parseDateTime(string $string): ?DateTime
@@ -1054,44 +1051,8 @@ class SQLDialect extends DialectAbstract
         try {
             return new DateTime($string);
         } catch (Throwable $exception) {
-        }
-
-        $timestamp = strtotime($string);
-
-        if (!$timestamp) {
             return null;
         }
-
-        $hasMicroseconds = preg_match('/\.([0-9]{0,6})[\+\-]?/', $string, $microsecondsMatches);
-
-        $dateTime = DateTime::createFromFormat(
-            'U.u',
-            sprintf(
-                '%d.%d',
-                $timestamp,
-                $hasMicroseconds ? (int) $microsecondsMatches[1] : 0
-            )
-        );
-
-        if (!$dateTime) {
-            return null;
-        }
-
-        $hasTimezoneOffset = preg_match('/([\+\-])([0-9]{1,2}+)\:?([0-9]{0,2})$/', $string, $timezoneOffsetMatches);
-
-        if ($hasTimezoneOffset) {
-            [$modifier, $timezoneOffsetHours, $timezoneOffsetMinutes] = array_slice($timezoneOffsetMatches, 1);
-
-            $multiplier = ((int) $timezoneOffsetHours + (int) $timezoneOffsetMinutes / 60) * ($modifier == '+' ? 1 : -1);
-
-            $timezone = timezone_name_from_abbr('', (int) ($multiplier * 3600));
-
-            if ($timezone) {
-                $dateTime->setTimezone(new DateTimeZone($timezone));
-            }
-        }
-
-        return $dateTime;
     }
 
     public function type(TypeEnum $type, ?int $size = null): string
