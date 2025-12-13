@@ -82,12 +82,12 @@ trait AltersTrait
         return $this;
     }
 
-    public function addAutoIncrement(string $name, int $bits = 32): static
+    public function addAutoIncrement(string $name, int $bits = 64): static
     {
         return $this->addIdentity($name, $bits);
     }
 
-    public function addIdentity(string $name, int $bits = 32): static
+    public function addIdentity(string $name, int $bits = 64): static
     {
         return $this->addInt($name, $bits, true, null, true);
     }

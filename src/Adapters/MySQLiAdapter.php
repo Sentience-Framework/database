@@ -12,7 +12,7 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\MySQLiResult;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Sockets\NetworkSocket;
-use Sentience\Database\Sockets\SocketInterface;
+use Sentience\Database\Sockets\SocketAbstract;
 
 class MySQLiAdapter extends AdapterAbstract
 {
@@ -26,7 +26,7 @@ class MySQLiAdapter extends AdapterAbstract
     public static function fromSocket(
         Driver $driver,
         string $name,
-        ?SocketInterface $socket,
+        ?SocketAbstract $socket,
         array $queries,
         array $options,
         ?Closure $debug,
@@ -38,22 +38,18 @@ class MySQLiAdapter extends AdapterAbstract
 
         $isNetworkSocket = $socket instanceof NetworkSocket;
 
-        if ($isNetworkSocket) {
-            [$host, $port] = $socket->address();
-        }
-
         $hostname = $isNetworkSocket
-            ? ($options[static::OPTIONS_PERSISTENT] ?? false) ? sprintf('p:%s', $host) : $host
+            ? ($options[static::OPTIONS_PERSISTENT] ?? false) ? sprintf('p:%s', $socket->host) : $socket->host
             : null;
 
         return new static(
             fn (): mysqli => new mysqli(
                 $hostname,
-                $socket->username(),
-                $socket->password(),
+                $socket->username,
+                $socket->password,
                 $name,
-                $isNetworkSocket ? $port : null,
-                !$isNetworkSocket ? $socket->address() : null
+                $isNetworkSocket ? $socket->port : null,
+                !$isNetworkSocket ? $socket->host : null
             ),
             $driver,
             $queries,

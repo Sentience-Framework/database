@@ -4,17 +4,8 @@ namespace Sentience\Database\Sockets;
 
 class NetworkSocket extends SocketAbstract
 {
-    public function __construct(
-        protected string $host,
-        protected int $port,
-        ?string $username = null,
-        ?string $password = null
-    ) {
-        parent::__construct($username, $password);
-    }
-
-    public function address(): array
+    public function __construct(string $host, int $port, ?string $username = null, ?string $password = null)
     {
-        return [$this->host, $this->port];
+        parent::__construct($host, $port, $username, $password);
     }
 }

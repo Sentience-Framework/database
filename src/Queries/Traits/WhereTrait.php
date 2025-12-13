@@ -2,6 +2,7 @@
 
 namespace Sentience\Database\Queries\Traits;
 
+use BackedEnum;
 use DateTimeInterface;
 use Sentience\Database\Queries\Enums\ChainEnum;
 use Sentience\Database\Queries\Enums\ConditionEnum;
@@ -36,12 +37,12 @@ trait WhereTrait
         return $this->isNotNull($column, ChainEnum::AND);
     }
 
-    public function whereLike(string|array $column, string|Identifier|SelectQuery $value): static
+    public function whereLike(string|array $column, string $value): static
     {
         return $this->like($column, $value, ChainEnum::AND);
     }
 
-    public function whereNotLike(string|array $column, string|Identifier|SelectQuery $value): static
+    public function whereNotLike(string|array $column, string $value): static
     {
         return $this->notLike($column, $value, ChainEnum::AND);
     }
@@ -141,6 +142,11 @@ trait WhereTrait
         return $this->group($callback, ChainEnum::AND);
     }
 
+    public function whereOperator(string|array $column, string|BackedEnum $operator, mixed $value): static
+    {
+        return $this->operator($column, $operator, $value, ChainEnum::AND);
+    }
+
     public function where(string $sql, array $values = []): static
     {
         return $this->addRawCondition($sql, $values, ChainEnum::AND);
@@ -166,12 +172,12 @@ trait WhereTrait
         return $this->isNotNull($column, ChainEnum::OR);
     }
 
-    public function orWhereLike(string|array $column, string|Identifier|SelectQuery $value): static
+    public function orWhereLike(string|array $column, string $value): static
     {
         return $this->like($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereNotLike(string|array $column, string|Identifier|SelectQuery $value): static
+    public function orWhereNotLike(string|array $column, string $value): static
     {
         return $this->notLike($column, $value, ChainEnum::OR);
     }
@@ -271,6 +277,11 @@ trait WhereTrait
         return $this->group($callback, ChainEnum::OR);
     }
 
+    public function orWhereOperator(string|array $column, string|BackedEnum $operator, mixed $value): static
+    {
+        return $this->operator($column, $operator, $value, ChainEnum::OR);
+    }
+
     public function orWhere(string $sql, array $values = []): static
     {
         return $this->addRawCondition($sql, $values, ChainEnum::OR);
@@ -296,12 +307,12 @@ trait WhereTrait
         return $this->addCondition(ConditionEnum::NOT_EQUALS, $column, null, $chain);
     }
 
-    protected function like(string|array $column, string|Identifier|SelectQuery $value, ChainEnum $chain): static
+    protected function like(string|array $column, string $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::LIKE, $column, $value, $chain);
     }
 
-    protected function notLike(string|array $column, string|Identifier|SelectQuery $value, ChainEnum $chain): static
+    protected function notLike(string|array $column, string $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::NOT_LIKE, $column, $value, $chain);
     }
@@ -425,7 +436,12 @@ trait WhereTrait
         return $this->addConditionGroup($conditionGroup);
     }
 
-    protected function addCondition(ConditionEnum $condition, null|string|array $identifier, mixed $value, ChainEnum $chain): static
+    protected function operator(string|array $column, string|BackedEnum $operator, mixed $value, ChainEnum $chain): static
+    {
+        return $this->addCondition($operator, $column, $value, $chain);
+    }
+
+    protected function addCondition(string|BackedEnum $condition, null|string|array $identifier, mixed $value, ChainEnum $chain): static
     {
         $this->where[] = new Condition($condition, $identifier, $value, $chain);
 

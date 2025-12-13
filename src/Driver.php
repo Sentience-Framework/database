@@ -15,7 +15,7 @@ use Sentience\Database\Dialects\PgSQLDialect;
 use Sentience\Database\Dialects\SQLDialect;
 use Sentience\Database\Dialects\SQLiteDialect;
 use Sentience\Database\Dialects\SQLServerDialect;
-use Sentience\Database\Sockets\SocketInterface;
+use Sentience\Database\Sockets\SocketAbstract;
 
 enum Driver: string
 {
@@ -35,7 +35,7 @@ enum Driver: string
 
     public function getAdapter(
         string $name,
-        ?SocketInterface $socket,
+        ?SocketAbstract $socket,
         array $queries,
         array $options,
         ?Closure $debug,

@@ -486,7 +486,9 @@ class SQLDialect extends DialectAbstract
         $query .= sprintf(
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
-            $condition->condition->value,
+            is_subclass_of($condition->condition, BackedEnum::class)
+            ? $condition->condition->value
+            : $condition->condition,
             $condition->value instanceof SelectQuery
             ? $this->buildSelectQuery($params, $condition->value)
             : $this->buildQuestionMarks($params, $condition->value)

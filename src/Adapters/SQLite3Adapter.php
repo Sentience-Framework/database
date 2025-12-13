@@ -11,7 +11,7 @@ use Sentience\Database\Driver;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Results\SQLite3Result;
-use Sentience\Database\Sockets\SocketInterface;
+use Sentience\Database\Sockets\SocketAbstract;
 
 class SQLite3Adapter extends AdapterAbstract
 {
@@ -20,7 +20,7 @@ class SQLite3Adapter extends AdapterAbstract
     public static function fromSocket(
         Driver $driver,
         string $name,
-        ?SocketInterface $socket,
+        ?SocketAbstract $socket,
         array $queries,
         array $options,
         ?Closure $debug,

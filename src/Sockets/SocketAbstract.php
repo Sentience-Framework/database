@@ -2,21 +2,13 @@
 
 namespace Sentience\Database\Sockets;
 
-abstract class SocketAbstract implements SocketInterface
+abstract class SocketAbstract
 {
     public function __construct(
-        protected ?string $username = null,
-        protected ?string $password = null
+        public string $host,
+        public ?int $port,
+        public ?string $username = null,
+        public ?string $password = null
     ) {
-    }
-
-    public function username(): ?string
-    {
-        return $this->username;
-    }
-
-    public function password(): ?string
-    {
-        return $this->password;
     }
 }

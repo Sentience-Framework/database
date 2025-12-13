@@ -7,7 +7,7 @@ use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\ResultInterface;
-use Sentience\Database\Sockets\SocketInterface;
+use Sentience\Database\Sockets\SocketAbstract;
 
 interface AdapterInterface
 {
@@ -16,6 +16,11 @@ interface AdapterInterface
     public const string OPTIONS_MYSQL_CHARSET = 'charset';
     public const string OPTIONS_MYSQL_COLLATION = 'collation';
     public const string OPTIONS_MYSQL_ENGINE = 'engine';
+    public const string OPTIONS_PGSQL_SSL_MODE = 'ssl_mode';
+    public const string OPTIONS_PGSQL_SSL_CERT = 'ssl_cert';
+    public const string OPTIONS_PGSQL_SSL_KEY = 'ssl_key';
+    public const string OPTIONS_PGSQL_SSL_ROOT_CERT = 'ssl_root_cert';
+    public const string OPTIONS_PGSQL_SSL_CRL = 'ssl_crl';
     public const string OPTIONS_PGSQL_CLIENT_ENCODING = 'client_encoding';
     public const string OPTIONS_PGSQL_SEARCH_PATH = 'search_path';
     public const string OPTIONS_SQLITE_READ_ONLY = 'read_only';
@@ -31,7 +36,7 @@ interface AdapterInterface
     public static function fromSocket(
         Driver $driver,
         string $name,
-        ?SocketInterface $socket,
+        ?SocketAbstract $socket,
         array $queries,
         array $options,
         ?Closure $debug,

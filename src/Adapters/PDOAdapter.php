@@ -13,7 +13,7 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\PDOResult;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Sockets\NetworkSocket;
-use Sentience\Database\Sockets\SocketInterface;
+use Sentience\Database\Sockets\SocketAbstract;
 
 class PDOAdapter extends AdapterAbstract
 {
@@ -22,7 +22,7 @@ class PDOAdapter extends AdapterAbstract
     public static function fromSocket(
         Driver $driver,
         string $name,
-        ?SocketInterface $socket,
+        ?SocketAbstract $socket,
         array $queries,
         array $options,
         ?Closure $debug,
@@ -30,7 +30,7 @@ class PDOAdapter extends AdapterAbstract
     ): static {
         return new static(
             function () use ($driver, $name, $socket, $options): PDO {
-                $dsn = (function (Driver $driver, string $name, ?SocketInterface $socket, array $options): string {
+                $dsn = (function (Driver $driver, string $name, ?SocketAbstract $socket, array $options): string {
                     if (array_key_exists(static::OPTIONS_PDO_DSN, $options)) {
                         return (string) $options[static::OPTIONS_PDO_DSN];
                     }
@@ -51,20 +51,12 @@ class PDOAdapter extends AdapterAbstract
                         throw new DriverException('this driver requires a socket');
                     }
 
-                    $isNetworkSocket = $socket instanceof NetworkSocket;
-
-                    if ($isNetworkSocket) {
-                        [$host, $port] = $socket->address();
-                    } else {
-                        $unixSocket = $socket->address();
-                    }
-
                     if ($driver == Driver::FIREBIRD) {
                         return sprintf(
                             '%s:dbname=%s/%d:%s',
                             $driver->value,
-                            $host,
-                            $port,
+                            $socket->host,
+                            $socket->port,
                             $name
                         );
                     }
@@ -73,8 +65,8 @@ class PDOAdapter extends AdapterAbstract
                         return sprintf(
                             '%s:Server=%s,%d;Database=%s;Encrypt=%s;TrustServerCertificate=yes',
                             $driver->value,
-                            $host,
-                            $port,
+                            $socket->host,
+                            $socket->port,
                             $name,
                             ($options[static::OPTIONS_SQLSRV_ENCRYPT] ?? true) ? 'yes' : 'no',
                             ($options[static::OPTIONS_SQLSRV_TRUST_SERVER_CERTIFICATE] ?? false) ? 'yes' : 'no'
@@ -87,24 +79,67 @@ class PDOAdapter extends AdapterAbstract
                         $name
                     );
 
-                    $dsn .= $socket instanceof NetworkSocket
-                        ? sprintf(
-                            ';host=%s;port=%d',
-                            $host,
-                            $port
-                        )
-                        : sprintf(
-                            ';unix_socket=%s',
-                            $unixSocket
-                        );
-
-                    if ($driver == Driver::PGSQL) {
-                        if (array_key_exists(static::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
-                            $dsn .= sprintf(
-                                ";options='--client_encoding=%s'",
-                                (string) $options[static::OPTIONS_PGSQL_CLIENT_ENCODING]
+                    if (in_array($driver, [Driver::MARIADB, Driver::MYSQL])) {
+                        $dsn .= $socket instanceof NetworkSocket
+                            ? sprintf(
+                                ';host=%s;port=%d',
+                                $socket->host,
+                                $socket->port
+                            )
+                            : sprintf(
+                                ';unix_socket=%s',
+                                $socket->host
                             );
-                        }
+
+                        return $dsn;
+                    }
+
+                    $dsn .= sprintf(
+                        ';host=%s;port=%d',
+                        $socket->host,
+                        (int) $socket->port
+                    );
+
+                    if (array_key_exists(static::OPTIONS_PGSQL_SSL_MODE, $options)) {
+                        $dsn .= sprintf(
+                            ";sslmode=%s'",
+                            (string) $options[static::OPTIONS_PGSQL_SSL_MODE]
+                        );
+                    }
+
+                    if (array_key_exists(static::OPTIONS_PGSQL_SSL_CERT, $options)) {
+                        $dsn .= sprintf(
+                            ";sslcert=%s'",
+                            (string) $options[static::OPTIONS_PGSQL_SSL_CERT]
+                        );
+                    }
+
+                    if (array_key_exists(static::OPTIONS_PGSQL_SSL_KEY, $options)) {
+                        $dsn .= sprintf(
+                            ";sslkey=%s'",
+                            (string) $options[static::OPTIONS_PGSQL_SSL_KEY]
+                        );
+                    }
+
+                    if (array_key_exists(static::OPTIONS_PGSQL_SSL_ROOT_CERT, $options)) {
+                        $dsn .= sprintf(
+                            ";sslrootcert=%s'",
+                            (string) $options[static::OPTIONS_PGSQL_SSL_ROOT_CERT]
+                        );
+                    }
+
+                    if (array_key_exists(static::OPTIONS_PGSQL_SSL_CRL, $options)) {
+                        $dsn .= sprintf(
+                            ";sslcrl=%s'",
+                            (string) $options[static::OPTIONS_PGSQL_SSL_CRL]
+                        );
+                    }
+
+                    if (array_key_exists(static::OPTIONS_PGSQL_CLIENT_ENCODING, $options)) {
+                        $dsn .= sprintf(
+                            ";options='--client_encoding=%s'",
+                            (string) $options[static::OPTIONS_PGSQL_CLIENT_ENCODING]
+                        );
                     }
 
                     return $dsn;
@@ -112,8 +147,8 @@ class PDOAdapter extends AdapterAbstract
 
                 return new PDO(
                     $dsn,
-                    $socket?->username(),
-                    $socket?->password()
+                    $socket?->username,
+                    $socket?->password
                 );
             },
             $driver,

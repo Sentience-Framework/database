@@ -4,6 +4,7 @@ namespace Sentience\Database\Dialects;
 
 use DateTimeInterface;
 use Sentience\Database\Driver;
+use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\AlterColumn;
@@ -50,6 +51,22 @@ class MySQLDialect extends SQLDialect
             $columns,
             $primaryKeys,
             $constraints
+        );
+    }
+
+    protected function buildConditionLike(string &$query, array &$params, Condition $condition): void
+    {
+        if ($this->version < 40000) {
+            parent::buildConditionLike($query, $params, $condition);
+
+            return;
+        }
+
+        $query .= sprintf(
+            '%s %s %s',
+            $this->escapeIdentifier($condition->identifier),
+            $condition->condition == ConditionEnum::LIKE ? 'LIKE BINARY' : 'NOT LIKE BINARY',
+            $this->buildQuestionMarks($params, $condition->value)
         );
     }
 
@@ -184,7 +201,7 @@ class MySQLDialect extends SQLDialect
             return true;
         }
 
-        return $this->version >= 401;
+        return $this->version >= 40100;
     }
 
     public function returning(): bool
