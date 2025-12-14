@@ -47,7 +47,7 @@ class SQLDialect extends DialectAbstract
     public function select(
         bool $distinct,
         array $columns,
-        string|array|Alias|Raw $table,
+        string|array|Alias|SelectQuery|Raw $table,
         array $joins,
         array $where,
         array $groupBy,
@@ -56,6 +56,10 @@ class SQLDialect extends DialectAbstract
         ?int $limit,
         ?int $offset
     ): QueryWithParams {
+        if ($table instanceof SelectQuery) {
+            throw new QueryException('table select query requires an alias');
+        }
+
         $query = 'SELECT';
         $params = [];
 

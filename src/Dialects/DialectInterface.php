@@ -10,13 +10,14 @@ use Sentience\Database\Queries\Objects\Having;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
+use Sentience\Database\Queries\SelectQuery;
 
 interface DialectInterface
 {
     public function select(
         bool $distinct,
         array $columns,
-        string|array|Alias|Raw $table,
+        string|array|Alias|SelectQuery|Raw $table,
         array $joins,
         array $where,
         array $groupBy,

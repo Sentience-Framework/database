@@ -115,19 +115,19 @@ class MySQLiAdapter extends AdapterAbstract
             return false;
         }
 
-        $isConnected = $this->mysqli->ping();
+        try {
+            $this->mysqli->query('SELECT 1');
 
-        if ($isConnected) {
             return true;
-        }
+        } catch (Throwable $exception) {
+            if ($reconnect) {
+                $this->reconnect();
 
-        if (!$reconnect) {
+                return true;
+            }
+
             return false;
         }
-
-        $this->reconnect();
-
-        return true;
     }
 
     public function version(): int

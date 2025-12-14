@@ -22,6 +22,7 @@ class InsertQuery extends Query
 
     protected bool $emulateOnConflict = false;
     protected bool $emulateOnConflictInTransaction = false;
+    protected bool $emulateReturning = false;
 
     public function toQueryWithParams(): QueryWithParams
     {
@@ -29,7 +30,7 @@ class InsertQuery extends Query
             $this->table,
             $this->values,
             !$this->emulateOnConflict ? $this->onConflict : null,
-            $this->returning,
+            !$this->emulateReturning ? $this->returning : null,
             $this->lastInsertId
         );
     }
@@ -112,7 +113,7 @@ class InsertQuery extends Query
     {
         $result = parent::execute($emulatePrepare);
 
-        if (!$this->lastInsertId || is_null($this->returning) || $this->dialect->returning()) {
+        if (!$this->lastInsertId || is_null($this->returning) || !$this->emulateReturning && $this->dialect->returning()) {
             return $result;
         }
 
@@ -152,7 +153,7 @@ class InsertQuery extends Query
 
         $result = $updateQuery->execute($emulatePrepare);
 
-        if (is_null($this->returning) || $this->dialect->returning()) {
+        if (is_null($this->returning) || !$this->emulateReturning && $this->dialect->returning()) {
             return $result;
         }
 
@@ -181,6 +182,15 @@ class InsertQuery extends Query
     {
         $this->emulateOnConflict = true;
         $this->emulateOnConflictInTransaction = $inTransaction;
+
+        $this->lastInsertId = $lastInsertId;
+
+        return $this;
+    }
+
+    public function emulateReturning(string $lastInsertId): static
+    {
+        $this->emulateReturning = true;
 
         $this->lastInsertId = $lastInsertId;
 

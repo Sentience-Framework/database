@@ -25,7 +25,7 @@ class Database
     public static function connect(
         Driver $driver,
         string $name,
-        ?SocketAbstract $socket,
+        ?SocketAbstract $socket = null,
         array $queries = [],
         array $options = [],
         ?Closure $debug = null,
