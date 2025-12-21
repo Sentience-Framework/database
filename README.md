@@ -44,17 +44,18 @@ The goal of this database abstraction was to provide an interface that is univer
 ### Where conditions
 - Equals / Not equals
 - IS NULL / IS NOT NULL
-- LIKE / NOT LIKE
-- Starts with / Ends with
-- Contains / Not contains
+- LIKE / NOT LIKE (case sensitive and insensitive)
+- Starts with / Ends with (using LIKE)
+- Contains / Not contains (using LIKE)
 - In / Not in
 - Less than / Less than or equals
 - Greater than / Greater than or equals
 - Between / Not between
 - Empty / Not empty (Mimicking PHP's empty function)
-- Regex / Not regex (using preg pattern)
+- Regex / Not regex (SQLite also supported)
 - Exists / Not exists (sub query)
 - Group
+- Operator
 - Raw
 
 ### Alter table definitions
@@ -66,6 +67,13 @@ The goal of this database abstraction was to provide an interface that is univer
 - Drop constraint (Not supported in SQLite)
 
 # Why Sentience as your database implementation
+
+Ever used a database, and suddenly you realize that you're missing a functionality? With Sentience Database, you don't have to worry about that.
+When a database doesn't support a feature, Sentience does its best to emulate this feature. Such examples are:
+
+- MySQL gets support for returning (with ->lastInsertId('') set)
+- SQLite gets support for regular expressions
+- Firebird, OCI, and SQLServer, get on conflict resolution support
 
 Sentience wasn't made to be a drop-in replacement for Eloquent or Doctrine, rather, it attempts to borrow doctrines and best practices from Golang (mainly inspired by the simplicity of [Bun ORM](https://bun.uptrace.dev/)), but with the extra abstractions for where conditions, conflict resolutions, and joins.
 
@@ -141,15 +149,15 @@ $database->exec(string $query): void;
 $database->query(string $query): ResultInterface;
 $database->prepared(string $query, array $params, bool $emulatePrepare = false): ResultInterface;
 $database->queryWithParams(QueryWithParams $queryWithParams, bool $emulatePrepare = false): ResultInterface;
-$database->beginTransaction(): void;
-$database->commitTransaction(): void;
-$database->rollbackTransaction(): void;
+$database->beginTransaction(): void; // Supports nested transactions using safepoints
+$database->commitTransaction(): void; // Supports nested transactions using safepoints
+$database->rollbackTransaction(): void; // Supports nested transactions using safepoints
 ```
 
 Some methods return a result. The results contain the following methods:
 
 ```php
-$result->columns(): array // A numeric array of column names
+$result->columns(): array // An associative array of columns ['column' => 'type']
 $result->fetchObject(string $class, array $constructorArgs = []): ?object
 $result->fetchObjects(string $class, array $constructorArgs = []): array
 $result->fetchAssoc(): ?array
@@ -208,7 +216,7 @@ $database->select(['public', 'table_1'], 'table1')
     ->whereNotLike('column2', '%z%')
     ->whereEmpty('empty_column')
     ->whereNotEmpty('not_empty_column')
-    ->whereRegex('column6', '/file|read|write|open/i')
+    ->whereRegex('column6', 'file|read|write|open', 'i')
     ->whereNotRegex('column6', 'error')
     ->whereContains('column7', 'draft')
     ->groupBy([
@@ -294,8 +302,8 @@ $database->delete('table_1')
 ```php
 $database->createTable('table_1')
     ->ifNotExists()
-    ->column('primary_key', 'int', true, null, true)
-    ->column('column1', 'bigint', true)
+    ->identity('id')
+    ->float('column1')
     ->column('column2', 'varchar(255)')
     ->primaryKeys(['primary_key'])
     ->uniqueConstraint(['column1', 'column2'])
