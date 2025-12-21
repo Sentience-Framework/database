@@ -24,6 +24,16 @@ class MySQLDialect extends SQLDialect
     public const bool ESCAPE_ANSI = false;
     public const string ESCAPE_IDENTIFIER = '`';
     public const string ESCAPE_STRING = '"';
+    public const array ESCAPE_CHARS = [
+        '\\' => '\\\\',
+        "\n" => '\\n',
+        "\r" => '\\r',
+        "\t" => '\\t',
+        "\0" => '\\0',
+        "\b" => '\\b',
+        "\x1A" => '\\Z',
+        "'" => "\\'"
+    ];
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 
     public function createTable(
@@ -62,11 +72,15 @@ class MySQLDialect extends SQLDialect
             return;
         }
 
+        [$value, $caseInsensitive] = $condition->value;
+
         $query .= sprintf(
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
-            $condition->condition == ConditionEnum::LIKE ? 'LIKE BINARY' : 'NOT LIKE BINARY',
-            $this->buildQuestionMarks($params, $condition->value)
+            $condition->condition == ConditionEnum::LIKE
+            ? $caseInsensitive ? 'LIKE' : 'LIKE BINARY'
+            : $caseInsensitive ? 'NOT LIKE' : 'NOT LIKE BINARY',
+            $this->buildQuestionMarks($params, $value)
         );
     }
 

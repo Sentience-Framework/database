@@ -43,6 +43,7 @@ interface AdapterInterface
         bool $lazy = false
     ): static;
 
+    public function driver(): Driver;
     public function connect(): void;
     public function disconnect(): void;
     public function reconnect(): void;

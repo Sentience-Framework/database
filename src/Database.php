@@ -83,6 +83,16 @@ class Database
     ) {
     }
 
+    public function adapter(): AdapterInterface
+    {
+        return $this->adapter;
+    }
+
+    public function dialect(): DialectInterface
+    {
+        return $this->dialect;
+    }
+
     public function exec(string $query): void
     {
         $this->adapter->exec($query);
@@ -173,18 +183,18 @@ class Database
         return $this->adapter->inTransaction();
     }
 
-    public function transactionInCallback(callable $callback): mixed
+    public function transactionInCallback(callable $callback, ?string $name = null): mixed
     {
-        $this->beginTransaction();
+        $this->beginTransaction($name);
 
         try {
             $return = $callback($this);
 
-            $this->commitTransaction();
+            $this->commitTransaction(false, $name);
 
             return $return;
         } catch (Throwable $exception) {
-            $this->rollbackTransaction();
+            $this->rollbackTransaction(false, $name);
 
             throw $exception;
         }

@@ -29,6 +29,11 @@ abstract class AdapterAbstract implements AdapterInterface
         }
     }
 
+    public function driver(): Driver
+    {
+        return $this->driver;
+    }
+
     public function reconnect(): void
     {
         $this->disconnect();

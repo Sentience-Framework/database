@@ -38,6 +38,7 @@ class SQLDialect extends DialectAbstract
     public const bool ESCAPE_ANSI = true;
     public const string ESCAPE_IDENTIFIER = '"';
     public const string ESCAPE_STRING = "'";
+    public const array ESCAPE_CHARS = [];
     public const bool BOOL = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
     public const bool ON_CONFLICT = false;
@@ -72,7 +73,16 @@ class SQLDialect extends DialectAbstract
             ? implode(
                 ', ',
                 array_map(
-                    function (string|array|Alias|Raw $column): string {
+                    function (string|array|Alias|Raw $column) use (&$params): string {
+                        if ($column instanceof Alias && $column->identifier instanceof SelectQuery) {
+                            $column->identifier = Query::raw(
+                                $this->buildSelectQuery(
+                                    $params,
+                                    $column->identifier
+                                )
+                            );
+                        }
+
                         return $this->escapeIdentifier($column);
                     },
                     $columns
@@ -115,13 +125,7 @@ class SQLDialect extends DialectAbstract
             implode(
                 ', ',
                 array_map(
-                    function (string|array|Alias|Raw $column): string {
-                        if ($column instanceof Alias) {
-                            return $this->escapeIdentifier($column->identifier);
-                        }
-
-                        return $this->escapeIdentifier($column);
-                    },
+                    fn (string $column): string => $this->escapeIdentifier($column),
                     array_keys($values)
                 )
             )
@@ -385,19 +389,13 @@ class SQLDialect extends DialectAbstract
     {
         $query .= ' ';
 
-        if ($table instanceof Alias) {
-            if ($table->identifier instanceof SelectQuery) {
-                $table->identifier = Query::raw(
-                    $this->buildSelectQuery(
-                        $params,
-                        $table->identifier
-                    )
-                );
-            }
-
-            $query .= $this->escapeIdentifier($table);
-
-            return;
+        if ($table instanceof Alias && $table->identifier instanceof SelectQuery) {
+            $table->identifier = Query::raw(
+                $this->buildSelectQuery(
+                    $params,
+                    $table->identifier
+                )
+            );
         }
 
         $query .= $this->escapeIdentifier($table);
@@ -477,7 +475,7 @@ class SQLDialect extends DialectAbstract
 
     protected function buildConditionOperator(string &$query, array &$params, Condition $condition): void
     {
-        if (is_null($condition->value)) {
+        if (is_null($condition->value) && in_array($condition->condition, [ConditionEnum::EQUALS, ConditionEnum::NOT_EQUALS])) {
             $query .= sprintf(
                 '%s %s',
                 $this->escapeIdentifier($condition->identifier),
@@ -487,15 +485,19 @@ class SQLDialect extends DialectAbstract
             return;
         }
 
+        $operator = is_subclass_of($condition->condition, BackedEnum::class)
+            ? $condition->condition->value
+            : $condition->condition;
+
+        $value = $condition->value instanceof SelectQuery
+            ? $this->buildSelectQuery($params, $condition->value)
+            : $this->buildQuestionMarks($params, $condition->value);
+
         $query .= sprintf(
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
-            is_subclass_of($condition->condition, BackedEnum::class)
-            ? $condition->condition->value
-            : $condition->condition,
-            $condition->value instanceof SelectQuery
-            ? $this->buildSelectQuery($params, $condition->value)
-            : $this->buildQuestionMarks($params, $condition->value)
+            $operator,
+            $value
         );
     }
 
@@ -520,7 +522,17 @@ class SQLDialect extends DialectAbstract
 
     protected function buildConditionLike(string &$query, array &$params, Condition $condition): void
     {
-        $this->buildConditionOperator($query, $params, $condition);
+        [$value, $caseInsensitive] = $condition->value;
+
+        $identifier = $condition->identifier;
+        $questionMark = $this->buildQuestionMarks($params, $value);
+
+        $query .= sprintf(
+            '%s %s %s',
+            $caseInsensitive ? sprintf('LOWER(%s)', $identifier) : $identifier,
+            $condition->condition->value,
+            $caseInsensitive ? sprintf('LOWER(%s)', $questionMark) : $questionMark
+        );
     }
 
     protected function buildConditionIn(string &$query, array &$params, Condition $condition): void
@@ -976,9 +988,15 @@ class SQLDialect extends DialectAbstract
 
     protected function escape(string $string, string $char): string
     {
-        $escapedString = $this::ESCAPE_ANSI
-            ? Query::escapeAnsi($string, [$char])
-            : Query::escapeBackslash($string, [$char]);
+        $escapedString = strtr(
+            $string,
+            [
+                ...static::ESCAPE_CHARS,
+                $char => static::ESCAPE_ANSI
+                    ? sprintf('%s%s', $char, $char)
+                    : sprintf('\\%s', $char, $char)
+            ]
+        );
 
         return $char . $escapedString . $char;
     }
