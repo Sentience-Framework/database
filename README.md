@@ -72,8 +72,9 @@ Ever used a database, and suddenly you realize that you're missing a functionali
 When a database doesn't support a feature, Sentience does its best to emulate this feature. Such examples are:
 
 - MySQL gets support for returning (with ->lastInsertId('') set)
-- SQLite gets support for regular expressions
-- Firebird, OCI, and SQLServer, get on conflict resolution support
+- SQLite gets support for regular expressions using REGEXP_LIKE
+- Firebird, OCI, and SQLServer, get ON CONFLICT resolution support
+- Firebird, OCI, and SQLServer, get IF EXISTS and IF NOT EXISTS support
 
 Sentience wasn't made to be a drop-in replacement for Eloquent or Doctrine, rather, it attempts to borrow doctrines and best practices from Golang (mainly inspired by the simplicity of [Bun ORM](https://bun.uptrace.dev/)), but with the extra abstractions for where conditions, conflict resolutions, and joins.
 
@@ -149,9 +150,9 @@ $database->exec(string $query): void;
 $database->query(string $query): ResultInterface;
 $database->prepared(string $query, array $params, bool $emulatePrepare = false): ResultInterface;
 $database->queryWithParams(QueryWithParams $queryWithParams, bool $emulatePrepare = false): ResultInterface;
-$database->beginTransaction(): void; // Supports nested transactions using safepoints
-$database->commitTransaction(): void; // Supports nested transactions using safepoints
-$database->rollbackTransaction(): void; // Supports nested transactions using safepoints
+$database->beginTransaction(?string $name = null): void; // Supports nested transactions using savepoints
+$database->commitTransaction(bool $releaseSavepoints = false, ?string $name = null): void; // Supports nested transactions using savepoints
+$database->rollbackTransaction(bool $releaseSavepoints = false, ?string $name = null): void; // Supports nested transactions using savepoints
 ```
 
 Some methods return a result. The results contain the following methods:
@@ -386,7 +387,19 @@ If the dialect does not explicitly state that conflict resolution and returning 
 
 # 7 Integration in your project
 
-This database abstraction was created for the Sentience V3 framework, but will continue to evolve as its own package. If you wish to explore how this database is implemented, have a look at the parent project: [Sentience V3](https://github.com/Sentience-Framework/sentience-v3)
+This database abstraction was created for the Sentience V3 framework, but will continue to evolve as its own package.
+
+To get started, create a simple SQLite database:
+```php
+$database = Database::connect(
+    Driver::from('sqlite'),
+    __DIR__ . '/database.sqlite3'
+);
+```
+
+From there, add options, initialization queries, and anything else your project requires.
+
+If you wish to explore how this database is implemented, have a look at the parent project: [Sentience V3](https://github.com/Sentience-Framework/sentience-v3)
 
 # 8 Miscellaneous information about Sentience database
 
