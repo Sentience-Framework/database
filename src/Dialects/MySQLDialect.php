@@ -78,8 +78,8 @@ class MySQLDialect extends SQLDialect
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
             $condition->condition == ConditionEnum::LIKE
-            ? $caseInsensitive ? 'LIKE' : 'LIKE BINARY'
-            : $caseInsensitive ? 'NOT LIKE' : 'NOT LIKE BINARY',
+            ? $caseInsensitive ? ConditionEnum::LIKE->value : 'LIKE BINARY'
+            : $caseInsensitive ? ConditionEnum::NOT_LIKE->value : 'NOT LIKE BINARY',
             $this->buildQuestionMarks($params, $value)
         );
     }
