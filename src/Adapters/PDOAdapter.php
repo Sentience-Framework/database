@@ -333,6 +333,10 @@ class PDOAdapter extends AdapterAbstract
                 (bool) $options[static::OPTIONS_SQLITE_FOREIGN_KEYS]
             );
         }
+
+        $this->sqliteCaseSensitiveLike(function (string $query): void {
+            $this->pdo->exec($query);
+        });
     }
 
     public function version(): string

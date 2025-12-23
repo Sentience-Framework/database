@@ -92,6 +92,10 @@ class SQLite3Adapter extends AdapterAbstract
             );
         }
 
+        $this->sqliteCaseSensitiveLike(function (string $query): void {
+            $this->sqlite3->exec($query);
+        });
+
         foreach ($this->queries as $query) {
             $this->sqlite3->exec($query);
         }

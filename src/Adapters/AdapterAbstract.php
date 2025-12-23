@@ -112,6 +112,11 @@ abstract class AdapterAbstract implements AdapterInterface
         );
     }
 
+    protected function sqliteCaseSensitiveLike(Closure $execute): void
+    {
+        $execute('PRAGMA case_sensitive_like = ON;');
+    }
+
     protected function sqliteForeignKeys(Closure $execute, bool $foreignKeys): void
     {
         if (!$foreignKeys) {
