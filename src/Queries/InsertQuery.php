@@ -45,26 +45,24 @@ class InsertQuery extends Query
 
     public function execute(bool $emulatePrepare = false): ResultInterface
     {
-        try {
-            $previousEmulateReturning = $this->emulateReturning;
+        /**
+         * PHP's SQLite3 class doesn't handle returning well, because it re-executes the insert when fetching returning results.
+         * This means that only when you have an ON CONFLICT specified, will returning work as intended when using SQLite3Adapter.
+         *
+         * Returning also doesn't work in a transaction,
+         * because when a returning result is still unread the transaction cannot be committed.
+         */
+        $emulateReturning = $this->emulateReturning;
 
-            /**
-             * PHP's SQLite3 class doesn't handle returning well, because it re-executes the insert when fetching returning results.
-             * This means that only when you have an ON CONFLICT specified, will returning work as intended when using SQLite3Adapter.
-             *
-             * Returning also doesn't work in a transaction,
-             * because when a returning result is still unread the transaction cannot be committed.
-             */
-            if (
-                $this->lastInsertId
-                && (
-                    $this->database->adapter() instanceof SQLite3Adapter
-                    || $this->database->adapter()->driver() == Driver::SQLITE && $this->emulateOnConflictInTransaction
-                )
-            ) {
-                $this->emulateReturning = true;
+        if ($this->shouldEmulateReturning()) {
+            if (!$this->lastInsertId) {
+                throw new QueryException('emulate returning was automatically enabled, but no last insert id column was provided');
             }
 
+            $this->emulateReturning = true;
+        }
+
+        try {
             if (!$this->onConflict || !$this->emulateOnConflict && $this->dialect->onConflict()) {
                 return $this->insert($emulatePrepare);
             }
@@ -75,7 +73,7 @@ class InsertQuery extends Query
         } catch (Throwable $exception) {
             throw $exception;
         } finally {
-            $this->emulateReturning = $previousEmulateReturning;
+            $this->emulateReturning = $emulateReturning;
         }
     }
 
@@ -225,5 +223,20 @@ class InsertQuery extends Query
         $this->lastInsertId = $lastInsertId;
 
         return $this;
+    }
+
+    protected function shouldEmulateReturning(): bool
+    {
+        $adapter = $this->database->adapter();
+
+        if ($adapter->driver() != Driver::SQLITE) {
+            return false;
+        }
+
+        if ($this->emulateOnConflictInTransaction || $adapter instanceof SQLite3Adapter) {
+            return true;
+        }
+
+        return false;
     }
 }
