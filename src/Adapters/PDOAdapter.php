@@ -17,6 +17,16 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 class PDOAdapter extends AdapterAbstract
 {
+    public const array SUPPORTED_DRIVERS = [
+        Driver::FIREBIRD,
+        Driver::MARIADB,
+        Driver::MYSQL,
+        Driver::OCI,
+        Driver::PGSQL,
+        Driver::SQLITE,
+        Driver::SQLSRV
+    ];
+
     protected ?PDO $pdo = null;
 
     public static function fromSocket(
@@ -35,8 +45,8 @@ class PDOAdapter extends AdapterAbstract
                         return (string) $options[static::OPTIONS_PDO_DSN];
                     }
 
-                    if (!in_array($driver, [Driver::FIREBIRD, Driver::MARIADB, Driver::MYSQL, Driver::PGSQL, Driver::SQLITE, Driver::SQLSRV])) {
-                        throw new DriverException('this driver requires a dsn');
+                    if (!in_array($driver->value, static::SUPPORTED_DRIVERS)) {
+                        throw new DriverException('this driver requires a DSN');
                     }
 
                     if ($driver == Driver::SQLITE) {
@@ -54,6 +64,16 @@ class PDOAdapter extends AdapterAbstract
                     if ($driver == Driver::FIREBIRD) {
                         return sprintf(
                             '%s:dbname=%s/%d:%s',
+                            $driver->value,
+                            $socket->host,
+                            $socket->port,
+                            $name
+                        );
+                    }
+
+                    if ($driver == Driver::OCI) {
+                        return sprintf(
+                            '%s:dbname=//%s:%d/%s',
                             $driver->value,
                             $socket->host,
                             $socket->port,

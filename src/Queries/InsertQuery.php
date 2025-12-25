@@ -3,9 +3,6 @@
 namespace Sentience\Database\Queries;
 
 use Closure;
-use Throwable;
-use Sentience\Database\Adapters\SQLite3Adapter;
-use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Objects\ConditionGroup;
 use Sentience\Database\Queries\Objects\QueryWithParams;
@@ -45,36 +42,13 @@ class InsertQuery extends Query
 
     public function execute(bool $emulatePrepare = false): ResultInterface
     {
-        /**
-         * PHP's SQLite3 class doesn't handle returning well, because it re-executes the insert when fetching returning results.
-         * This means that only when you have an ON CONFLICT specified, will returning work as intended when using SQLite3Adapter.
-         *
-         * Returning also doesn't work in a transaction,
-         * because when a returning result is still unread the transaction cannot be committed.
-         */
-        $emulateReturning = $this->emulateReturning;
-
-        if ($this->shouldEmulateReturning()) {
-            if (!$this->lastInsertId) {
-                throw new QueryException('emulate returning was automatically enabled, but no last insert id column was provided');
-            }
-
-            $this->emulateReturning = true;
+        if (!$this->onConflict || !$this->emulateOnConflict && $this->dialect->onConflict()) {
+            return $this->insert($emulatePrepare);
         }
 
-        try {
-            if (!$this->onConflict || !$this->emulateOnConflict && $this->dialect->onConflict()) {
-                return $this->insert($emulatePrepare);
-            }
-
-            return $this->emulateOnConflictInTransaction
-                ? $this->database->transactionInCallback(fn (): ResultInterface => $this->upsert($emulatePrepare))
-                : $this->upsert($emulatePrepare);
-        } catch (Throwable $exception) {
-            throw $exception;
-        } finally {
-            $this->emulateReturning = $emulateReturning;
-        }
+        return $this->emulateOnConflictInTransaction
+            ? $this->database->transactionInCallback(fn (): ResultInterface => $this->upsert($emulatePrepare))
+            : $this->upsert($emulatePrepare);
     }
 
     protected function upsert(bool $emulatePrepare): ResultInterface
@@ -145,17 +119,15 @@ class InsertQuery extends Query
 
         $lastInsertId = $this->database->lastInsertId();
 
-        return $this->select(
-            function (ConditionGroup $conditionGroup) use ($lastInsertId): ConditionGroup {
-                if (empty($lastInsertId)) {
-                    return $conditionGroup;
-                }
+        if (empty($lastInsertId)) {
+            return $result;
+        }
 
-                return $conditionGroup->whereEquals(
-                    $this->lastInsertId,
-                    $lastInsertId
-                );
-            },
+        return $this->select(
+            fn (ConditionGroup $conditionGroup): ConditionGroup => $conditionGroup->whereEquals(
+                $this->lastInsertId,
+                $lastInsertId
+            ),
             1,
             $emulatePrepare
         );
@@ -223,20 +195,5 @@ class InsertQuery extends Query
         $this->lastInsertId = $lastInsertId;
 
         return $this;
-    }
-
-    protected function shouldEmulateReturning(): bool
-    {
-        $adapter = $this->database->adapter();
-
-        if ($adapter->driver() != Driver::SQLITE) {
-            return false;
-        }
-
-        if ($this->emulateOnConflictInTransaction || $adapter instanceof SQLite3Adapter) {
-            return true;
-        }
-
-        return false;
     }
 }
