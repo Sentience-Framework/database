@@ -78,8 +78,8 @@ class MySQLDialect extends SQLDialect
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
             $condition->condition == ConditionEnum::LIKE
-            ? $caseInsensitive ? ConditionEnum::LIKE->value : 'LIKE BINARY'
-            : $caseInsensitive ? ConditionEnum::NOT_LIKE->value : 'NOT LIKE BINARY',
+            ? ($caseInsensitive ? ConditionEnum::LIKE->value : 'LIKE BINARY')
+            : ($caseInsensitive ? ConditionEnum::NOT_LIKE->value : 'NOT LIKE BINARY'),
             $this->buildQuestionMarks($params, $value)
         );
     }
@@ -120,7 +120,7 @@ class MySQLDialect extends SQLDialect
         }
 
         $updates = !$insertIgnore
-            ? count($onConflict->updates) > 0 ? $onConflict->updates : $values
+            ? (count($onConflict->updates) > 0 ? $onConflict->updates : $values)
             : [];
 
         if ($lastInsertId) {

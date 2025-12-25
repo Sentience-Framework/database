@@ -45,7 +45,7 @@ class PDOAdapter extends AdapterAbstract
                         return (string) $options[static::OPTIONS_PDO_DSN];
                     }
 
-                    if (!in_array($driver->value, static::SUPPORTED_DRIVERS)) {
+                    if (!in_array($driver, static::SUPPORTED_DRIVERS)) {
                         throw new DriverException('this driver requires a DSN');
                     }
 

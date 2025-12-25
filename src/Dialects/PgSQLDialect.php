@@ -32,8 +32,8 @@ class PgSQLDialect extends SQLDialect
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
             $condition->condition == ConditionEnum::LIKE
-            ? $caseInsensitive ? 'ILIKE' : ConditionEnum::LIKE->value
-            : $caseInsensitive ? 'NOT ILIKE' : ConditionEnum::NOT_LIKE->value,
+            ? ($caseInsensitive ? 'ILIKE' : ConditionEnum::LIKE->value)
+            : ($caseInsensitive ? 'NOT ILIKE' : ConditionEnum::NOT_LIKE->value),
             $this->buildQuestionMarks($params, $value)
         );
     }
