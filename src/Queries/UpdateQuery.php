@@ -2,7 +2,10 @@
 
 namespace Sentience\Database\Queries;
 
+use Sentience\Database\Databases\DatabaseInterface;
+use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Traits\ReturningTrait;
 use Sentience\Database\Queries\Traits\ValuesTrait;
 use Sentience\Database\Queries\Traits\WhereTrait;
@@ -13,6 +16,11 @@ class UpdateQuery extends Query
     use ReturningTrait;
     use ValuesTrait;
     use WhereTrait;
+
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Raw $table)
+    {
+        parent::__construct($database, $dialect, $table);
+    }
 
     public function toQueryWithParams(): QueryWithParams
     {

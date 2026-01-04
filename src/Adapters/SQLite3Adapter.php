@@ -9,46 +9,37 @@ use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Results\Result;
 use Sentience\Database\Results\SQLite3Result;
 use Sentience\Database\Sockets\SocketAbstract;
 
 class SQLite3Adapter extends AdapterAbstract
 {
-    protected ?SQLite3 $sqlite3 = null;
+    protected SQLite3 $sqlite3;
 
-    public static function fromSocket(
+    public function __construct(
         Driver $driver,
         string $name,
         ?SocketAbstract $socket,
         array $queries,
         array $options,
-        ?Closure $debug,
-        bool $lazy = false
-    ): static {
-        return new static(
-            fn (): SQLite3 => new SQLite3(
-                $name,
-                !($options[static::OPTIONS_SQLITE_READ_ONLY] ?? false)
-                ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
-                : SQLITE3_OPEN_READONLY,
-                (string) ($options[static::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
-            ),
-            Driver::SQLITE,
+        ?Closure $debug
+    ) {
+        parent::__construct(
+            $driver,
+            $name,
+            $socket,
             $queries,
             $options,
-            $debug,
-            $lazy
+            $debug
         );
-    }
 
-    public function connect(): void
-    {
-        if ($this->isConnected()) {
-            return;
-        }
-
-        $this->sqlite3 = ($this->connect)();
+        $this->sqlite3 = new SQLite3(
+            $name,
+            !($options[static::OPTIONS_SQLITE_READ_ONLY] ?? false)
+            ? SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
+            : SQLITE3_OPEN_READONLY,
+            (string) ($options[static::OPTIONS_SQLITE_ENCRYPTION_KEY] ?? '')
+        );
 
         $this->sqlite3->enableExceptions(true);
 
@@ -61,87 +52,26 @@ class SQLite3Adapter extends AdapterAbstract
             )
         );
 
-        if (array_key_exists(static::OPTIONS_SQLITE_BUSY_TIMEOUT, $this->options)) {
-            $this->sqlite3->busyTimeout((int) $this->options[static::OPTIONS_SQLITE_BUSY_TIMEOUT]);
+        if (array_key_exists(static::OPTIONS_SQLITE_BUSY_TIMEOUT, $options)) {
+            $this->sqlite3->busyTimeout((int) $options[static::OPTIONS_SQLITE_BUSY_TIMEOUT]);
         }
 
-        if (array_key_exists(static::OPTIONS_SQLITE_ENCODING, $this->options)) {
-            $this->sqliteEncoding(
-                function (string $query): void {
-                    $this->sqlite3->exec($query);
-                },
-                (string) $this->options[static::OPTIONS_SQLITE_ENCODING]
-            );
+        if (array_key_exists(static::OPTIONS_SQLITE_ENCODING, $options)) {
+            $this->sqliteEncoding((string) $options[static::OPTIONS_SQLITE_ENCODING]);
         }
 
-        if (array_key_exists(static::OPTIONS_SQLITE_JOURNAL_MODE, $this->options)) {
-            $this->sqliteJournalMode(
-                function (string $query): void {
-                    $this->sqlite3->exec($query);
-                },
-                (string) $this->options[static::OPTIONS_SQLITE_JOURNAL_MODE]
-            );
+        if (array_key_exists(static::OPTIONS_SQLITE_JOURNAL_MODE, $options)) {
+            $this->sqliteJournalMode((string) $options[static::OPTIONS_SQLITE_JOURNAL_MODE]);
         }
 
-        if (array_key_exists(static::OPTIONS_SQLITE_FOREIGN_KEYS, $this->options)) {
-            $this->sqliteForeignKeys(
-                function (string $query): void {
-                    $this->sqlite3->exec($query);
-                },
-                (bool) $this->options[static::OPTIONS_SQLITE_FOREIGN_KEYS]
-            );
+        if (array_key_exists(static::OPTIONS_SQLITE_FOREIGN_KEYS, $options)) {
+            $this->sqliteForeignKeys((bool) $options[static::OPTIONS_SQLITE_FOREIGN_KEYS]);
         }
 
-        $this->sqliteCaseSensitiveLike(function (string $query): void {
-            $this->sqlite3->exec($query);
-        });
+        $this->sqliteCaseSensitiveLike();
 
-        foreach ($this->queries as $query) {
-            $this->sqlite3->exec($query);
-        }
-    }
-
-    public function disconnect(): void
-    {
-        if (!$this->isConnected()) {
-            return;
-        }
-
-        $this->sqliteOptimize(
-            function (string $query): void {
-                $this->sqlite3->exec($query);
-            },
-            $this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false
-        );
-
-        $this->sqlite3->close();
-
-        $this->sqlite3 = null;
-    }
-
-    public function isConnected(): bool
-    {
-        return !is_null($this->sqlite3);
-    }
-
-    public function ping(bool $reconnect = false): bool
-    {
-        if (!$this->isConnected()) {
-            return false;
-        }
-
-        try {
-            $this->sqlite3->exec('SELECT 1');
-
-            return true;
-        } catch (Throwable $exception) {
-            if ($reconnect) {
-                $this->reconnect();
-
-                return true;
-            }
-
-            return false;
+        foreach ($queries as $query) {
+            $this->exec($query);
         }
     }
 
@@ -152,33 +82,21 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function exec(string $query): void
     {
-        $this->connect();
-
         $start = microtime(true);
 
         try {
             $this->sqlite3->exec($query);
-
-            if ($this->lazy && $this->isInsertQuery($query)) {
-                $this->cacheLastInsertId();
-            }
         } catch (Throwable $exception) {
             $this->debug($query, $start, $exception);
 
             throw $exception;
-        } finally {
-            if ($this->lazy && !$this->inTransaction()) {
-                $this->disconnect();
-            }
         }
 
         $this->debug($query, $start);
     }
 
-    public function query(string $query): SQLite3Result|Result
+    public function query(string $query): SQLite3Result
     {
-        $this->connect();
-
         $start = microtime(true);
 
         try {
@@ -186,30 +104,16 @@ class SQLite3Adapter extends AdapterAbstract
 
             $this->debug($query, $start);
 
-            if ($this->lazy && $this->isInsertQuery($query)) {
-                $this->cacheLastInsertId();
-            }
-
-            $result = new SQLite3Result($sqlite3Result);
-
-            return $this->lazy
-                ? Result::fromInterface($result)
-                : $result;
+            return new SQLite3Result($sqlite3Result);
         } catch (Throwable $exception) {
             $this->debug($query, $start, $exception);
 
             throw $exception;
-        } finally {
-            if ($this->lazy && !$this->inTransaction()) {
-                $this->disconnect();
-            }
         }
     }
 
-    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): SQLite3Result|Result
+    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): SQLite3Result
     {
-        $this->connect();
-
         if ($emulatePrepare) {
             return $this->query($queryWithParams->toSql($dialect));
         }
@@ -219,15 +123,7 @@ class SQLite3Adapter extends AdapterAbstract
         try {
             $sqlite3Stmt = $this->sqlite3->prepare($queryWithParams->query);
         } catch (Throwable $exception) {
-            if ($this->lazy && !$this->inTransaction()) {
-                $this->disconnect();
-            }
-
-            $this->debug(
-                $queryWithParams->toSql($dialect),
-                $start,
-                $exception
-            );
+            $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start, $exception);
 
             throw $exception;
         }
@@ -251,34 +147,14 @@ class SQLite3Adapter extends AdapterAbstract
         try {
             $sqlite3Result = $sqlite3Stmt->execute();
         } catch (Throwable $exception) {
-            if ($this->lazy && !$this->inTransaction()) {
-                $this->disconnect();
-            }
-
-            $this->debug(
-                $queryWithParams->toSql($dialect),
-                $start,
-                $exception
-            );
+            $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start, $exception);
 
             throw $exception;
         }
 
-        $this->debug($queryWithParams->toSql($dialect), $start);
+        $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start);
 
-        if ($this->lazy && $this->isInsertQuery($queryWithParams)) {
-            $this->cacheLastInsertId();
-        }
-
-        $result = new SQLite3Result($sqlite3Result);
-
-        if ($this->lazy && !$this->inTransaction()) {
-            $result = Result::fromInterface($result);
-
-            $this->disconnect();
-        }
-
-        return $result;
+        return new SQLite3Result($sqlite3Result);
     }
 
     public function beginTransaction(DialectInterface $dialect, ?string $name = null): void
@@ -296,21 +172,9 @@ class SQLite3Adapter extends AdapterAbstract
         parent::rollbackTransaction($dialect, null);
     }
 
-    public function lastInsertId(?string $name = null): ?int
+    public function lastInsertId(?string $name = null): int
     {
-        if ($this->lazy && $this->lastInsertId) {
-            return $this->lastInsertId;
-        }
-
-        if (!$this->isConnected()) {
-            return null;
-        }
-
-        $lastInsertId = $this->sqlite3->lastInsertRowID();
-
-        $this->lastInsertId = $this->lazy ? $lastInsertId : null;
-
-        return $lastInsertId;
+        return $this->sqlite3->lastInsertRowID();
     }
 
     protected function bindValue(SQLite3Stmt $sqlite3Stmt, int $key, null|int|float|string $value, int $type): void
@@ -321,5 +185,14 @@ class SQLite3Adapter extends AdapterAbstract
     protected function bindParam(SQLite3Stmt $sqlite3Stmt, string $key, null|int|float|string $value, int $type): void
     {
         $sqlite3Stmt->bindParam($key, $value, $type);
+    }
+
+    public function __destruct()
+    {
+        $this->sqliteOptimize($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false);
+
+        if (!($this->options[static::OPTIONS_PERSISTENT] ?? false)) {
+            $this->sqlite3->close();
+        }
     }
 }

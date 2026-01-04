@@ -55,32 +55,33 @@ class SelectQuery extends Query
 
     public function count(null|string|array|Raw $column = null, bool $emulatePrepare = false): int
     {
-        $previousDistinct = $this->distinct;
-        $previousColumns = $this->columns;
-        $previousOrderBy = $this->orderBy;
+        $queryWithParams = $this->dialect->select(
+            false,
+            [
+                Query::alias(
+                    Query::raw(
+                        sprintf(
+                            'COUNT(%s)',
+                            !is_null($column)
+                            ? ($this->distinct ? 'DISTINCT ' : '') . $this->dialect->escapeIdentifier($column)
+                            : '*'
+                        )
+                    ),
+                    'count'
+                )
+            ],
+            $this->table,
+            $this->joins,
+            $this->where,
+            $this->groupBy,
+            $this->having,
+            [],
+            $this->limit,
+            $this->offset
+        );
 
-        $this->distinct = false;
-        $this->columns = [
-            Query::alias(
-                Query::raw(
-                    sprintf(
-                        'COUNT(%s)',
-                        !is_null($column)
-                        ? ($previousDistinct ? 'DISTINCT ' : '') . $this->dialect->escapeIdentifier($column)
-                        : '*'
-                    )
-                ),
-                'count'
-            )
-        ];
-        $this->orderBy = [];
-
-        $count = (int) $this->execute($emulatePrepare)->fetchObject()?->count ?? 0;
-
-        $this->distinct = $previousDistinct;
-        $this->columns = $previousColumns;
-        $this->orderBy = $previousOrderBy;
-
-        return $count;
+        return (int) $this->database
+            ->queryWithParams($queryWithParams, $emulatePrepare)
+            ->scalar() ?? 0;
     }
 }

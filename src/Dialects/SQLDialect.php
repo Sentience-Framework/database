@@ -28,8 +28,8 @@ use Sentience\Database\Queries\Objects\OrderBy;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\RenameColumn;
+use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Objects\UniqueConstraint;
-use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
 
 class SQLDialect extends DialectAbstract
@@ -38,7 +38,7 @@ class SQLDialect extends DialectAbstract
     public const bool ESCAPE_ANSI = true;
     public const string ESCAPE_IDENTIFIER = '"';
     public const string ESCAPE_STRING = "'";
-    public const array ESCAPE_CHARS = [];
+    public const array ESCAPE_CHARS = ["\0" => ''];
     public const bool BOOL = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
     public const bool ON_CONFLICT = false;
@@ -48,7 +48,7 @@ class SQLDialect extends DialectAbstract
     public function select(
         bool $distinct,
         array $columns,
-        string|array|Alias|SelectQuery|Raw $table,
+        string|array|Alias|Raw|SubQuery $table,
         array $joins,
         array $where,
         array $groupBy,
@@ -57,10 +57,6 @@ class SQLDialect extends DialectAbstract
         ?int $limit,
         ?int $offset
     ): QueryWithParams {
-        if ($table instanceof SelectQuery) {
-            throw new QueryException('table select query requires an alias');
-        }
-
         $query = 'SELECT';
         $params = [];
 
@@ -73,14 +69,11 @@ class SQLDialect extends DialectAbstract
             ? implode(
                 ', ',
                 array_map(
-                    function (string|array|Alias|Raw $column) use (&$params): string {
-                        if ($column instanceof Alias && $column->identifier instanceof SelectQuery) {
-                            $column->identifier = Query::raw(
-                                $this->buildSelectQuery(
-                                    $params,
-                                    $column->identifier
-                                )
-                            );
+                    function (string|array|Alias|Raw|SubQuery $column) use (&$params): string {
+                        if ($column instanceof SubQuery) {
+                            $column = $column->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
+                                return $this->buildSelectQuery($params, $selectQuery);
+                            });
                         }
 
                         return $this->escapeIdentifier($column);
@@ -105,7 +98,7 @@ class SQLDialect extends DialectAbstract
     }
 
     public function insert(
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $values,
         ?OnConflict $onConflict,
         ?array $returning,
@@ -153,7 +146,7 @@ class SQLDialect extends DialectAbstract
     }
 
     public function update(
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $values,
         array $where,
         ?array $returning
@@ -192,7 +185,7 @@ class SQLDialect extends DialectAbstract
     }
 
     public function delete(
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $where,
         ?array $returning
     ): QueryWithParams {
@@ -208,7 +201,7 @@ class SQLDialect extends DialectAbstract
 
     public function createTable(
         bool $ifNotExists,
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $columns,
         array $primaryKeys,
         array $constraints
@@ -264,7 +257,7 @@ class SQLDialect extends DialectAbstract
     }
 
     public function alterTable(
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $alters
     ): array {
         if (count($alters) == 0) {
@@ -299,7 +292,7 @@ class SQLDialect extends DialectAbstract
 
     public function dropTable(
         bool $ifExists,
-        string|array|Alias|Raw $table
+        string|array|Raw $table
     ): QueryWithParams {
         $query = 'DROP TABLE';
         $params = [];
@@ -385,17 +378,14 @@ class SQLDialect extends DialectAbstract
         );
     }
 
-    protected function buildTable(string &$query, &$params, string|array|Alias|Raw $table): void
+    protected function buildTable(string &$query, &$params, string|array|Alias|Raw|SubQuery $table): void
     {
         $query .= ' ';
 
-        if ($table instanceof Alias && $table->identifier instanceof SelectQuery) {
-            $table->identifier = Query::raw(
-                $this->buildSelectQuery(
-                    $params,
-                    $table->identifier
-                )
-            );
+        if ($table instanceof SubQuery) {
+            $table = $table->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
+                return $this->buildSelectQuery($params, $selectQuery);
+            });
         }
 
         $query .= $this->escapeIdentifier($table);
@@ -988,7 +978,7 @@ class SQLDialect extends DialectAbstract
 
     protected function escape(string $string, string $char): string
     {
-        $escapedString = strtr(
+        $escaped = strtr(
             $string,
             [
                 ...static::ESCAPE_CHARS,
@@ -998,7 +988,7 @@ class SQLDialect extends DialectAbstract
             ]
         );
 
-        return $char . $escapedString . $char;
+        return $char . $escaped . $char;
     }
 
     public function castToDriver(null|bool|int|float|string|DateTimeInterface $value): null|bool|int|float|string
@@ -1046,7 +1036,7 @@ class SQLDialect extends DialectAbstract
     public function castBool(bool $bool): null|bool|int|float|string
     {
         return !$this->bool()
-            ? $bool ? 1 : 0
+            ? ($bool ? 1 : 0)
             : $bool;
     }
 

@@ -3,6 +3,8 @@
 namespace Sentience\Database\Queries;
 
 use DateTimeInterface;
+use Sentience\Database\Databases\DatabaseInterface;
+use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\QueryWithParams;
@@ -19,6 +21,11 @@ class CreateTableQuery extends Query
     use PrimaryKeysTrait;
 
     protected array $columns = [];
+
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Raw $table)
+    {
+        parent::__construct($database, $dialect, $table);
+    }
 
     public function toQueryWithParams(): QueryWithParams
     {

@@ -4,6 +4,6 @@ namespace Sentience\Database\Exceptions;
 
 use Exception;
 
-class DriverException extends Exception
+class AdapterException extends Exception
 {
 }

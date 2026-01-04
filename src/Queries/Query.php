@@ -3,18 +3,19 @@
 namespace Sentience\Database\Queries;
 
 use DateTime;
-use Sentience\Database\Database;
+use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Identifier;
 use Sentience\Database\Queries\Objects\Raw;
+use Sentience\Database\Queries\Objects\SubQuery;
 
 abstract class Query implements QueryInterface
 {
     public function __construct(
-        protected Database $database,
+        protected DatabaseInterface $database,
         protected DialectInterface $dialect,
-        protected string|array|Alias|Raw $table
+        protected string|array|Alias|Raw|SubQuery $table
     ) {
     }
 
@@ -30,7 +31,7 @@ abstract class Query implements QueryInterface
         return $this->database->queryWithParams($queryWithParams, $emulatePrepare);
     }
 
-    public static function alias(string|array|Raw|SelectQuery $identifier, string $alias): Alias
+    public static function alias(string|array|Raw $identifier, string $alias): Alias
     {
         return new Alias($identifier, $alias);
     }
@@ -45,6 +46,11 @@ abstract class Query implements QueryInterface
         return new Raw($sql);
     }
 
+    public static function subQuery(SelectQuery $selectQuery, string $alias): SubQuery
+    {
+        return new SubQuery($selectQuery, $alias);
+    }
+
     public static function now(): DateTime
     {
         return new DateTime();
@@ -52,7 +58,7 @@ abstract class Query implements QueryInterface
 
     public static function escapeAnsi(string $string, array $chars): string
     {
-        return static::escape($string, $chars, '$0$0', '/%s/');
+        return static::escape($string, $chars, '$0$0');
     }
 
     public static function escapeBackslash(string $string, array $chars): string
@@ -71,7 +77,7 @@ abstract class Query implements QueryInterface
         return static::escape($string, $chars);
     }
 
-    protected static function escape(string $string, array $chars, string $replacement = '\\\\$0', string $pattern = '/(?<!\\\\)(?:\\\\\\\\)*%s/'): string
+    protected static function escape(string $string, array $chars, string $replacement = '\\\\$0', string $pattern = '/%s/'): string
     {
         $escaped = $string;
 

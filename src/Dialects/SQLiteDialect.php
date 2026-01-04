@@ -7,7 +7,6 @@ use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\AddPrimaryKeys;
 use Sentience\Database\Queries\Objects\AddUniqueConstraint;
-use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\DropConstraint;
@@ -21,14 +20,11 @@ use Sentience\Database\Queries\Objects\UniqueConstraint;
 class SQLiteDialect extends SQLDialect
 {
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
-    public const array ESCAPE_CHARS = [
-        "\0" => ''
-    ];
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 
     public function createTable(
         bool $ifNotExists,
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $columns,
         array $primaryKeys,
         array $constraints

@@ -6,7 +6,6 @@ use DateTimeInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
-use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
@@ -38,7 +37,7 @@ class MySQLDialect extends SQLDialect
 
     public function createTable(
         bool $ifNotExists,
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $columns,
         array $primaryKeys,
         array $constraints

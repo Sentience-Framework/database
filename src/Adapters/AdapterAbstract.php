@@ -6,64 +6,26 @@ use Closure;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
-use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Query;
+use Sentience\Database\Sockets\SocketAbstract;
 
 abstract class AdapterAbstract implements AdapterInterface
 {
     public const string REGEXP_LIKE_FUNCTION = 'REGEXP_LIKE';
 
     protected bool $inTransaction = false;
-    protected null|int|string $lastInsertId = null;
 
     public function __construct(
-        protected Closure $connect,
         protected Driver $driver,
+        protected string $name,
+        protected ?SocketAbstract $socket,
         protected array $queries,
         protected array $options,
-        protected ?Closure $debug,
-        protected bool $lazy = false
+        protected ?Closure $debug
     ) {
-        if (!$lazy) {
-            $this->connect();
-        }
     }
 
-    public function driver(): Driver
-    {
-        return $this->driver;
-    }
-
-    public function reconnect(): void
-    {
-        $this->disconnect();
-        $this->connect();
-    }
-
-    public function enableLazy(bool $disconnect = true): void
-    {
-        $this->lazy = true;
-
-        if ($disconnect) {
-            $this->disconnect();
-        }
-    }
-
-    public function disableLazy(bool $connect = true): void
-    {
-        $this->lazy = false;
-
-        if ($connect) {
-            $this->connect();
-        }
-    }
-
-    public function isLazy(): bool
-    {
-        return $this->lazy;
-    }
-
-    protected function mysqlNames(Closure $execute, string $charset, ?string $collation): void
+    protected function mysqlNames(string $charset, ?string $collation): void
     {
         $query = sprintf(
             'SET NAMES %s',
@@ -77,62 +39,60 @@ abstract class AdapterAbstract implements AdapterInterface
             );
         }
 
-        $query .= ';';
-
-        $execute($query);
+        $this->exec($query);
     }
 
-    protected function mysqlEngine(Closure $execute, string $engine): void
+    protected function mysqlEngine(string $engine): void
     {
-        $execute(
+        $this->exec(
             sprintf(
-                'SET SESSION default_storage_engine = %s;',
+                'SET SESSION default_storage_engine = %s',
                 $engine
             )
         );
     }
 
-    protected function sqliteEncoding(Closure $execute, string $encoding): void
+    protected function sqliteEncoding(string $encoding): void
     {
-        $execute(
+        $this->exec(
             sprintf(
-                "PRAGMA encoding = '%s';",
+                "PRAGMA encoding = '%s'",
                 $encoding
             )
         );
     }
 
-    protected function sqliteJournalMode(Closure $execute, string $journalMode): void
+    protected function sqliteJournalMode(string $journalMode): void
     {
-        $execute(
+        $this->exec(
             sprintf(
-                'PRAGMA journal_mode = %s;',
+                'PRAGMA journal_mode = %s',
                 $journalMode
             )
         );
     }
 
-    protected function sqliteCaseSensitiveLike(Closure $execute): void
-    {
-        $execute('PRAGMA case_sensitive_like = ON;');
-    }
-
-    protected function sqliteForeignKeys(Closure $execute, bool $foreignKeys): void
+    protected function sqliteForeignKeys(bool $foreignKeys): void
     {
         if (!$foreignKeys) {
             return;
         }
 
-        $execute('PRAGMA foreign_keys = ON;');
+        $this->exec('PRAGMA foreign_keys = ON');
     }
 
-    protected function sqliteOptimize(Closure $execute, bool $optimize): void
+    protected function sqliteCaseSensitiveLike(): void
+    {
+        $this->exec('PRAGMA case_sensitive_like = ON');
+    }
+
+    protected function sqliteOptimize(bool $optimize): void
     {
         if (!$optimize) {
             return;
         }
 
-        $execute('PRAGMA optimize;');
+        $this->exec('PRAGMA optimize');
     }
 
     protected function regexpLikeFunction(string $value, string $pattern, string $flags): bool
@@ -147,18 +107,8 @@ abstract class AdapterAbstract implements AdapterInterface
         );
     }
 
-    protected function isInsertQuery(string|QueryWithParams $query): bool
-    {
-        return str_starts_with(
-            strtoupper($query instanceof QueryWithParams ? $query->query : $query),
-            'INSERT'
-        );
-    }
-
     public function beginTransaction(DialectInterface $dialect, ?string $name = null): void
     {
-        $this->connect();
-
         if ($this->inTransaction()) {
             return;
         }
@@ -170,10 +120,6 @@ abstract class AdapterAbstract implements AdapterInterface
 
     public function commitTransaction(DialectInterface $dialect, ?string $name = null): void
     {
-        if (!$this->isConnected()) {
-            return;
-        }
-
         if (!$this->inTransaction()) {
             return;
         }
@@ -184,19 +130,11 @@ abstract class AdapterAbstract implements AdapterInterface
             throw $exception;
         } finally {
             $this->inTransaction = false;
-
-            if ($this->lazy) {
-                $this->disconnect();
-            }
         }
     }
 
     public function rollbackTransaction(DialectInterface $dialect, ?string $name = null): void
     {
-        if (!$this->isConnected()) {
-            return;
-        }
-
         if (!$this->inTransaction()) {
             return;
         }
@@ -207,24 +145,16 @@ abstract class AdapterAbstract implements AdapterInterface
             throw $exception;
         } finally {
             $this->inTransaction = false;
-
-            if ($this->lazy) {
-                $this->disconnect();
-            }
         }
     }
 
     public function beginSavepoint(DialectInterface $dialect, string $name): void
     {
-        if (!$this->isConnected()) {
+        if (!$dialect->savepoints()) {
             return;
         }
 
         if (!$this->inTransaction()) {
-            return;
-        }
-
-        if (!$dialect->savepoints()) {
             return;
         }
 
@@ -233,15 +163,11 @@ abstract class AdapterAbstract implements AdapterInterface
 
     public function commitSavepoint(DialectInterface $dialect, string $name): void
     {
-        if (!$this->isConnected()) {
+        if (!$dialect->savepoints()) {
             return;
         }
 
         if (!$this->inTransaction()) {
-            return;
-        }
-
-        if (!$dialect->savepoints()) {
             return;
         }
 
@@ -250,15 +176,11 @@ abstract class AdapterAbstract implements AdapterInterface
 
     public function rollbackSavepoint(DialectInterface $dialect, string $name): void
     {
-        if (!$this->isConnected()) {
+        if (!$dialect->savepoints()) {
             return;
         }
 
         if (!$this->inTransaction()) {
-            return;
-        }
-
-        if (!$dialect->savepoints()) {
             return;
         }
 
@@ -267,17 +189,7 @@ abstract class AdapterAbstract implements AdapterInterface
 
     public function inTransaction(): bool
     {
-        if (!$this->isConnected()) {
-            return false;
-        }
-
         return $this->inTransaction;
-    }
-
-    protected function cacheLastInsertId(): void
-    {
-        $this->lastInsertId = null;
-        $this->lastInsertId();
     }
 
     protected function debug(string|callable $query, float $start, null|string|Throwable $error = null): void
@@ -291,20 +203,5 @@ abstract class AdapterAbstract implements AdapterInterface
             $start,
             $error instanceof Throwable ? $error->getMessage() : $error
         );
-    }
-
-    public function __destruct()
-    {
-        if (!$this->isConnected()) {
-            return;
-        }
-
-        if ($this->driver == Driver::SQLITE) {
-            $this->disconnect();
-        }
-
-        if (!($this->options[static::OPTIONS_PERSISTENT] ?? false)) {
-            $this->disconnect();
-        }
     }
 }

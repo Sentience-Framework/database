@@ -10,14 +10,14 @@ use Sentience\Database\Queries\Objects\Having;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
-use Sentience\Database\Queries\SelectQuery;
+use Sentience\Database\Queries\Objects\SubQuery;
 
 interface DialectInterface
 {
     public function select(
         bool $distinct,
         array $columns,
-        string|array|Alias|SelectQuery|Raw $table,
+        string|array|Alias|Raw|SubQuery $table,
         array $joins,
         array $where,
         array $groupBy,
@@ -28,7 +28,7 @@ interface DialectInterface
     ): QueryWithParams;
 
     public function insert(
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $values,
         ?OnConflict $onConflict,
         ?array $returning,
@@ -36,34 +36,34 @@ interface DialectInterface
     ): QueryWithParams;
 
     public function update(
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $values,
         array $where,
         ?array $returning
     ): QueryWithParams;
 
     public function delete(
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $where,
         ?array $returning
     ): QueryWithParams;
 
     public function createTable(
         bool $ifNotExists,
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $columns,
         array $primaryKeys,
         array $constraints
     ): QueryWithParams;
 
     public function alterTable(
-        string|array|Alias|Raw $table,
+        string|array|Raw $table,
         array $alters
     ): array;
 
     public function dropTable(
         bool $ifExists,
-        string|array|Alias|Raw $table
+        string|array|Raw $table
     ): QueryWithParams;
 
     public function beginTransaction(

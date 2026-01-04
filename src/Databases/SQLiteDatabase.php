@@ -1,25 +1,24 @@
 <?php
 
-namespace Sentience\Database;
+namespace Sentience\Database\Databases;
 
 use Closure;
-use Sentience\Database\Databases\DatabaseAbstract;
-use Sentience\Database\Sockets\SocketAbstract;
+use Sentience\Database\Driver;
 
-class Database extends DatabaseAbstract
+class SQLiteDatabase extends DatabaseAbstract
 {
-    public static function connect(
-        Driver $driver,
+    public static function fromFile(
         string $name,
-        ?SocketAbstract $socket = null,
         array $queries = [],
         array $options = [],
         ?Closure $debug = null,
         bool $usePDOAdapter = false
     ): static {
+        $driver = Driver::SQLITE;
+
         $adapter = $driver->getAdapter(
             $name,
-            $socket,
+            null,
             $queries,
             $options,
             $debug,

@@ -3,9 +3,12 @@
 namespace Sentience\Database\Queries;
 
 use Closure;
+use Sentience\Database\Databases\DatabaseInterface;
+use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Objects\ConditionGroup;
 use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Traits\LastInsertIdTrait;
 use Sentience\Database\Queries\Traits\OnConflictTrait;
 use Sentience\Database\Queries\Traits\ReturningTrait;
@@ -23,6 +26,11 @@ class InsertQuery extends Query
     protected bool $emulateOnConflict = false;
     protected bool $emulateOnConflictInTransaction = false;
     protected bool $emulateReturning = false;
+
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Raw $table)
+    {
+        parent::__construct($database, $dialect, $table);
+    }
 
     public function toQueryWithParams(): QueryWithParams
     {
@@ -47,7 +55,7 @@ class InsertQuery extends Query
         }
 
         return $this->emulateOnConflictInTransaction
-            ? $this->database->transactionInCallback(fn (): ResultInterface => $this->upsert($emulatePrepare))
+            ? $this->database->transaction(fn (): ResultInterface => $this->upsert($emulatePrepare))
             : $this->upsert($emulatePrepare);
     }
 
@@ -98,15 +106,20 @@ class InsertQuery extends Query
 
     protected function select(Closure $whereGroup, int $limit, bool $emulatePrepare): ResultInterface
     {
-        return $this->database->select($this->table)
+        $selectQuery = $this->database->select($this->table)
             ->columns(
                 !empty($this->returning)
                 ? array_unique(array_filter([$this->lastInsertId, ...$this->returning]))
                 : []
             )
             ->whereGroup($whereGroup)
-            ->limit($limit)
-            ->execute($emulatePrepare);
+            ->limit($limit);
+
+        if ($this->lastInsertId) {
+            $selectQuery->orderByDesc($this->lastInsertId);
+        }
+
+        return $selectQuery->execute($emulatePrepare);
     }
 
     protected function insert(bool $emulatePrepare): ResultInterface
@@ -119,15 +132,17 @@ class InsertQuery extends Query
 
         $lastInsertId = $this->database->lastInsertId();
 
-        if (empty($lastInsertId)) {
-            return $result;
-        }
-
         return $this->select(
-            fn (ConditionGroup $conditionGroup): ConditionGroup => $conditionGroup->whereEquals(
-                $this->lastInsertId,
-                $lastInsertId
-            ),
+            function (ConditionGroup $conditionGroup) use ($lastInsertId): ConditionGroup {
+                if (empty($lastInsertId)) {
+                    return $conditionGroup;
+                }
+
+                return $conditionGroup->whereEquals(
+                    $this->lastInsertId,
+                    $lastInsertId
+                );
+            },
             1,
             $emulatePrepare
         );
@@ -138,7 +153,7 @@ class InsertQuery extends Query
         $updateQuery = $this->database->update($this->table);
 
         $updates = !is_null($this->onConflict->updates)
-            ? count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values
+            ? (count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values)
             : $conflict;
 
         $updateQuery->values($updates);

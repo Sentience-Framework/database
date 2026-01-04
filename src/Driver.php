@@ -27,22 +27,16 @@ enum Driver: string
     case SQLITE = 'sqlite';
     case SQLSRV = 'sqlsrv';
 
-    case CUBRID = 'cubrid';
-    case DB2 = 'ibm';
-    case DBLIB = 'dblib';
-    case INFORMIX = 'informix';
-    case ODBC = 'odbc';
-
     public function getAdapter(
         string $name,
         ?SocketAbstract $socket,
         array $queries,
         array $options,
         ?Closure $debug,
-        bool $usePdoAdapter = false,
+        bool $usePDOAdapter = false,
         bool $lazy = false
     ): AdapterInterface {
-        $adapter = !$usePdoAdapter
+        $adapter = !$usePDOAdapter
             ? match ($this) {
                 static::MARIADB,
                 static::MYSQL => MySQLiAdapter::class,
@@ -51,7 +45,7 @@ enum Driver: string
             }
         : PDOAdapter::class;
 
-        return $adapter::fromSocket(
+        return new $adapter(
             $this,
             $name,
             $socket,

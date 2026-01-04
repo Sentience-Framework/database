@@ -1,25 +1,29 @@
 <?php
 
-namespace Sentience\Database;
+namespace Sentience\Database\Databases;
 
 use Closure;
-use Sentience\Database\Databases\DatabaseAbstract;
-use Sentience\Database\Sockets\SocketAbstract;
+use Sentience\Database\Driver;
+use Sentience\Database\Sockets\NetworkSocket;
 
-class Database extends DatabaseAbstract
+class SQLServerDatabase extends DatabaseAbstract
 {
-    public static function connect(
-        Driver $driver,
+    public static function fromNetwork(
         string $name,
-        ?SocketAbstract $socket = null,
+        string $username,
+        ?string $password,
+        string $host = 'localhost',
+        int $port = 1433,
         array $queries = [],
         array $options = [],
         ?Closure $debug = null,
         bool $usePDOAdapter = false
     ): static {
+        $driver = Driver::SQLSRV;
+
         $adapter = $driver->getAdapter(
             $name,
-            $socket,
+            new NetworkSocket($host, $port, $username, $password),
             $queries,
             $options,
             $debug,

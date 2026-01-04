@@ -2,12 +2,9 @@
 
 namespace Sentience\Database\Adapters;
 
-use Closure;
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Driver;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\ResultInterface;
-use Sentience\Database\Sockets\SocketAbstract;
 
 interface AdapterInterface
 {
@@ -33,25 +30,6 @@ interface AdapterInterface
     public const string OPTIONS_SQLSRV_ENCRYPT = 'encrypt';
     public const string OPTIONS_SQLSRV_TRUST_SERVER_CERTIFICATE = 'trust_server_certificate';
 
-    public static function fromSocket(
-        Driver $driver,
-        string $name,
-        ?SocketAbstract $socket,
-        array $queries,
-        array $options,
-        ?Closure $debug,
-        bool $lazy = false
-    ): static;
-
-    public function driver(): Driver;
-    public function connect(): void;
-    public function disconnect(): void;
-    public function reconnect(): void;
-    public function isConnected(): bool;
-    public function ping(bool $reconnect = false): bool;
-    public function enableLazy(bool $disconnect = true): void;
-    public function disableLazy(bool $connect = true): void;
-    public function isLazy(): bool;
     public function version(): int|string;
     public function exec(string $query): void;
     public function query(string $query): ResultInterface;
