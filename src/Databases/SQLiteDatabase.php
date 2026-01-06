@@ -10,7 +10,7 @@ class SQLiteDatabase extends DatabaseAbstract
     public const Driver DRIVER = Driver::SQLITE;
 
     public static function fromFile(
-        string $name,
+        string $file,
         array $queries = [],
         array $options = [],
         ?Closure $debug = null,
@@ -19,7 +19,7 @@ class SQLiteDatabase extends DatabaseAbstract
         $driver = static::DRIVER;
 
         $adapter = $driver->getAdapter(
-            $name,
+            $file,
             null,
             $queries,
             $options,

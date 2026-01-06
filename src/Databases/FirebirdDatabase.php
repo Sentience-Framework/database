@@ -46,12 +46,23 @@ class FirebirdDatabase extends DatabaseAbstract
 
     public function rdbRelationsTables(): array
     {
-        return $this->select(Query::raw('RDB$RELATIONS'))
+        $result = $this->select(Query::raw('RDB$RELATIONS'))
             ->columns([Query::raw('RDB$RELATION_NAME')])
             ->where('COALESCE(RDB$SYSTEM_FLAG, 0) = 0')
             ->where('RDB$RELATION_TYPE = 0')
-            ->execute()
-            ->fetchAssocs();
+            ->execute();
+
+        $tables = [];
+
+        while ($table = $result->scalar()) {
+            if (!$table) {
+                break;
+            }
+
+            $tables[] = $table;
+        }
+
+        return $tables;
     }
 
     public function rdbRelationFields(string $table): array
