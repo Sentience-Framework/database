@@ -33,8 +33,7 @@ enum Driver: string
         array $queries,
         array $options,
         ?Closure $debug,
-        bool $usePDOAdapter = false,
-        bool $lazy = false
+        bool $usePDOAdapter = false
     ): AdapterInterface {
         $adapter = !$usePDOAdapter
             ? match ($this) {
@@ -51,8 +50,7 @@ enum Driver: string
             $socket,
             $queries,
             $options,
-            $debug,
-            $lazy
+            $debug
         );
     }
 

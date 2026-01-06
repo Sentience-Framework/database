@@ -115,28 +115,11 @@ $database = Database::connect(
     $queries, // A list of queries to execute when initializing the session
     $options, // An associative array of extra options (more on that in #4),
     $debug, // A callback that takes (string $query, float $startTime, ?string $error) as arguments
-    $usePdoAdapter, // Use PDO for MariaDB/MySQL/SQLite connections instead of their native implementation
-    $lazy // Disconnect after each query, reconnect when ->exec(), ->query(), or ->queryWithParams() is called
+    $usePDOAdapter, // Use PDO for MariaDB/MySQL/SQLite connections instead of their native implementation
 );
 ```
 
 The socket constructor arg should be a `NetworkSocket` or `UnixSocket` class.
-
-If you wish the connect a custom PDO implementation, you can use `::pdo`. The first argument is a callback that should return a new instance of PDO. The reason it requires a callback, is because lazy mode uses this callback to reinitialize the connection after terminating it.
-
-```php
-use Sentience\Database\Database;
-
-$database = Database::connect(
-    function (): PDO {
-        return new PDO($dsn, $username, $password, $options);
-    },
-    $driver,
-    $queries, // A list of queries to execute when initializing the session
-    $options, // An associative array of extra options (more on that in {INSERT CHAPTER}),
-    $debug, // A callback that takes (string $query, float $startTime, ?string $error) as arguments
-    $lazy // Disconnect after each query, reconnect when ->exec(), ->query(), or ->queryWithParams() is called
-);
 ```
 
 If you wish to build a custom database implementation, you can also manually initialize the database by calling the constructor with an `AdapterInterface` and a `DialectInterface`. Both have "abstract" classes you can extend to include a lot of functionality in your custom implementations directly. For adapters it's `AdapterAbstract`, and for dialects it's `SQLDialect` which implements the SQL 2016 standard to the best of its abilities.
@@ -343,12 +326,16 @@ $database->dropTable('table_1')
 The `AdapterInterface` class holds the options as public constants.
 
 ```php
-public const string OPTIONS_VERSION = 'version'; // null|int|string
 public const string OPTIONS_PERSISTENT = 'persistent'; // bool
 public const string OPTIONS_PDO_DSN = 'dsn'; // string
 public const string OPTIONS_MYSQL_CHARSET = 'charset'; // string
 public const string OPTIONS_MYSQL_COLLATION = 'collation'; // null|string
 public const string OPTIONS_MYSQL_ENGINE = 'engine'; // string
+public const string OPTIONS_PGSQL_SSL_MODE = 'ssl_mode'; // string
+public const string OPTIONS_PGSQL_SSL_CERT = 'ssl_cert'; // string
+public const string OPTIONS_PGSQL_SSL_KEY = 'ssl_key'; // string
+public const string OPTIONS_PGSQL_SSL_ROOT_CERT = 'ssl_root_cert'; // string
+public const string OPTIONS_PGSQL_SSL_CRL = 'ssl_crl'; // string
 public const string OPTIONS_PGSQL_CLIENT_ENCODING = 'client_encoding'; // string
 public const string OPTIONS_PGSQL_SEARCH_PATH = 'search_path'; // string
 public const string OPTIONS_SQLITE_READ_ONLY = 'read_only'; // bool
@@ -358,19 +345,13 @@ public const string OPTIONS_SQLITE_ENCODING = 'encoding'; // string
 public const string OPTIONS_SQLITE_JOURNAL_MODE = 'journal_mode'; // string (https://sqlite.org/pragma.html#pragma_journal_mode)
 public const string OPTIONS_SQLITE_FOREIGN_KEYS = 'foreign_keys'; // bool
 public const string OPTIONS_SQLITE_OPTIMIZE = 'optimize'; // bool
+public const string OPTIONS_SQLSRV_ENCRYPT = 'encrypt'; // bool
+public const string OPTIONS_SQLSRV_TRUST_SERVER_CERTIFICATE = 'trust_server_certificate'; // bool
 ```
 
 Most options work on a "if they're in the options array, they're applied".
 
-# 5 Lazy mode
-
-If you have a lot of processes running simultaneously, the amount of available database connection can become exhausted quickly. To prevent long running processes from hogging connections, Sentience allows you to automatically disconnect and reconnect, only keeping a connection active when one is required.
-
-Having to disconnect and reconnect for every query adds extra latency. By calling `->disableLazy()` on database you can temporarely disable lazy mode, en re-enable it with `->enableLazy()`. The query result and last insert id are cached, so that when the connection is closed immediately after executing, you can still query the results.
-
-When a transaction is started, lazy mode is temporarely disabled until the transaction is commited or rolled back.
-
-# 6 Native upserts and emulated upserts (including RETURNING emulation)
+# 5 Native upserts and emulated upserts (including RETURNING emulation)
 
 MariaDB, MySQL, Postgres, and SQLite support some form of conflict resolution inside INSERT queries. MariaDB and MySQL support INSERT IGNORE and ON DUPLICATE KEY UPDATE, Postgres and SQLite support ON CONFLICT DO NOTHING and ON CONFLICT DO UPDATE.
 
@@ -385,7 +366,7 @@ For databases that do not support returning (MariaDB < 10.5, MySQL) another sele
 
 If the dialect does not explicitly state that conflict resolution and returning are supported, it will use the fallback.
 
-# 7 Integration in your project
+# 6 Integration in your project
 
 This database abstraction was created for the Sentience V3 framework, but will continue to evolve as its own package.
 
@@ -393,13 +374,21 @@ To get started, create a simple SQLite database:
 ```php
 $database = Database::connect(
     Driver::from('sqlite'),
-    __DIR__ . '/database.sqlite3'
+    'database.sqlite3'
 );
 ```
 
 From there, add options, initialization queries, and anything else your project requires.
 
 If you wish to explore how this database is implemented, have a look at the parent project: [Sentience V3](https://github.com/Sentience-Framework/sentience-v3)
+
+# 7 Database specific implementations
+
+Sentience offers specific classes for each database implementation. They are located in the `src/Databases` folders. They contain extra functionality that differs too much per database to include in the regular query classes. Things like schema dumping.
+
+These functionalities were not implemented in the abstract database class because they differ too much per database. Creating a consistent stream of information wasn't easy, or even possible.
+
+Since these functionalities are likely only used when you know which specific database you're using, they were bundled with their database specific implementations.
 
 # 8 Miscellaneous information about Sentience database
 
@@ -411,4 +400,5 @@ If you wish to explore how this database is implemented, have a look at the pare
 6. Query::alias() can be used to create aliasses for your tables or columns, without having to resort to using raw statements.
 7. Query::raw() offers a way to use raw unparameterized SQL in your queries.
 8. Query::now() spawns a new DateTime object.
-9. Empty IN or NOT IN lists compile to 1 <> 1 or 1 = 1
+9. Empty IN or NOT IN lists compile to 1 <> 1 or 1 = 1.
+10. Oracle OCI is implemented according to the available documentation online. Unlike the other databases which were tested in real world scenarios with Docker containers, Oracle OCI has not been tested.
