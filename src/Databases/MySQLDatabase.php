@@ -67,4 +67,31 @@ class MySQLDatabase extends DatabaseAbstract
 
         return new static($adapter, $dialect);
     }
+
+    public function showTables(): array
+    {
+        $result = $this->query('SHOW TABLES');
+
+        $tables = [];
+
+        while ($table = $result->scalar()) {
+            if (!$table) {
+                break;
+            }
+
+            $tables[] = $table;
+        }
+
+        return $tables;
+    }
+
+    public function describeTable(string $table): array
+    {
+        $query = sprintf(
+            'DESCRIBE %s',
+            $this->dialect->escapeIdentifier($table)
+        );
+
+        return $this->query($query)->fetchAssocs();
+    }
 }

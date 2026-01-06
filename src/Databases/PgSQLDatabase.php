@@ -9,7 +9,7 @@ use Sentience\Database\Sockets\UnixSocket;
 
 class PgSQLDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::MYSQL;
+    public const Driver DRIVER = Driver::PGSQL;
 
     public static function fromNetwork(
         string $name,
@@ -19,8 +19,7 @@ class PgSQLDatabase extends DatabaseAbstract
         int $port = 5432,
         array $queries = [],
         array $options = [],
-        ?Closure $debug = null,
-        bool $usePDOAdapter = false
+        ?Closure $debug = null
     ): static {
         $driver = static::DRIVER;
 
@@ -29,8 +28,7 @@ class PgSQLDatabase extends DatabaseAbstract
             new NetworkSocket($host, $port, $username, $password),
             $queries,
             $options,
-            $debug,
-            $usePDOAdapter
+            $debug
         );
 
         $version = $adapter->version();
@@ -48,8 +46,7 @@ class PgSQLDatabase extends DatabaseAbstract
         int $port = 5432,
         array $queries = [],
         array $options = [],
-        ?Closure $debug = null,
-        bool $usePDOAdapter = false
+        ?Closure $debug = null
     ): static {
         $driver = static::DRIVER;
 
@@ -58,8 +55,7 @@ class PgSQLDatabase extends DatabaseAbstract
             new UnixSocket($unixSocket, $port, $username, $password),
             $queries,
             $options,
-            $debug,
-            $usePDOAdapter
+            $debug
         );
 
         $version = $adapter->version();
@@ -67,5 +63,21 @@ class PgSQLDatabase extends DatabaseAbstract
         $dialect = $driver->getDialect($version);
 
         return new static($adapter, $dialect);
+    }
+
+    public function backslashDT(): array
+    {
+        return $this->select(['information_schema', 'tables'])
+            ->whereNotIn('table_schema', ['pg_catalog', 'information_schema'])
+            ->execute()
+            ->fetchAssocs();
+    }
+
+    public function bashslashD(string $table): array
+    {
+        return $this->select(['information_schema', 'columns'])
+            ->whereEquals('table_name', $table)
+            ->execute()
+            ->fetchAssocs();
     }
 }

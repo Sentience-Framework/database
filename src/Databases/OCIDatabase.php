@@ -8,6 +8,8 @@ use Sentience\Database\Sockets\NetworkSocket;
 
 class OCIDatabase extends DatabaseAbstract
 {
+    public const Driver DRIVER = Driver::OCI;
+
     public static function fromNetwork(
         string $name,
         string $username,
@@ -16,18 +18,16 @@ class OCIDatabase extends DatabaseAbstract
         int $port = 1521,
         array $queries = [],
         array $options = [],
-        ?Closure $debug = null,
-        bool $usePDOAdapter = false
+        ?Closure $debug = null
     ): static {
-        $driver = Driver::OCI;
+        $driver = static::DRIVER;
 
         $adapter = $driver->getAdapter(
             $name,
             new NetworkSocket($host, $port, $username, $password),
             $queries,
             $options,
-            $debug,
-            $usePDOAdapter
+            $debug
         );
 
         $version = $adapter->version();
