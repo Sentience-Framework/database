@@ -1,8 +1,9 @@
 <?php
 
-namespace Sentience\Database\Databases;
+namespace Sentience\Database\Databases\SQLite;
 
 use Closure;
+use Sentience\Database\Databases\DatabaseAbstract;
 use Sentience\Database\Driver;
 
 class SQLiteDatabase extends DatabaseAbstract

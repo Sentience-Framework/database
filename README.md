@@ -96,11 +96,6 @@ $driver = Driver::from('pgsql');
 // - 'pgsql'
 // - 'sqlite'
 // - 'sqlsrv'
-// - 'cubrid' (Only SQL standard features + upsert)
-// - 'ibm' (Only SQL standard features + upsert)
-// - 'dblib' (Only SQL standard features + upsert)
-// - 'informix' (Only SQL standard features + upsert)
-// - 'odbc' (Only SQL standard features + upsert)
 ```
 
 Once the driver is initialized you can initialize a database instance using `::connect`, `::pdo`, or by passing in an `AdapterInterface` and `DialectInterface` manually.

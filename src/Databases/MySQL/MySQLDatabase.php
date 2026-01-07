@@ -1,25 +1,27 @@
 <?php
 
-namespace Sentience\Database\Databases;
+namespace Sentience\Database\Databases\MySQL;
 
 use Closure;
+use Sentience\Database\Databases\DatabaseAbstract;
 use Sentience\Database\Driver;
 use Sentience\Database\Sockets\NetworkSocket;
 use Sentience\Database\Sockets\UnixSocket;
 
-class PgSQLDatabase extends DatabaseAbstract
+class MySQLDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::PGSQL;
+    public const Driver DRIVER = Driver::MYSQL;
 
     public static function fromNetwork(
         string $name,
         string $username,
         ?string $password,
         string $host = 'localhost',
-        int $port = 5432,
+        int $port = 3306,
         array $queries = [],
         array $options = [],
-        ?Closure $debug = null
+        ?Closure $debug = null,
+        bool $usePDOAdapter = false
     ): static {
         $driver = static::DRIVER;
 
@@ -28,7 +30,8 @@ class PgSQLDatabase extends DatabaseAbstract
             new NetworkSocket($host, $port, $username, $password),
             $queries,
             $options,
-            $debug
+            $debug,
+            $usePDOAdapter
         );
 
         $version = $adapter->version();
@@ -43,19 +46,20 @@ class PgSQLDatabase extends DatabaseAbstract
         string $username,
         ?string $password,
         string $unixSocket,
-        int $port = 5432,
         array $queries = [],
         array $options = [],
-        ?Closure $debug = null
+        ?Closure $debug = null,
+        bool $usePDOAdapter = false
     ): static {
         $driver = static::DRIVER;
 
         $adapter = $driver->getAdapter(
             $name,
-            new UnixSocket($unixSocket, $port, $username, $password),
+            new UnixSocket($unixSocket, null, $username, $password),
             $queries,
             $options,
-            $debug
+            $debug,
+            $usePDOAdapter
         );
 
         $version = $adapter->version();
@@ -65,19 +69,30 @@ class PgSQLDatabase extends DatabaseAbstract
         return new static($adapter, $dialect);
     }
 
-    public function backslashDT(): array
+    public function showTables(): array
     {
-        return $this->select(['information_schema', 'tables'])
-            ->whereNotIn('table_schema', ['pg_catalog', 'information_schema'])
-            ->execute()
-            ->fetchAssocs();
+        $result = $this->query('SHOW TABLES');
+
+        $tables = [];
+
+        while ($table = $result->scalar()) {
+            if (!$table) {
+                break;
+            }
+
+            $tables[] = $table;
+        }
+
+        return $tables;
     }
 
-    public function bashslashD(string $table): array
+    public function describeTable(string $table): array
     {
-        return $this->select(['information_schema', 'columns'])
-            ->whereEquals('table_name', $table)
-            ->execute()
-            ->fetchAssocs();
+        $query = sprintf(
+            'DESCRIBE %s',
+            $this->dialect->escapeIdentifier($table)
+        );
+
+        return $this->query($query)->fetchAssocs();
     }
 }

@@ -1,10 +1,10 @@
 <?php
 
-namespace Sentience\Database\Databases;
+namespace Sentience\Database\Databases\Firebird;
 
 use Closure;
+use Sentience\Database\Databases\DatabaseAbstract;
 use Sentience\Database\Driver;
-use Sentience\Database\Queries\Objects\Join;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Sockets\NetworkSocket;
 
@@ -74,14 +74,8 @@ class FirebirdDatabase extends DatabaseAbstract
                 Query::alias(Query::raw('F.RDB$FIELD_LENGTH'), 'field_length'),
                 Query::alias(Query::raw('CSET.RDB$CHARACTER_SET_NAME'), 'field_charset')
             ])
-            ->leftJoin(
-                Query::alias(Query::raw('RDB$FIELDS'), 'F'),
-                fn (Join $join): Join => $join->where('R.RDB$FIELD_SOURCE = F.RDB$FIELD_NAME')
-            )
-            ->leftJoin(
-                Query::alias(Query::raw('RDB$CHARACTER_SETS'), 'CSET'),
-                fn (Join $join): Join => $join->where('F.RDB$CHARACTER_SET_ID = CSET.RDB$CHARACTER_SET_ID')
-            )
+            ->join('LEFT JOIN RDB$FIELDS AS F ON R.RDB$FIELD_SOURCE = F.RDB$FIELD_NAME')
+            ->join('LEFT JOIN RDB$CHARACTER_SETS CSET ON F.RDB$CHARACTER_SET_ID = CSET.RDB$CHARACTER_SET_ID')
             ->where('R.RDB$RELATION_NAME = ?', [$table])
             ->orderByAsc(Query::raw('R.RDB$FIELD_POSITION'))
             ->execute()

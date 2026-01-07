@@ -1,6 +1,6 @@
 <?php
 
-namespace Sentience\Database\Databases;
+namespace Sentience\Database\Databases\MySQL;
 
 use Sentience\Database\Driver;
 

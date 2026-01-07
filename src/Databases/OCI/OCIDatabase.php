@@ -1,8 +1,9 @@
 <?php
 
-namespace Sentience\Database\Databases;
+namespace Sentience\Database\Databases\OCI;
 
 use Closure;
+use Sentience\Database\Databases\DatabaseAbstract;
 use Sentience\Database\Driver;
 use Sentience\Database\Sockets\NetworkSocket;
 
