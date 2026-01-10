@@ -3,12 +3,14 @@
 namespace Sentience\Database\Dialects;
 
 use Sentience\Database\Exceptions\QueryException;
+use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\AddPrimaryKeys;
 use Sentience\Database\Queries\Objects\AddUniqueConstraint;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\Column;
+use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\DropConstraint;
 use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\OnConflict;
@@ -46,6 +48,57 @@ class SQLiteDialect extends SQLDialect
             $columns,
             $primaryKeys,
             $constraints
+        );
+    }
+
+    protected function buildConditionLike(string &$query, array &$params, Condition $condition): void
+    {
+        [$value, $caseInsensitive] = $condition->value;
+
+        $query .= sprintf(
+            '%s %s %s',
+            $this->escapeIdentifier($condition->identifier),
+            $condition->condition == ConditionEnum::LIKE
+            ? ($caseInsensitive ? ConditionEnum::LIKE->value : 'GLOB')
+            : ($caseInsensitive ? ConditionEnum::NOT_LIKE->value : 'NOT GLOB'),
+            $this->buildQuestionMarks(
+                $params,
+                $caseInsensitive ? $value : $this->likeToGlob($value)
+            )
+        );
+    }
+
+    protected function likeToGlob(string $likePattern): string
+    {
+        $globPattern = strtr(
+            $likePattern,
+            [
+                '*' => '[*]',
+                '?' => '[?]',
+                '[' => '[[]',
+                ']' => '[]]'
+            ]
+        );
+
+        if (str_contains($globPattern, '\\')) {
+            $globPattern = preg_replace_callback(
+                '/\\\\(.)/us',
+                fn (array $match): string => (string) match ($match[1]) {
+                    '%' => '[%]',
+                    '_' => '[_]',
+                    '\\' => '[\\]',
+                    default => $match[1]
+                },
+                $globPattern
+            );
+        }
+
+        return strtr(
+            $globPattern,
+            [
+                '%' => '*',
+                '_' => '?'
+            ]
         );
     }
 
