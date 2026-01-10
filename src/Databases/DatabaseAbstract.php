@@ -61,12 +61,10 @@ abstract class DatabaseAbstract implements DatabaseInterface
             return;
         }
 
-        $name = !$name
-            ? sprintf(
-                'savepoint_%d',
-                count($this->savepoints) + 1
-            )
-            : $name;
+        $name ??= sprintf(
+            'savepoint_%d',
+            count($this->savepoints) + 1
+        );
 
         $this->savepoints[] = $name;
 

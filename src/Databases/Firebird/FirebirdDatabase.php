@@ -75,7 +75,7 @@ class FirebirdDatabase extends DatabaseAbstract
                 Query::alias(Query::raw('CSET.RDB$CHARACTER_SET_NAME'), 'field_charset')
             ])
             ->join('LEFT JOIN RDB$FIELDS AS F ON R.RDB$FIELD_SOURCE = F.RDB$FIELD_NAME')
-            ->join('LEFT JOIN RDB$CHARACTER_SETS CSET ON F.RDB$CHARACTER_SET_ID = CSET.RDB$CHARACTER_SET_ID')
+            ->join('LEFT JOIN RDB$CHARACTER_SETS AS CSET ON F.RDB$CHARACTER_SET_ID = CSET.RDB$CHARACTER_SET_ID')
             ->where('R.RDB$RELATION_NAME = ?', [$table])
             ->orderByAsc(Query::raw('R.RDB$FIELD_POSITION'))
             ->execute()

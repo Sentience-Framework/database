@@ -14,19 +14,16 @@
 
 The Sentience database abstraction offers a lightweight, no dependencies, database implementation. Through the use of adapter classes it can wrap around PDO, mysqli, and SQLite3. Through the use of easy to extend interfaces it's easy to add your adapters and dialects and use them natively in the Sentience database implementation.
 
-### Natively supported database dialects
+### Fully supported database dialects
 - Firebird (PDO)
 - MariaDB (PDO / Mysqli)
 - MySQL (PDO / Mysqli)
-- Oracle OCI (PDO)
 - Postgres (PDO)
 - SQLite (PDO / SQLite3)
 - SQL Server (PDO)
 
-### Unofficially supported through standard SQL dialect with PDO
-- Cubrid
-- IBM DB2
-- Informix
+### Partially supported database dialects
+- Oracle OCI (PDO)
 
 The goal of this database abstraction was to provide an interface that is universally supported across all the implemented database (with currently the only exception being table constraint altering in SQLite). This is achieved by adhering to the SQL standard as much as possible, with a few exception outside the standard such as RETURNING and REGEXP_LIKE. For databases that don't natively implement ON CONFLICT or RETURNING clauses, Sentience offers alternatives that emulate the feature.
 
@@ -176,17 +173,17 @@ $database->select(['public', 'table_1'], 'table1')
     ->join('RIGHT JOIN table2 jt ON jt.column1 = table1.column1 AND jt.column2 = table2.column2')
     ->whereEquals('column1', 10)
     ->whereGroup(
-        fn($group) => $group
+        fn(ConditionGroup $group): ConditionGroup => $group
             ->whereGreaterThanOrEquals('column2', 20)
             ->orwhereIsNull('column3')
     )
     ->where('DATE(`created_at`) > :date OR DATE(`created_at`) < :date', [':date' => Query::now()])
     ->whereGroup(
-        fn($group) => $group
+        fn(ConditionGroup $group): ConditionGroup => $group
             ->whereIn('column4', [1, 2, 3, 4])
             ->whereNotEquals('column5', 'test string')
     )
-    ->whereGroup(fn($group) => $group)
+    ->whereGroup(fn(ConditionGroup $group): ConditionGroup => $group)
     ->whereIn('column2', [])
     ->whereNotIn('column2', [])
     ->whereStartsWith('column2', 'a')
@@ -198,6 +195,7 @@ $database->select(['public', 'table_1'], 'table1')
     ->whereRegex('column6', 'file|read|write|open', 'i')
     ->whereNotRegex('column6', 'error')
     ->whereContains('column7', 'draft')
+    ->where('created_at < ?', [Query::now()])
     ->groupBy([
         ['table', 'column'],
         'column2',
@@ -260,7 +258,7 @@ $database->update('table_1')
                 Query::raw('MAX(id)')
             ])
             ->whereBetween('column_5', 1, 2)
-            ->whereRegex('regexable_column', '/[0-9]/im')
+            ->whereRegex('regexable_column', '[0-9]', 'im')
     )
     ->returning(['id'])
     ->execute();
@@ -397,3 +395,4 @@ Since these functionalities are likely only used when you know which specific da
 8. Query::now() spawns a new DateTime object.
 9. Empty IN or NOT IN lists compile to 1 <> 1 or 1 = 1.
 10. Oracle OCI is implemented according to the available documentation online. Unlike the other databases which were tested in real world scenarios with Docker containers, Oracle OCI has not been tested.
+11. Postgres is best supported, followed closely by MySQL (only for missing specific conflict handling)
