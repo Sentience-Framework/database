@@ -12,7 +12,7 @@ class Join
 
     public function __construct(
         public JoinEnum $join,
-        public string|array|Alias|Raw $table
+        public string|array|Alias|Raw|SubQuery $table
     ) {
     }
 
