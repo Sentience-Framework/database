@@ -49,7 +49,7 @@ class SQLServerDialect extends SQLDialect
         $query = sprintf(
             "IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = %s AND schema_id = SCHEMA_ID('dbo')) BEGIN %s END",
             $this->escapeString($table),
-            $createTableQuery->query
+            $createTableQuery->toSql($this)
         );
 
         return new QueryWithParams($query, $createTableQuery->params);
@@ -75,7 +75,7 @@ class SQLServerDialect extends SQLDialect
         $query = sprintf(
             "IF EXISTS (SELECT 1 FROM sys.tables WHERE name = %s AND schema_id = SCHEMA_ID('dbo')) BEGIN %s END",
             $this->escapeString($table),
-            $dropTableQuery->query
+            $dropTableQuery->toSql($this)
         );
 
         return new QueryWithParams($query, $dropTableQuery->params);

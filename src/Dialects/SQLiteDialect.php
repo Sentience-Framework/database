@@ -61,10 +61,7 @@ class SQLiteDialect extends SQLDialect
             $condition->condition == ConditionEnum::LIKE
             ? ($caseInsensitive ? ConditionEnum::LIKE->value : 'GLOB')
             : ($caseInsensitive ? ConditionEnum::NOT_LIKE->value : 'NOT GLOB'),
-            $this->buildQuestionMarks(
-                $params,
-                $caseInsensitive ? $value : $this->likeToGlob($value)
-            )
+            $this->buildQuestionMarks($params, $caseInsensitive ? $value : $this->likeToGlob($value))
         );
     }
 
@@ -82,7 +79,7 @@ class SQLiteDialect extends SQLDialect
 
         if (str_contains($globPattern, '\\')) {
             $globPattern = preg_replace_callback(
-                '/\\\\(.)/us',
+                '/\\\\(.)/su',
                 fn (array $match): string => (string) match ($match[1]) {
                     '%' => '[%]',
                     '_' => '[_]',
