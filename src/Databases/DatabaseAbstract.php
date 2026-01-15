@@ -5,6 +5,7 @@ namespace Sentience\Database\Databases;
 use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Exceptions\DatabaseException;
 use Sentience\Database\Queries\AlterTableQuery;
 use Sentience\Database\Queries\CreateTableQuery;
 use Sentience\Database\Queries\DeleteQuery;
@@ -14,6 +15,7 @@ use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\SubQuery;
+use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
 use Sentience\Database\Queries\UpdateQuery;
 use Sentience\Database\Results\ResultInterface;
@@ -21,6 +23,8 @@ use Sentience\Database\Results\ResultInterface;
 abstract class DatabaseAbstract implements DatabaseInterface
 {
     protected array $savepoints = [];
+    protected array $mutableStoredProcedures = [];
+    protected array $immutableStoredProcedures = [];
 
     public function __construct(
         protected AdapterInterface $adapter,
@@ -171,5 +175,47 @@ abstract class DatabaseAbstract implements DatabaseInterface
     public function dropTable(string|array|Raw $table): DropTableQuery
     {
         return new DropTableQuery($this, $this->dialect, $table);
+    }
+
+    public function createMutableStoredProcedure(string $name, callable $callback): void
+    {
+        $this->mutableStoredProcedures[$name] = $callback;
+    }
+
+    public function createImmutableStoredProcedure(string $name, string $query): void
+    {
+        $this->mutableStoredProcedures[$name] = $query;
+    }
+
+    public function executeMutableStoredProcedure(string $name, array $params = [], ?callable $callback = null, bool $emulatePrepare = false): ResultInterface
+    {
+        if (!array_key_exists($name, $this->mutableStoredProcedures)) {
+            throw new DatabaseException('mutable stored procedure does not exist');
+        }
+
+        $query = $this->mutableStoredProcedures[$name](...$params);
+
+        if (!($query instanceof Query)) {
+            throw new DatabaseException('mutable stored procedure callback must return a query class');
+        }
+
+        if ($callback) {
+            $query = $callback($query);
+        }
+
+        return $query->execute($emulatePrepare);
+    }
+
+    public function executeImmutableStoredProcedure(string $name, array $params = [], bool $emulatePrepare = false): ResultInterface
+    {
+        if (!array_key_exists($name, $this->mutableStoredProcedures)) {
+            throw new DatabaseException('mutable stored procedure does not exist');
+        }
+
+        return $this->prepared(
+            $this->mutableStoredProcedures[$name],
+            $params,
+            $emulatePrepare
+        );
     }
 }

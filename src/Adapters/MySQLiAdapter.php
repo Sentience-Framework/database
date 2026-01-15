@@ -8,6 +8,7 @@ use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\AdapterException;
+use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\MySQLiResult;
 use Sentience\Database\Sockets\NetworkSocket;
@@ -30,8 +31,12 @@ class MySQLiAdapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
+        if (!class_exists('mysqli')) {
+            throw new AdapterException('mysqli extension is not installed');
+        }
+
         if (!$socket) {
-            throw new AdapterException('this driver requires a socket');
+            throw new DriverException('this driver requires a socket');
         }
 
         parent::__construct(

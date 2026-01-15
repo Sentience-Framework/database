@@ -9,6 +9,7 @@ use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\AdapterException;
+use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\PDOResult;
 use Sentience\Database\Sockets\NetworkSocket;
@@ -26,6 +27,10 @@ class PDOAdapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
+        if (!class_exists('PDO')) {
+            throw new AdapterException('PDO extension is not installed');
+        }
+
         parent::__construct(
             $driver,
             $name,
@@ -87,7 +92,7 @@ class PDOAdapter extends AdapterAbstract
         }
 
         if (!$socket) {
-            throw new AdapterException('this driver requires a socket');
+            throw new DriverException('this driver requires a socket');
         }
 
         if ($driver == Driver::FIREBIRD) {
@@ -191,7 +196,7 @@ class PDOAdapter extends AdapterAbstract
         $this->pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
 
         if (!in_array($driver, [Driver::SQLSRV])) {
-            $this->pdo->setAttribute(PDO::ATTR_PERSISTENT, $options[static::OPTIONS_PERSISTENT] ?? false);
+            $this->pdo->setAttribute(PDO::ATTR_PERSISTENT, (bool) ($options[static::OPTIONS_PERSISTENT] ?? false));
         }
     }
 
@@ -269,8 +274,6 @@ class PDOAdapter extends AdapterAbstract
         if (array_key_exists(static::OPTIONS_SQLITE_FOREIGN_KEYS, $options)) {
             $this->sqliteForeignKeys((bool) $options[static::OPTIONS_SQLITE_FOREIGN_KEYS]);
         }
-
-        $this->sqliteCaseSensitiveLike();
     }
 
     public function version(): string

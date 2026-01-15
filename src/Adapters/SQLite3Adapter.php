@@ -8,6 +8,7 @@ use SQLite3Stmt;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
+use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\SQLite3Result;
 use Sentience\Database\Sockets\SocketAbstract;
@@ -24,6 +25,10 @@ class SQLite3Adapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
+        if (!class_exists('SQLite3')) {
+            throw new AdapterException('SQLite3 extension is not installed');
+        }
+
         parent::__construct(
             $driver,
             $name,
@@ -67,8 +72,6 @@ class SQLite3Adapter extends AdapterAbstract
         if (array_key_exists(static::OPTIONS_SQLITE_FOREIGN_KEYS, $options)) {
             $this->sqliteForeignKeys((bool) $options[static::OPTIONS_SQLITE_FOREIGN_KEYS]);
         }
-
-        $this->sqliteCaseSensitiveLike();
 
         foreach ($queries as $query) {
             $this->exec($query);
