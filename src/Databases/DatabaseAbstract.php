@@ -200,7 +200,7 @@ abstract class DatabaseAbstract implements DatabaseInterface
         }
 
         if ($callback) {
-            $query = $callback($query);
+            $callback($query);
         }
 
         return $query->execute($emulatePrepare);
