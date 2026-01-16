@@ -359,7 +359,68 @@ For databases that do not support returning (MariaDB < 10.5, MySQL) another sele
 
 If the dialect does not explicitly state that conflict resolution and returning are supported, it will use the fallback.
 
-# 6 Integration in your project
+# 6 Stored procedures
+
+If you want to re-use a query multiple times with a set list of parameters, you can create a stored procedure. To make them database intercompatible the procedures are stored inside the database class instead of the database.
+
+To create a mutable stored procedure, you do the following:
+```php
+$database->createMutableStoredProcedure(
+    'insert_movie'
+    function (string $title, string $description) use ($database): Query {
+        return $database->insert('movies')
+            ->values([
+                'title' => $title,
+                'description' => $description
+            ])
+            ->onConflictIgnore(['title', 'description']);
+    }
+);
+```
+
+Which you can later call using the name:
+```php
+$movies = [
+    ['title' => 'Star Wars', 'description' => 'Wars in the stars'],
+    ['title' => 'Back To The Future', 'description' => 'A film about time travel']
+];
+
+foreach($movies as $movie) {
+    $database->executeMutableStoredProcedure(
+        'insert_movie',
+        $movie
+    );
+}
+```
+
+If you wish to mutate the query, you can pass in an extra command:
+```php
+foreach($movies as $movie) {
+    $database->executeMutableStoredProcedure(
+        'insert_movie',
+        $movie,
+        function (InsertQuery $insertQuery) {
+            $insertQuery->onConflictIgnore('movies_uniq')
+                ->returning(['id']);
+        }
+    );
+}
+```
+
+If you want the query to be immutable, you can do the following:
+```php
+$database->createImmutableStoredProcedure(
+    'movies_cleanup',
+    'DELETE FROM "movies" WHERE "published_at" < ?'
+);
+
+$result = $database->executeImmutableStoredProcedure(
+    'movies_cleanup',
+    [new DateTime('2025-01-01')]
+);
+```
+
+# 7 Integration in your project
 
 This database abstraction was created for the Sentience V3 framework, but will continue to evolve as its own package.
 
@@ -375,7 +436,7 @@ From there, add options, initialization queries, and anything else your project 
 
 If you wish to explore how this database is implemented, have a look at the parent project: [Sentience V3](https://github.com/Sentience-Framework/sentience-v3)
 
-# 7 Database specific implementations
+# 8 Database specific implementations
 
 Sentience offers specific classes for each database implementation. They are located in the `src/Databases` folders. They contain extra functionality that differs too much per database to include in the regular query classes. Things like schema dumping.
 
@@ -383,7 +444,7 @@ These functionalities were not implemented in the abstract database class becaus
 
 Since these functionalities are likely only used when you know which specific database you're using, they were bundled with their database specific implementations.
 
-# 8 Miscellaneous information about Sentience database
+# 9 Miscellaneous information about Sentience database
 
 1. Both named and unnamed parameters are supported for query building. The `QueryWithParams` automatically converts named params to placeholders.
 2. Mysqli does not officially support named params, so the `QueryWithParams` object automatically handles that for Mysqli.
