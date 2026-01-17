@@ -27,7 +27,7 @@ class PDOAdapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
-        if (!class_exists('PDO')) {
+        if (!class_exists(static::CLASS_PDO)) {
             throw new AdapterException('PDO extension is not installed');
         }
 

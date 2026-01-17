@@ -34,8 +34,11 @@ interface DatabaseInterface
     public function createTable(string|array|Raw $table): CreateTableQuery;
     public function alterTable(string|array|Raw $table): AlterTableQuery;
     public function dropTable(string|array|Raw $table): DropTableQuery;
+    public function getAvailableMutableStoredProcedures(): array;
+    public function getAvailableImmutableStoredProcedures(): array;
     public function createMutableStoredProcedure(string $name, callable $callback): void;
     public function createImmutableStoredProcedure(string $name, string $query): void;
     public function executeMutableStoredProcedure(string $name, array $params = [], ?callable $callback = null, bool $emulatePrepare = false): ResultInterface;
     public function executeImmutableStoredProcedure(string $name, array $params = [], bool $emulatePrepare = false): ResultInterface;
+    public function getAvailableDrivers(): array;
 }

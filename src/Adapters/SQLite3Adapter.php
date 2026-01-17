@@ -25,7 +25,7 @@ class SQLite3Adapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
-        if (!class_exists('SQLite3')) {
+        if (!class_exists(static::CLASS_SQLITE3)) {
             throw new AdapterException('SQLite3 extension is not installed');
         }
 

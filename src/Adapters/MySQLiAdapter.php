@@ -31,7 +31,7 @@ class MySQLiAdapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
-        if (!class_exists('mysqli')) {
+        if (!class_exists(static::CLASS_MYSQLI)) {
             throw new AdapterException('mysqli extension is not installed');
         }
 

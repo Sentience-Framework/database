@@ -2,9 +2,11 @@
 
 namespace Sentience\Database\Databases;
 
+use PDO;
 use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\DatabaseException;
 use Sentience\Database\Queries\AlterTableQuery;
 use Sentience\Database\Queries\CreateTableQuery;
@@ -177,6 +179,16 @@ abstract class DatabaseAbstract implements DatabaseInterface
         return new DropTableQuery($this, $this->dialect, $table);
     }
 
+    public function getAvailableMutableStoredProcedures(): array
+    {
+        return array_keys($this->mutableStoredProcedures);
+    }
+
+    public function getAvailableImmutableStoredProcedures(): array
+    {
+        return array_keys($this->immutableStoredProcedures);
+    }
+
     public function createMutableStoredProcedure(string $name, callable $callback): void
     {
         $this->mutableStoredProcedures[$name] = $callback;
@@ -217,5 +229,44 @@ abstract class DatabaseAbstract implements DatabaseInterface
             $params,
             $emulatePrepare
         );
+    }
+
+    public function getAvailableDrivers(): array
+    {
+        $availableDrivers = [];
+
+        if (class_exists($this->adapter::CLASS_PDO)) {
+            foreach (PDO::getAvailableDrivers() as $pdoDriver) {
+                $driver = Driver::tryFrom($pdoDriver);
+
+                if (!$driver) {
+                    continue;
+                }
+
+                $availableDrivers[] = $driver;
+            }
+
+            if (in_array(Driver::MYSQL, $availableDrivers)) {
+                $availableDrivers[] = Driver::MARIADB;
+            }
+        }
+
+        if (class_exists($this->adapter::CLASS_MYSQLI)) {
+            foreach ([Driver::MYSQL, Driver::MARIADB] as $driver) {
+                if (in_array($driver, $availableDrivers)) {
+                    continue;
+                }
+
+                $availableDrivers[] = $driver;
+            }
+        }
+
+        if (class_exists($this->adapter::CLASS_SQLITE3)) {
+            if (!in_array(Driver::SQLITE, $availableDrivers)) {
+                $availableDrivers[] = Driver::SQLITE;
+            }
+        }
+
+        return $availableDrivers;
     }
 }
