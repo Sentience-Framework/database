@@ -16,6 +16,7 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 class MySQLiAdapter extends AdapterAbstract
 {
+    public const string MYSQLI = 'mysqli';
     public const string MYSQLI_NULL = 's';
     public const string MYSQLI_INT = 'i';
     public const string MYSQLI_FLOAT = 'd';
@@ -31,7 +32,7 @@ class MySQLiAdapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
-        if (!class_exists(static::CLASS_MYSQLI)) {
+        if (!class_exists(static::MYSQLI)) {
             throw new AdapterException('mysqli extension is not installed');
         }
 

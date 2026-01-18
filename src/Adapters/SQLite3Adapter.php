@@ -15,6 +15,8 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 class SQLite3Adapter extends AdapterAbstract
 {
+    public const string SQLITE3 = 'SQLite3';
+
     protected SQLite3 $sqlite3;
 
     public function __construct(
@@ -25,7 +27,7 @@ class SQLite3Adapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
-        if (!class_exists(static::CLASS_SQLITE3)) {
+        if (!class_exists(static::SQLITE3)) {
             throw new AdapterException('SQLite3 extension is not installed');
         }
 

@@ -8,9 +8,6 @@ use Sentience\Database\Results\ResultInterface;
 
 interface AdapterInterface
 {
-    public const string CLASS_MYSQLI = 'mysqli';
-    public const string CLASS_PDO = 'PDO';
-    public const string CLASS_SQLITE3 = 'SQLite3';
     public const string OPTIONS_PERSISTENT = 'persistent';
     public const string OPTIONS_PDO_DSN = 'dsn';
     public const string OPTIONS_MYSQL_CHARSET = 'charset';

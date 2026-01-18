@@ -17,6 +17,8 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 class PDOAdapter extends AdapterAbstract
 {
+    public const string PDO = 'PDO';
+
     protected PDO $pdo;
 
     public function __construct(
@@ -27,7 +29,7 @@ class PDOAdapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
-        if (!class_exists(static::CLASS_PDO)) {
+        if (!class_exists(static::PDO)) {
             throw new AdapterException('PDO extension is not installed');
         }
 

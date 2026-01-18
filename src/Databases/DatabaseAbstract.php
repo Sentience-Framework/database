@@ -5,6 +5,9 @@ namespace Sentience\Database\Databases;
 use PDO;
 use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
+use Sentience\Database\Adapters\MySQLiAdapter;
+use Sentience\Database\Adapters\PDOAdapter;
+use Sentience\Database\Adapters\SQLite3Adapter;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\DatabaseException;
@@ -235,7 +238,7 @@ abstract class DatabaseAbstract implements DatabaseInterface
     {
         $availableDrivers = [];
 
-        if (class_exists(AdapterInterface::CLASS_PDO)) {
+        if (class_exists(PDOAdapter::PDO)) {
             foreach (PDO::getAvailableDrivers() as $pdoDriver) {
                 $driver = Driver::tryFrom($pdoDriver);
 
@@ -251,7 +254,7 @@ abstract class DatabaseAbstract implements DatabaseInterface
             }
         }
 
-        if (class_exists(AdapterInterface::CLASS_MYSQLI)) {
+        if (class_exists(MySQLiAdapter::MYSQLI)) {
             foreach ([Driver::MYSQL, Driver::MARIADB] as $driver) {
                 if (in_array($driver, $availableDrivers)) {
                     continue;
@@ -261,7 +264,7 @@ abstract class DatabaseAbstract implements DatabaseInterface
             }
         }
 
-        if (class_exists(AdapterInterface::CLASS_SQLITE3)) {
+        if (class_exists(SQLite3Adapter::SQLITE3)) {
             if (!in_array(Driver::SQLITE, $availableDrivers)) {
                 $availableDrivers[] = Driver::SQLITE;
             }
