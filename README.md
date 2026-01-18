@@ -41,16 +41,16 @@ The goal of this database abstraction was to provide an interface that is univer
 ### Where conditions
 - Equals / Not equals
 - IS NULL / IS NOT NULL
-- LIKE / NOT LIKE (case sensitive and insensitive)
+- LIKE / NOT LIKE case sensitive and insensitive (SQLITE uses LIKE converted to GLOB)
 - Starts with / Ends with (using LIKE)
 - Contains / Not contains (using LIKE)
-- In / Not in
+- IN / NOT IN
 - Less than / Less than or equals
 - Greater than / Greater than or equals
-- Between / Not between
+- BETWEEN / NOT BETWEEN
 - Empty / Not empty (Mimicking PHP's empty function)
 - Regex / Not regex (SQLite also supported)
-- Exists / Not exists (sub query)
+- EXISTS / NOT EXISTS (sub query)
 - Group
 - Operator
 - Raw
@@ -112,7 +112,6 @@ $database = Database::connect(
 ```
 
 The socket constructor arg should be a `NetworkSocket` or `UnixSocket` class.
-```
 
 If you wish to build a custom database implementation, you can also manually initialize the database by calling the constructor with an `AdapterInterface` and a `DialectInterface`. Both have "abstract" classes you can extend to include a lot of functionality in your custom implementations directly. For adapters it's `AdapterAbstract`, and for dialects it's `SQLDialect` which implements the SQL 2016 standard to the best of its abilities.
 
@@ -134,6 +133,7 @@ Some methods return a result. The results contain the following methods:
 
 ```php
 $result->columns(): array // An associative array of columns ['column' => 'type']
+$result->scalar(?string $column = null): mixed // $column null will return the first key in the associative array
 $result->fetchObject(string $class, array $constructorArgs = []): ?object
 $result->fetchObjects(string $class, array $constructorArgs = []): array
 $result->fetchAssoc(): ?array
