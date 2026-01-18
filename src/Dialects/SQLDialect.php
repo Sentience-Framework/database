@@ -424,6 +424,12 @@ class SQLDialect extends DialectAbstract
 
             $conditions = $join->getConditions();
 
+            if (count($conditions) == 0) {
+                $query .= (string) $this->castToQuery(true);
+
+                continue;
+            }
+
             foreach ($conditions as $index => $condition) {
                 $condition instanceof Condition
                     ? $this->buildCondition($query, $params, $index, $condition)

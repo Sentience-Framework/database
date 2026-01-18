@@ -457,3 +457,4 @@ Since these functionalities are likely only used when you know which specific da
 9. Empty IN or NOT IN lists compile to 1 <> 1 or 1 = 1.
 10. Oracle OCI is implemented according to the available documentation online. Unlike the other databases which were tested in real world scenarios with Docker containers, Oracle OCI has not been tested.
 11. Postgres is best supported, followed closely by MySQL (only for missing specific conflict handling)
+12. When calling `->leftJoin()` or `->innerJoin()` with only a table, without a callback as the second argument, it joins `ON TRUE` (or `ON 1` for dialects that don't support native booleans)
