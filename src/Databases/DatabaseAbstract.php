@@ -231,11 +231,11 @@ abstract class DatabaseAbstract implements DatabaseInterface
         );
     }
 
-    public function getAvailableDrivers(): array
+    public static function getAvailableDrivers(): array
     {
         $availableDrivers = [];
 
-        if (class_exists($this->adapter::CLASS_PDO)) {
+        if (class_exists(AdapterInterface::CLASS_PDO)) {
             foreach (PDO::getAvailableDrivers() as $pdoDriver) {
                 $driver = Driver::tryFrom($pdoDriver);
 
@@ -251,7 +251,7 @@ abstract class DatabaseAbstract implements DatabaseInterface
             }
         }
 
-        if (class_exists($this->adapter::CLASS_MYSQLI)) {
+        if (class_exists(AdapterInterface::CLASS_MYSQLI)) {
             foreach ([Driver::MYSQL, Driver::MARIADB] as $driver) {
                 if (in_array($driver, $availableDrivers)) {
                     continue;
@@ -261,7 +261,7 @@ abstract class DatabaseAbstract implements DatabaseInterface
             }
         }
 
-        if (class_exists($this->adapter::CLASS_SQLITE3)) {
+        if (class_exists(AdapterInterface::CLASS_SQLITE3)) {
             if (!in_array(Driver::SQLITE, $availableDrivers)) {
                 $availableDrivers[] = Driver::SQLITE;
             }
