@@ -51,6 +51,15 @@ class SQLite3Adapter extends AdapterAbstract
         $this->sqlite3->enableExceptions(true);
 
         $this->sqlite3->createFunction(
+            static::REGEXP_FUNCTION,
+            fn (string $value, string $pattern): bool => $this->regexpFunction(
+                $value,
+                $pattern
+            ),
+            2
+        );
+
+        $this->sqlite3->createFunction(
             static::REGEXP_LIKE_FUNCTION,
             fn (string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction(
                 $value,

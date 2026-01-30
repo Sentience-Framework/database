@@ -11,6 +11,7 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 abstract class AdapterAbstract implements AdapterInterface
 {
+    public const string REGEXP_FUNCTION = 'REGEXP';
     public const string REGEXP_LIKE_FUNCTION = 'REGEXP_LIKE';
 
     protected bool $inTransaction = false;
@@ -88,6 +89,17 @@ abstract class AdapterAbstract implements AdapterInterface
         }
 
         $this->exec('PRAGMA optimize');
+    }
+
+    protected function regexpFunction(string $value, string $pattern): bool
+    {
+        return preg_match(
+            sprintf(
+                '/%s/',
+                Query::escapeBackslash($pattern, ['/'])
+            ),
+            $value
+        );
     }
 
     protected function regexpLikeFunction(string $value, string $pattern, string $flags): bool
