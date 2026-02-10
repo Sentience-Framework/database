@@ -171,6 +171,7 @@ class SQLiteDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
+            TypeEnum::BOOL => 'BOOLEAN',
             TypeEnum::FLOAT => 'REAL',
             default => parent::type($type, $size)
         };

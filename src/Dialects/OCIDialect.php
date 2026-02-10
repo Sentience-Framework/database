@@ -102,7 +102,7 @@ class OCIDialect extends SQLDialect
         if ($value instanceof DateTimeInterface) {
             array_push($params, $value);
 
-            return 'TO_DATE(?)';
+            return 'to_date(?)';
         }
 
         return parent::buildQuestionMarks($params, $value);

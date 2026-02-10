@@ -425,7 +425,7 @@ class SQLDialect extends DialectAbstract
             $conditions = $join->getConditions();
 
             if (count($conditions) == 0) {
-                $query .= (string) $this->castToQuery(true);
+                $query .= $this->castToQuery(true);
 
                 continue;
             }
@@ -531,9 +531,9 @@ class SQLDialect extends DialectAbstract
 
         $query .= sprintf(
             '%s %s %s',
-            $caseInsensitive ? sprintf('LOWER(%s)', $identifier) : $identifier,
+            $caseInsensitive ? sprintf('lower(%s)', $identifier) : $identifier,
             $condition->condition->value,
-            $caseInsensitive ? sprintf('LOWER(%s)', $questionMark) : $questionMark
+            $caseInsensitive ? sprintf('lower(%s)', $questionMark) : $questionMark
         );
     }
 
@@ -555,7 +555,7 @@ class SQLDialect extends DialectAbstract
         }
 
         $query .= sprintf(
-            'REGEXP_LIKE(%s, %s, %s)',
+            'regexp_like(%s, %s, %s)',
             $this->escapeIdentifier($condition->identifier),
             $this->buildQuestionMarks($params, $condition->value[0]),
             $this->buildQuestionMarks($params, $condition->value[1])
@@ -1016,7 +1016,7 @@ class SQLDialect extends DialectAbstract
         return $value;
     }
 
-    public function castToQuery(null|bool|int|float|string|DateTimeInterface $value): null|bool|int|float|string
+    public function castToQuery(null|bool|int|float|string|DateTimeInterface $value): string
     {
         if (is_null($value)) {
             return 'NULL';
@@ -1031,7 +1031,7 @@ class SQLDialect extends DialectAbstract
 
             return is_string($bool)
                 ? $this->escapeString($bool)
-                : $bool;
+                : (string) $bool;
         }
 
         if (is_string($value)) {
@@ -1042,7 +1042,7 @@ class SQLDialect extends DialectAbstract
             return $this->escapeString($this->castDateTime($value));
         }
 
-        return $value;
+        return (string) $value;
     }
 
     public function castBool(bool $bool): null|bool|int|float|string

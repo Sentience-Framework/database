@@ -93,7 +93,7 @@ interface DialectInterface
     public function escapeIdentifier(string|array|Alias|Raw $identifier): string;
     public function escapeString(string $string): string;
     public function castToDriver(null|bool|int|float|string|DateTimeInterface $value): null|bool|int|float|string;
-    public function castToQuery(null|bool|int|float|string|DateTimeInterface $value): null|bool|int|float|string;
+    public function castToQuery(null|bool|int|float|string|DateTimeInterface $value): string;
     public function castBool(bool $bool): null|bool|int|float|string;
     public function castDateTime(DateTimeInterface $dateTime): null|bool|int|float|string;
     public function parseBool(null|bool|int|float|string $bool): bool;

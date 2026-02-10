@@ -157,7 +157,7 @@ class SQLServerDialect extends SQLDialect
     protected function buildColumn(Column $column): string
     {
         if ($column->generatedByDefaultAsIdentity) {
-            $column->type .= ' IDENTITY(1, 1)';
+            $column->type .= ' identity(1, 1)';
         }
 
         return parent::buildColumn($column);

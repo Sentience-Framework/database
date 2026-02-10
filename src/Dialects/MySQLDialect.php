@@ -125,7 +125,7 @@ class MySQLDialect extends SQLDialect
         if ($lastInsertId) {
             $updates[$lastInsertId] = Query::raw(
                 sprintf(
-                    'LAST_INSERT_ID(%s)',
+                    'last_insert_id(%s)',
                     $this->escapeIdentifier($lastInsertId)
                 )
             );

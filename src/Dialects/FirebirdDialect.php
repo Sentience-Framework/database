@@ -128,11 +128,6 @@ class FirebirdDialect extends SQLDialect
         );
     }
 
-    protected function buildColumn(Column $column): string
-    {
-        return parent::buildColumn($column);
-    }
-
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
