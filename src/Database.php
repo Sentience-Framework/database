@@ -9,7 +9,7 @@ use Sentience\Database\Sockets\SocketAbstract;
 class Database extends DatabaseAbstract
 {
     public static function connect(
-        Driver $driver,
+        DriverInterface $driver,
         string $name,
         ?SocketAbstract $socket = null,
         array $queries = [],

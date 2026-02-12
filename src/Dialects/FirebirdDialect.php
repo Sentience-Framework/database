@@ -2,11 +2,10 @@
 
 namespace Sentience\Database\Dialects;
 
-use Sentience\Database\Driver;
+use Sentience\Database\DriverInterface;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Alias;
-use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
@@ -17,7 +16,7 @@ class FirebirdDialect extends SQLDialect
     public const bool BOOL = true;
     public const bool RETURNING = true;
 
-    public function __construct(Driver $driver, int|string $version)
+    public function __construct(DriverInterface $driver, int|string $version)
     {
         if (is_int($version)) {
             parent::__construct($driver, $version);

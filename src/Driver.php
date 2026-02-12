@@ -17,7 +17,7 @@ use Sentience\Database\Dialects\SQLiteDialect;
 use Sentience\Database\Dialects\SQLServerDialect;
 use Sentience\Database\Sockets\SocketAbstract;
 
-enum Driver: string
+enum Driver: string implements DriverInterface
 {
     case FIREBIRD = 'firebird';
     case MARIADB = 'mariadb';
@@ -26,6 +26,11 @@ enum Driver: string
     case PGSQL = 'pgsql';
     case SQLITE = 'sqlite';
     case SQLSRV = 'sqlsrv';
+
+    public function name(): string
+    {
+        return $this->value;
+    }
 
     public function getAdapter(
         string $name,

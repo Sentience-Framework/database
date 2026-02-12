@@ -7,7 +7,7 @@ use SQLite3;
 use SQLite3Stmt;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Driver;
+use Sentience\Database\DriverInterface;
 use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\SQLite3Result;
@@ -20,7 +20,7 @@ class SQLite3Adapter extends AdapterAbstract
     protected SQLite3 $sqlite3;
 
     public function __construct(
-        Driver $driver,
+        DriverInterface $driver,
         string $name,
         ?SocketAbstract $socket,
         array $queries,

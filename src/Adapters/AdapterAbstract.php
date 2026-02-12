@@ -5,7 +5,7 @@ namespace Sentience\Database\Adapters;
 use Closure;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Driver;
+use Sentience\Database\DriverInterface;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Sockets\SocketAbstract;
 
@@ -17,7 +17,7 @@ abstract class AdapterAbstract implements AdapterInterface
     protected bool $inTransaction = false;
 
     public function __construct(
-        protected Driver $driver,
+        protected DriverInterface $driver,
         protected string $name,
         protected ?SocketAbstract $socket,
         protected array $queries,

@@ -2,13 +2,13 @@
 
 namespace Sentience\Database\Dialects;
 
-use Sentience\Database\Driver;
+use Sentience\Database\DriverInterface;
 
 abstract class DialectAbstract implements DialectInterface
 {
     protected int $version;
 
-    public function __construct(protected Driver $driver, int|string $version)
+    public function __construct(protected DriverInterface $driver, int|string $version)
     {
         if (is_int($version)) {
             $this->version = $version;

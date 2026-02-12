@@ -6,7 +6,7 @@ use Closure;
 use mysqli;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Driver;
+use Sentience\Database\DriverInterface;
 use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
@@ -25,7 +25,7 @@ class MySQLiAdapter extends AdapterAbstract
     protected mysqli $mysqli;
 
     public function __construct(
-        Driver $driver,
+        DriverInterface $driver,
         string $name,
         ?SocketAbstract $socket,
         array $queries,

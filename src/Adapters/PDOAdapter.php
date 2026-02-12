@@ -8,6 +8,7 @@ use PDOStatement;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
+use Sentience\Database\DriverInterface;
 use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
@@ -22,7 +23,7 @@ class PDOAdapter extends AdapterAbstract
     protected PDO $pdo;
 
     public function __construct(
-        Driver $driver,
+        DriverInterface $driver,
         string $name,
         ?SocketAbstract $socket,
         array $queries,
@@ -76,7 +77,7 @@ class PDOAdapter extends AdapterAbstract
     }
 
     protected function dsn(
-        Driver $driver,
+        DriverInterface $driver,
         string $name,
         ?SocketAbstract $socket,
         array $options
@@ -88,7 +89,7 @@ class PDOAdapter extends AdapterAbstract
         if ($driver == Driver::SQLITE) {
             return sprintf(
                 '%s:%s',
-                $driver->value,
+                $driver->name(),
                 $name
             );
         }
@@ -100,7 +101,7 @@ class PDOAdapter extends AdapterAbstract
         if ($driver == Driver::FIREBIRD) {
             return sprintf(
                 '%s:dbname=%s/%d:%s',
-                $driver->value,
+                $driver->name(),
                 $socket->host,
                 $socket->port,
                 $name
@@ -110,7 +111,7 @@ class PDOAdapter extends AdapterAbstract
         if ($driver == Driver::OCI) {
             return sprintf(
                 '%s:dbname=//%s:%d/%s',
-                $driver->value,
+                $driver->name(),
                 $socket->host,
                 $socket->port,
                 $name
@@ -120,7 +121,7 @@ class PDOAdapter extends AdapterAbstract
         if ($driver == Driver::SQLSRV) {
             return sprintf(
                 '%s:Server=%s,%d;Database=%s;Encrypt=%s;TrustServerCertificate=%s',
-                $driver->value,
+                $driver->name(),
                 $socket->host,
                 $socket->port,
                 $name,
@@ -131,7 +132,7 @@ class PDOAdapter extends AdapterAbstract
 
         $build = fn (array $dsn): string => sprintf(
             '%s:%s',
-            $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->value,
+            $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->name(),
             implode(
                 ';',
                 array_map(
@@ -192,7 +193,7 @@ class PDOAdapter extends AdapterAbstract
         return $build($dsn);
     }
 
-    protected function configurePDO(Driver $driver, array $options): void
+    protected function configurePDO(DriverInterface $driver, array $options): void
     {
         $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         $this->pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
