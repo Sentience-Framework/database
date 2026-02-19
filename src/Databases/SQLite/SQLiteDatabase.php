@@ -35,6 +35,21 @@ class SQLiteDatabase extends DatabaseAbstract
         return new static($adapter, $dialect);
     }
 
+    public static function memory(
+        array $queries = [],
+        array $options = [],
+        ?Closure $debug = null,
+        bool $usePDOAdapter = false
+    ): static {
+        return static::fromFile(
+            ':memory:',
+            $queries,
+            $options,
+            $debug,
+            $usePDOAdapter
+        );
+    }
+
     public function sqliteMasterTables(): array
     {
         return $this->select('sqlite_master')
