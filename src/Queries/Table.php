@@ -149,12 +149,14 @@ class Table
 
     public function columns(): array
     {
-        return array_keys(
-            $this->select()
-                ->limit(0)
-                ->execute()
-                ->columns()
-        );
+        $columns = $this->select()
+            ->limit(0)
+            ->execute()
+            ->columns();
+
+        return !array_is_list($columns)
+            ? array_keys($columns)
+            : $columns;
     }
 
     public function isEmpty(): bool
