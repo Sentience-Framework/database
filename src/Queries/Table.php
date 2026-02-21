@@ -2,6 +2,7 @@
 
 namespace Sentience\Database\Queries;
 
+use Throwable;
 use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Objects\ConditionGroup;
@@ -9,7 +10,7 @@ use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
 
-class QueryFactory
+class Table
 {
     public function __construct(
         protected DatabaseInterface $database,
@@ -131,6 +132,11 @@ class QueryFactory
         return $query;
     }
 
+    public function truncate(): void
+    {
+        $this->delete()->execute();
+    }
+
     public function drop(): DropTableQuery
     {
         return $this->database->dropTable($this->table);
@@ -139,5 +145,86 @@ class QueryFactory
     public function dropIfExists(): DropTableQuery
     {
         return $this->drop()->ifExists();
+    }
+
+    public function columns(): array
+    {
+        return array_keys(
+            $this->select()
+                ->limit(0)
+                ->execute()
+                ->columns()
+        );
+    }
+
+    public function isEmpty(): bool
+    {
+        return $this->select()->limit(1)->count() > 0;
+    }
+
+    public function copyFrom(string|array|Raw|self $from, ?callable $map = null, bool $ignoreExceptions = false, bool $emulatePrepare = false): int
+    {
+        $table = $from instanceof self ? $from : $this->database->table($from);
+
+        $columns = $table->columns();
+
+        $result = $table->select()->execute($emulatePrepare);
+
+        $count = 0;
+
+        while ($assoc = $result->fetchAssoc()) {
+            try {
+                $this->insert(
+                    array_filter(
+                        $map ? $map($assoc) : $assoc,
+                        fn (string $column) => in_array($column, $columns),
+                        ARRAY_FILTER_USE_KEY
+                    )
+                )->execute($emulatePrepare);
+
+                $count++;
+            } catch (Throwable $exception) {
+                if ($ignoreExceptions) {
+                    continue;
+                }
+
+                throw $exception;
+            }
+        }
+
+        return $count;
+    }
+
+    public function copyTo(string|array|Raw|self $to, ?callable $map = null, bool $ignoreExceptions = false, bool $emulatePrepare = false): int
+    {
+        $table = $to instanceof self ? $to : $this->database->table($to);
+
+        $columns = $table->columns();
+
+        $result = $this->select()->execute();
+
+        $count = 0;
+
+        while ($assoc = $result->fetchAssoc()) {
+            try {
+                $table->insert(
+                    array_filter(
+                        $map ? $map($assoc) : $assoc,
+                        fn (string $column) => in_array($column, $columns),
+                        ARRAY_FILTER_USE_KEY
+                    )
+                )->execute($emulatePrepare);
+
+                $count++;
+            } catch (Throwable $exception) {
+                if ($ignoreExceptions) {
+                    continue;
+                }
+
+                throw $exception;
+            }
+        }
+
+        return $count;
     }
 }

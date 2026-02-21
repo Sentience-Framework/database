@@ -21,8 +21,8 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Query;
-use Sentience\Database\Queries\QueryFactory;
 use Sentience\Database\Queries\SelectQuery;
+use Sentience\Database\Queries\Table;
 use Sentience\Database\Queries\UpdateQuery;
 use Sentience\Database\Results\ResultInterface;
 
@@ -183,9 +183,9 @@ abstract class DatabaseAbstract implements DatabaseInterface
         return new DropTableQuery($this, $this->dialect, $table);
     }
 
-    public function table(string|array|Raw $table): QueryFactory
+    public function table(string|array|Raw $table): Table
     {
-        return new QueryFactory($this, $this->dialect, $table);
+        return new Table($this, $this->dialect, $table);
     }
 
     public function getAvailableMutableStoredProcedures(): array

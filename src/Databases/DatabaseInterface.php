@@ -11,8 +11,8 @@ use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\SubQuery;
-use Sentience\Database\Queries\QueryFactory;
 use Sentience\Database\Queries\SelectQuery;
+use Sentience\Database\Queries\Table;
 use Sentience\Database\Queries\UpdateQuery;
 use Sentience\Database\Results\ResultInterface;
 
@@ -35,7 +35,7 @@ interface DatabaseInterface
     public function createTable(string|array|Raw $table): CreateTableQuery;
     public function alterTable(string|array|Raw $table): AlterTableQuery;
     public function dropTable(string|array|Raw $table): DropTableQuery;
-    public function table(string|array|Raw $table): QueryFactory;
+    public function table(string|array|Raw $table): Table;
     public function getAvailableMutableStoredProcedures(): array;
     public function getAvailableImmutableStoredProcedures(): array;
     public function createMutableStoredProcedure(string $name, callable $callback): void;
