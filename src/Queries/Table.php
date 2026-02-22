@@ -179,7 +179,7 @@ class Table
                 $this->insert(
                     array_filter(
                         $map ? $map($assoc) : $assoc,
-                        fn (string $column) => in_array($column, $columns),
+                        fn (string $column): bool => in_array($column, $columns),
                         ARRAY_FILTER_USE_KEY
                     )
                 )->execute($emulatePrepare);
@@ -212,7 +212,7 @@ class Table
                 $table->insert(
                     array_filter(
                         $map ? $map($assoc) : $assoc,
-                        fn (string $column) => in_array($column, $columns),
+                        fn (string $column): bool => in_array($column, $columns),
                         ARRAY_FILTER_USE_KEY
                     )
                 )->execute($emulatePrepare);
