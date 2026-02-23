@@ -54,7 +54,7 @@ trait AltersTrait
         return $this;
     }
 
-    public function addUniqueConstraint(array $columns, ?string $name): static
+    public function addUniqueConstraint(array $columns, ?string $name = null): static
     {
         $this->alters[] = new AddUniqueConstraint($columns, $name);
 
