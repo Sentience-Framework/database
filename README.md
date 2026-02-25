@@ -444,7 +444,30 @@ These functionalities were not implemented in the abstract database class becaus
 
 Since these functionalities are likely only used when you know which specific database you're using, they were bundled with their database specific implementations.
 
-# 9 Miscellaneous information about Sentience database
+# 9 Where macros
+
+To prevent needing to define the same conditions every time you make a query, you can add macros.
+
+```php
+$database->addWhereMacro('is_adult', function (ConditionGroup $conditionGroup): void {
+    return $conditionGroup->whereGreaterThanOrEquals('age', 18);
+});
+
+$database->addWhereMacro('has_enough_money', function (ConditionGroup $conditionGroup, float $itemPrice): void {
+    return $conditionGroup->whereGreaterThanOrEquals('bank_balance', $itemPrice);
+});
+
+$itemPrice = 250;
+
+$usersAbleToBuyItemCount = $database->select('users')
+    ->whereMacro('is_adult')
+    ->whereMacro('has_enough_money', [$itemPrice])
+    ->count();
+```
+
+You can also use `orWhereMacro()` to chain them using OR. These functions are defined on the database class level. So each macro you define there can be used in select, update, or delete queries spawned from that class.
+
+# 10 Miscellaneous information about Sentience database
 
 1. Both named and unnamed parameters are supported for query building. The `QueryWithParams` automatically converts named params to placeholders.
 2. Mysqli does not officially support named params, so the `QueryWithParams` object automatically handles that for Mysqli.

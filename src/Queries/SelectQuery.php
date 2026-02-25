@@ -2,8 +2,12 @@
 
 namespace Sentience\Database\Queries;
 
+use Sentience\Database\Databases\DatabaseInterface;
+use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Raw;
+use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Traits\ColumnsTrait;
 use Sentience\Database\Queries\Traits\DistinctTrait;
 use Sentience\Database\Queries\Traits\GroupByTrait;
@@ -26,6 +30,13 @@ class SelectQuery extends Query
     use OffsetTrait;
     use OrderByTrait;
     use WhereTrait;
+
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Alias|Raw|SubQuery $table, array $whereMacros)
+    {
+        parent::__construct($database, $dialect, $table);
+
+        $this->whereMacros = $whereMacros;
+    }
 
     public function toQueryWithParams(): QueryWithParams
     {

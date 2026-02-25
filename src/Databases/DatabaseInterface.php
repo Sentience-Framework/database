@@ -36,6 +36,7 @@ interface DatabaseInterface
     public function alterTable(string|array|Raw $table): AlterTableQuery;
     public function dropTable(string|array|Raw $table): DropTableQuery;
     public function table(string|array|Raw $table): Table;
+    public function addWhereMacro(string $macro, callable $callback): static;
     public function getAvailableMutableStoredProcedures(): array;
     public function getAvailableImmutableStoredProcedures(): array;
     public function createMutableStoredProcedure(string $name, callable $callback): void;

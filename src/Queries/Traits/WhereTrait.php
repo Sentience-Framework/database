@@ -4,6 +4,7 @@ namespace Sentience\Database\Queries\Traits;
 
 use BackedEnum;
 use DateTimeInterface;
+use Sentience\Database\Exceptions\MacroException;
 use Sentience\Database\Queries\Enums\ChainEnum;
 use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Objects\Condition;
@@ -17,6 +18,7 @@ use Sentience\Database\Queries\SelectQuery;
 trait WhereTrait
 {
     protected array $where = [];
+    protected array $whereMacros = [];
 
     public function whereEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
     {
@@ -151,6 +153,11 @@ trait WhereTrait
     public function where(string $sql, array $values = []): static
     {
         return $this->addRawCondition($sql, $values, ChainEnum::AND);
+    }
+
+    public function whereMacro(string $macro, array $args = []): static
+    {
+        return $this->macro($macro, $args, ChainEnum::AND);
     }
 
     public function orWhereEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
@@ -288,6 +295,11 @@ trait WhereTrait
         return $this->addRawCondition($sql, $values, ChainEnum::OR);
     }
 
+    public function orWhereMacro(string $macro, array $args = []): static
+    {
+        return $this->macro($macro, $args, ChainEnum::OR);
+    }
+
     protected function equals(string|array $column, null|bool|int|float|string|DateTimeInterface|Identifier|SelectQuery $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::EQUALS, $column, $value, $chain);
@@ -422,7 +434,7 @@ trait WhereTrait
 
     protected function group(callable $callback, ChainEnum $chain): static
     {
-        $conditionGroup = new ConditionGroup($chain);
+        $conditionGroup = new ConditionGroup($chain, $this->whereMacros);
 
         $conditionGroup = $callback($conditionGroup) ?? $conditionGroup;
 
@@ -440,6 +452,20 @@ trait WhereTrait
     public function operator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|Identifier|Raw|SelectQuery $value, ChainEnum $chain): static
     {
         return $this->addCondition($operator, $column, $value, $chain);
+    }
+
+    public function macro(string $macro, array $args, ChainEnum $chain): static
+    {
+        if (!array_key_exists($macro, $this->whereMacros)) {
+            throw new MacroException("macro {$macro} does not exist");
+        }
+
+        return $this->group(
+            function (ConditionGroup $conditionGroup) use ($macro, $args): void {
+                $this->whereMacros[$macro]($conditionGroup, ...$args);
+            },
+            $chain
+        );
     }
 
     protected function addCondition(string|BackedEnum $condition, null|string|array $identifier, mixed $value, ChainEnum $chain): static

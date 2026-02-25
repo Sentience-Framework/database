@@ -29,6 +29,7 @@ use Sentience\Database\Results\ResultInterface;
 abstract class DatabaseAbstract implements DatabaseInterface
 {
     protected array $savepoints = [];
+    protected array $whereMacros = [];
     protected array $mutableStoredProcedures = [];
     protected array $immutableStoredProcedures = [];
 
@@ -150,7 +151,7 @@ abstract class DatabaseAbstract implements DatabaseInterface
 
     public function select(string|array|Alias|Raw|SubQuery $table): SelectQuery
     {
-        return new SelectQuery($this, $this->dialect, $table);
+        return new SelectQuery($this, $this->dialect, $table, $this->whereMacros);
     }
 
     public function insert(string|array|Raw $table): InsertQuery
@@ -160,12 +161,12 @@ abstract class DatabaseAbstract implements DatabaseInterface
 
     public function update(string|array|Raw $table): UpdateQuery
     {
-        return new UpdateQuery($this, $this->dialect, $table);
+        return new UpdateQuery($this, $this->dialect, $table, $this->whereMacros);
     }
 
     public function delete(string|array|Raw $table): DeleteQuery
     {
-        return new DeleteQuery($this, $this->dialect, $table);
+        return new DeleteQuery($this, $this->dialect, $table, $this->whereMacros);
     }
 
     public function createTable(string|array|Raw $table): CreateTableQuery
@@ -186,6 +187,13 @@ abstract class DatabaseAbstract implements DatabaseInterface
     public function table(string|array|Raw $table): Table
     {
         return new Table($this, $this->dialect, $table);
+    }
+
+    public function addWhereMacro(string $macro, callable $callback): static
+    {
+        $this->whereMacros[$macro] = $callback;
+
+        return $this;
     }
 
     public function getAvailableMutableStoredProcedures(): array

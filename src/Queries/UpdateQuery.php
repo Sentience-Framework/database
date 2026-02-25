@@ -17,9 +17,11 @@ class UpdateQuery extends Query
     use ValuesTrait;
     use WhereTrait;
 
-    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Raw $table)
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Raw $table, array $whereMacros)
     {
         parent::__construct($database, $dialect, $table);
+
+        $this->whereMacros = $whereMacros;
     }
 
     public function toQueryWithParams(): QueryWithParams
