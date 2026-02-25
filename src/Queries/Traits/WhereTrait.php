@@ -155,7 +155,7 @@ trait WhereTrait
         return $this->addRawCondition($sql, $values, ChainEnum::AND);
     }
 
-    public function whereMacro(string $macro, array $args = []): static
+    public function whereMacro(string|BackedEnum $macro, array $args = []): static
     {
         return $this->macro($macro, $args, ChainEnum::AND);
     }
@@ -295,7 +295,7 @@ trait WhereTrait
         return $this->addRawCondition($sql, $values, ChainEnum::OR);
     }
 
-    public function orWhereMacro(string $macro, array $args = []): static
+    public function orWhereMacro(string|BackedEnum $macro, array $args = []): static
     {
         return $this->macro($macro, $args, ChainEnum::OR);
     }
@@ -454,15 +454,17 @@ trait WhereTrait
         return $this->addCondition($operator, $column, $value, $chain);
     }
 
-    public function macro(string $macro, array $args, ChainEnum $chain): static
+    public function macro(string|BackedEnum $macro, array $args, ChainEnum $chain): static
     {
-        if (!array_key_exists($macro, $this->whereMacros)) {
+        $key = $macro instanceof BackedEnum ? $macro->value : $macro;
+
+        if (!array_key_exists($key, $this->whereMacros)) {
             throw new MacroException("macro {$macro} does not exist");
         }
 
         return $this->group(
-            function (ConditionGroup $conditionGroup) use ($macro, $args): void {
-                $this->whereMacros[$macro]($conditionGroup, ...$args);
+            function (ConditionGroup $conditionGroup) use ($key, $args): void {
+                $this->whereMacros[$key]($conditionGroup, ...$args);
             },
             $chain
         );

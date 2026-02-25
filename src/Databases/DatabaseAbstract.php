@@ -2,6 +2,7 @@
 
 namespace Sentience\Database\Databases;
 
+use BackedEnum;
 use PDO;
 use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
@@ -189,9 +190,11 @@ abstract class DatabaseAbstract implements DatabaseInterface
         return new Table($this, $this->dialect, $table);
     }
 
-    public function addWhereMacro(string $macro, callable $callback): static
+    public function addWhereMacro(string|BackedEnum $macro, callable $callback): static
     {
-        $this->whereMacros[$macro] = $callback;
+        $key = $macro instanceof BackedEnum ? $macro->value : $macro;
+
+        $this->whereMacros[$key] = $callback;
 
         return $this;
     }
