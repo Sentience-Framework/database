@@ -43,5 +43,4 @@ interface DatabaseInterface
     public function createImmutableStoredProcedure(string $name, string $query): void;
     public function executeMutableStoredProcedure(string $name, array $params = [], ?callable $callback = null, bool $emulatePrepare = false): ResultInterface;
     public function executeImmutableStoredProcedure(string $name, array $params = [], bool $emulatePrepare = false): ResultInterface;
-    public static function getAvailableDrivers(): array;
 }

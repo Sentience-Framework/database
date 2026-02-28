@@ -55,13 +55,17 @@ class CreateTableQuery extends Query
         return $this;
     }
 
-    public function autoIncrement(string $name, int $bits = 64): static
+    public function autoIncrement(string $name, int $bits = 64, bool $addPrimaryKey = true): static
     {
-        return $this->identity($name, $bits);
+        return $this->identity($name, $bits, $addPrimaryKey);
     }
 
-    public function identity(string $name, int $bits = 64): static
+    public function identity(string $name, int $bits = 64, bool $addPrimaryKey = true): static
     {
+        if ($addPrimaryKey && !in_array($name, $this->primaryKeys)) {
+            $this->primaryKeys[] = $name;
+        }
+
         return $this->int($name, $bits, true, null, true);
     }
 

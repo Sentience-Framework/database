@@ -3,14 +3,9 @@
 namespace Sentience\Database\Databases;
 
 use BackedEnum;
-use PDO;
 use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
-use Sentience\Database\Adapters\MySQLiAdapter;
-use Sentience\Database\Adapters\PDOAdapter;
-use Sentience\Database\Adapters\SQLite3Adapter;
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Driver;
 use Sentience\Database\Exceptions\DatabaseException;
 use Sentience\Database\Queries\AlterTableQuery;
 use Sentience\Database\Queries\CreateTableQuery;
@@ -249,44 +244,5 @@ abstract class DatabaseAbstract implements DatabaseInterface
             $params,
             $emulatePrepare
         );
-    }
-
-    public static function getAvailableDrivers(): array
-    {
-        $availableDrivers = [];
-
-        if (class_exists(PDOAdapter::PDO)) {
-            foreach (PDO::getAvailableDrivers() as $pdoDriver) {
-                $driver = Driver::tryFrom($pdoDriver);
-
-                if (!$driver) {
-                    continue;
-                }
-
-                $availableDrivers[] = $driver;
-            }
-
-            if (in_array(Driver::MYSQL, $availableDrivers)) {
-                $availableDrivers[] = Driver::MARIADB;
-            }
-        }
-
-        if (class_exists(MySQLiAdapter::MYSQLI)) {
-            foreach ([Driver::MYSQL, Driver::MARIADB] as $driver) {
-                if (in_array($driver, $availableDrivers)) {
-                    continue;
-                }
-
-                $availableDrivers[] = $driver;
-            }
-        }
-
-        if (class_exists(SQLite3Adapter::SQLITE3)) {
-            if (!in_array(Driver::SQLITE, $availableDrivers)) {
-                $availableDrivers[] = Driver::SQLITE;
-            }
-        }
-
-        return $availableDrivers;
     }
 }

@@ -449,12 +449,12 @@ trait WhereTrait
         return $this->addConditionGroup($conditionGroup);
     }
 
-    public function operator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|Identifier|Raw|SelectQuery $value, ChainEnum $chain): static
+    protected function operator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|Identifier|Raw|SelectQuery $value, ChainEnum $chain): static
     {
         return $this->addCondition($operator, $column, $value, $chain);
     }
 
-    public function macro(string|BackedEnum $macro, array $args, ChainEnum $chain): static
+    protected function macro(string|BackedEnum $macro, array $args, ChainEnum $chain): static
     {
         $key = $macro instanceof BackedEnum ? $macro->value : $macro;
 
