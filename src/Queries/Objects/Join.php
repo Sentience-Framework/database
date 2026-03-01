@@ -3,6 +3,7 @@
 namespace Sentience\Database\Queries\Objects;
 
 use Sentience\Database\Queries\Enums\JoinEnum;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\Traits\WhereTrait;
 
@@ -12,7 +13,7 @@ class Join
 
     public function __construct(
         public JoinEnum $join,
-        public string|array|Alias|Raw|SubQuery $table
+        public string|array|Alias|Sql|SubQuery $table
     ) {
     }
 

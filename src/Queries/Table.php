@@ -5,8 +5,8 @@ namespace Sentience\Database\Queries;
 use Throwable;
 use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\ConditionGroup;
-use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
 
@@ -15,7 +15,7 @@ class Table
     public function __construct(
         protected DatabaseInterface $database,
         protected DialectInterface $dialect,
-        protected string|array|Raw $table
+        protected string|array|Sql $table
     ) {
     }
 
@@ -164,7 +164,7 @@ class Table
         return $this->select()->limit(1)->count() > 0;
     }
 
-    public function copyFrom(string|array|Raw|self $from, ?callable $map = null, bool $ignoreExceptions = false, bool $emulatePrepare = false): int
+    public function copyFrom(string|array|self|Sql $from, ?callable $map = null, bool $ignoreExceptions = false, bool $emulatePrepare = false): int
     {
         $table = $from instanceof self ? $from : $this->database->table($from);
 
@@ -197,7 +197,7 @@ class Table
         return $count;
     }
 
-    public function copyTo(string|array|Raw|self $to, ?callable $map = null, bool $ignoreExceptions = false, bool $emulatePrepare = false): int
+    public function copyTo(string|array|self|Sql $to, ?callable $map = null, bool $ignoreExceptions = false, bool $emulatePrepare = false): int
     {
         $table = $to instanceof self ? $to : $this->database->table($to);
 

@@ -9,6 +9,7 @@ use Throwable;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\AddColumn;
 use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\AddPrimaryKeys;
@@ -22,11 +23,9 @@ use Sentience\Database\Queries\Objects\DropColumn;
 use Sentience\Database\Queries\Objects\DropConstraint;
 use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\Having;
-use Sentience\Database\Queries\Objects\Identifier;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\OrderBy;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\RenameColumn;
 use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Objects\UniqueConstraint;
@@ -48,7 +47,7 @@ class SQLDialect extends DialectAbstract
     public function select(
         bool $distinct,
         array $columns,
-        string|array|Alias|Raw|SubQuery $table,
+        string|array|Alias|Sql|SubQuery $table,
         array $joins,
         array $where,
         array $groupBy,
@@ -69,7 +68,7 @@ class SQLDialect extends DialectAbstract
             ? implode(
                 ', ',
                 array_map(
-                    function (string|array|Alias|Raw|SubQuery $column) use (&$params): string {
+                    function (string|array|Alias|Sql|SubQuery $column) use (&$params): string {
                         if ($column instanceof SubQuery) {
                             $column = $column->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
                                 return $this->buildSelectQuery($params, $selectQuery);
@@ -98,7 +97,7 @@ class SQLDialect extends DialectAbstract
     }
 
     public function insert(
-        string|array|Raw $table,
+        string|array|Sql $table,
         array $values,
         ?OnConflict $onConflict,
         ?array $returning,
@@ -129,7 +128,7 @@ class SQLDialect extends DialectAbstract
             implode(
                 ', ',
                 array_map(
-                    function (null|bool|int|float|string|DateTimeInterface|Identifier|Raw|SelectQuery $value) use (&$params): string {
+                    function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value) use (&$params): string {
                         return $value instanceof SelectQuery
                             ? $this->buildSelectQuery($params, $value)
                             : $this->buildQuestionMarks($params, $value);
@@ -146,7 +145,7 @@ class SQLDialect extends DialectAbstract
     }
 
     public function update(
-        string|array|Raw $table,
+        string|array|Sql $table,
         array $values,
         array $where,
         ?array $returning
@@ -164,7 +163,7 @@ class SQLDialect extends DialectAbstract
         $query .= implode(
             ', ',
             array_map(
-                function (null|bool|int|float|string|DateTimeInterface|Identifier|Raw|SelectQuery $value, string $key) use (&$params): string {
+                function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, string $key) use (&$params): string {
                     return sprintf(
                         '%s = %s',
                         $this->escapeIdentifier($key),
@@ -185,7 +184,7 @@ class SQLDialect extends DialectAbstract
     }
 
     public function delete(
-        string|array|Raw $table,
+        string|array|Sql $table,
         array $where,
         ?array $returning
     ): QueryWithParams {
@@ -201,7 +200,7 @@ class SQLDialect extends DialectAbstract
 
     public function createTable(
         bool $ifNotExists,
-        string|array|Raw $table,
+        string|array|Sql $table,
         array $columns,
         array $primaryKeys,
         array $constraints
@@ -235,7 +234,7 @@ class SQLDialect extends DialectAbstract
                 implode(
                     ', ',
                     array_map(
-                        fn (string|Raw $column): string => $this->escapeIdentifier($column),
+                        fn (string|Sql $column): string => $this->escapeIdentifier($column),
                         $primaryKeys
                     )
                 )
@@ -257,7 +256,7 @@ class SQLDialect extends DialectAbstract
     }
 
     public function alterTable(
-        string|array|Raw $table,
+        string|array|Sql $table,
         array $alters
     ): array {
         if (count($alters) == 0) {
@@ -292,7 +291,7 @@ class SQLDialect extends DialectAbstract
 
     public function dropTable(
         bool $ifExists,
-        string|array|Raw $table
+        string|array|Sql $table
     ): QueryWithParams {
         $query = 'DROP TABLE';
         $params = [];
@@ -378,7 +377,7 @@ class SQLDialect extends DialectAbstract
         );
     }
 
-    protected function buildTable(string &$query, &$params, string|array|Alias|Raw|SubQuery $table): void
+    protected function buildTable(string &$query, &$params, string|array|Alias|Sql|SubQuery $table): void
     {
         $query .= ' ';
 
@@ -404,8 +403,8 @@ class SQLDialect extends DialectAbstract
                 $query .= ' ';
             }
 
-            if ($join instanceof Raw) {
-                $query .= $join->sql;
+            if ($join instanceof Sql) {
+                $query .= $this->buildSql($params, $join);
 
                 continue;
             }
@@ -625,7 +624,7 @@ class SQLDialect extends DialectAbstract
             implode(
                 ', ',
                 array_map(
-                    fn (string|array|Raw $column): string => $this->escapeIdentifier($column),
+                    fn (string|array|Sql $column): string => $this->escapeIdentifier($column),
                     $groupBy
                 )
             )
@@ -704,7 +703,7 @@ class SQLDialect extends DialectAbstract
                 implode(
                     ', ',
                     array_map(
-                        fn (string|Raw $column): string => $this->escapeIdentifier($column),
+                        fn (string|Sql $column): string => $this->escapeIdentifier($column),
                         $onConflict->conflict
                     )
                 )
@@ -725,7 +724,7 @@ class SQLDialect extends DialectAbstract
             implode(
                 ', ',
                 array_map(
-                    function (null|bool|int|float|string|DateTimeInterface|Identifier|Raw|SelectQuery $value, string $key) use (&$params): string {
+                    function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, string $key) use (&$params): string {
                         return sprintf(
                             '%s = %s',
                             $this->escapeIdentifier($key),
@@ -764,14 +763,10 @@ class SQLDialect extends DialectAbstract
         $query .= ' RETURNING ' . $columns;
     }
 
-    protected function buildQuestionMarks(array &$params, null|bool|int|float|string|array|DateTimeInterface|Identifier|Raw $value, bool $parentheses = true, string $separator = ', '): string
+    protected function buildQuestionMarks(array &$params, null|bool|int|float|string|array|DateTimeInterface|Sql $value, bool $parentheses = true, string $separator = ', '): string
     {
-        if ($value instanceof Identifier) {
-            return $this->escapeIdentifier($value->identifier);
-        }
-
-        if ($value instanceof Raw) {
-            return $value->sql;
+        if ($value instanceof Sql) {
+            return $this->buildSql($params, $value);
         }
 
         if (is_array($value)) {
@@ -780,7 +775,7 @@ class SQLDialect extends DialectAbstract
                 implode(
                     $separator,
                     array_map(
-                        function (null|bool|int|float|string|DateTimeInterface|Identifier|Raw|SelectQuery $value) use (&$params): string {
+                        function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value) use (&$params): string {
                             return $value instanceof SelectQuery
                                 ? $this->buildSelectQuery($params, $value)
                                 : $this->buildQuestionMarks($params, $value);
@@ -808,6 +803,13 @@ class SQLDialect extends DialectAbstract
         );
     }
 
+    protected function buildSql(array &$params, Sql $sql): string
+    {
+        array_push($params, ...$sql->params($this));
+
+        return $sql->sql($this);
+    }
+
     protected function buildColumn(Column $column): string
     {
         $sql = sprintf(
@@ -825,9 +827,9 @@ class SQLDialect extends DialectAbstract
         }
 
         if (!is_null($column->default)) {
-            $default = !($column->default instanceof Raw)
+            $default = !($column->default instanceof Sql)
                 ? $this->castToQuery($column->default)
-                : $column->default->sql;
+                : $column->default->rawSql($this);
 
             $sql .= ' DEFAULT ' . $default;
         }
@@ -927,7 +929,7 @@ class SQLDialect extends DialectAbstract
             implode(
                 ', ',
                 array_map(
-                    fn (string|array|Raw $column): string => $this->escapeIdentifier($column),
+                    fn (string|array|Sql $column): string => $this->escapeIdentifier($column),
                     $addPrimaryKeys->columns
                 )
             )
@@ -958,7 +960,7 @@ class SQLDialect extends DialectAbstract
         );
     }
 
-    public function escapeIdentifier(string|array|Alias|Raw $identifier): string
+    public function escapeIdentifier(string|array|Alias|Sql $identifier): string
     {
         if ($identifier instanceof Alias) {
             return sprintf(
@@ -968,15 +970,15 @@ class SQLDialect extends DialectAbstract
             );
         }
 
-        if ($identifier instanceof Raw) {
-            return $identifier->sql;
+        if ($identifier instanceof Sql) {
+            return $identifier->rawSql($this);
         }
 
         return is_array($identifier)
             ? implode(
                 '.',
                 array_map(
-                    fn (string|array|Raw $identifier): string => $this->escapeIdentifier($identifier),
+                    fn (string|array|Sql $identifier): string => $this->escapeIdentifier($identifier),
                     $identifier
                 )
             )

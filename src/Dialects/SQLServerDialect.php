@@ -4,12 +4,12 @@ namespace Sentience\Database\Dialects;
 
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\TypeEnum;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Query;
 
 class SQLServerDialect extends SQLDialect
@@ -19,7 +19,7 @@ class SQLServerDialect extends SQLDialect
 
     public function createTable(
         bool $ifNotExists,
-        string|array|Alias|Raw $table,
+        string|array|Alias|Sql $table,
         array $columns,
         array $primaryKeys,
         array $constraints
@@ -57,7 +57,7 @@ class SQLServerDialect extends SQLDialect
 
     public function dropTable(
         bool $ifExists,
-        string|array|Alias|Raw $table
+        string|array|Alias|Sql $table
     ): QueryWithParams {
         $dropTableQuery = parent::dropTable(
             false,

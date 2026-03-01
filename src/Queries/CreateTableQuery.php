@@ -6,9 +6,9 @@ use DateTimeInterface;
 use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Enums\TypeEnum;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Traits\ConstraintsTrait;
 use Sentience\Database\Queries\Traits\IfNotExistsTrait;
 use Sentience\Database\Queries\Traits\PrimaryKeysTrait;
@@ -22,7 +22,7 @@ class CreateTableQuery extends Query
 
     protected array $columns = [];
 
-    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Raw $table)
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table)
     {
         parent::__construct($database, $dialect, $table);
     }
@@ -48,7 +48,7 @@ class CreateTableQuery extends Query
         return parent::execute($emulatePrepare);
     }
 
-    public function column(string $name, string $type, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null, bool $generatedByDefaultAsIdentity = false): static
+    public function column(string $name, string $type, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Sql $default = null, bool $generatedByDefaultAsIdentity = false): static
     {
         $this->columns[] = new Column($name, $type, $notNull, $default, $generatedByDefaultAsIdentity);
 
@@ -69,27 +69,27 @@ class CreateTableQuery extends Query
         return $this->int($name, $bits, true, null, true);
     }
 
-    public function bool(string $name, bool $notNull = false, null|bool|Raw $default = null): static
+    public function bool(string $name, bool $notNull = false, null|bool|Sql $default = null): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::BOOL), $notNull, $default);
     }
 
-    public function int(string $name, int $bits = 64, bool $notNull = false, null|int|Raw $default = null, bool $generatedByDefaultAsIdentity = false): static
+    public function int(string $name, int $bits = 64, bool $notNull = false, null|int|Sql $default = null, bool $generatedByDefaultAsIdentity = false): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::INT, $bits), $notNull, $default, $generatedByDefaultAsIdentity);
     }
 
-    public function float(string $name, int $bits = 64, bool $notNull = false, null|int|float|DateTimeInterface|Raw $default = null): static
+    public function float(string $name, int $bits = 64, bool $notNull = false, null|int|float|DateTimeInterface|Sql $default = null): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::FLOAT, $bits), $notNull, $default);
     }
 
-    public function string(string $name, int $size = 255, bool $notNull = false, null|string|Raw $default = null): static
+    public function string(string $name, int $size = 255, bool $notNull = false, null|string|Sql $default = null): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::STRING, $size), $notNull, $default);
     }
 
-    public function dateTime(string $name, int $size = 6, bool $notNull = false, null|DateTimeInterface|Raw $default = null): static
+    public function dateTime(string $name, int $size = 6, bool $notNull = false, null|DateTimeInterface|Sql $default = null): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::DATETIME, $size), $notNull, $default);
     }

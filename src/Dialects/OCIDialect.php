@@ -4,10 +4,10 @@ namespace Sentience\Database\Dialects;
 
 use DateTimeInterface;
 use Sentience\Database\Queries\Enums\TypeEnum;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Objects\Raw;
 
 class OCIDialect extends SQLDialect
 {
@@ -15,7 +15,7 @@ class OCIDialect extends SQLDialect
 
     public function createTable(
         bool $ifNotExists,
-        array|string|Alias|Raw $table,
+        array|string|Alias|Sql $table,
         array $columns,
         array $primaryKeys,
         array $constraints
@@ -42,7 +42,7 @@ class OCIDialect extends SQLDialect
 
     public function dropTable(
         bool $ifExists,
-        string|array|Alias|Raw $table
+        string|array|Alias|Sql $table
     ): QueryWithParams {
         $dropTableQuery = parent::dropTable(
             false,

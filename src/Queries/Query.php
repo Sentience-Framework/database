@@ -5,7 +5,10 @@ namespace Sentience\Database\Queries;
 use DateTime;
 use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
+use Sentience\Database\Queries\Objects\CaseExpression;
+use Sentience\Database\Queries\Objects\Expression;
 use Sentience\Database\Queries\Objects\Identifier;
 use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\SubQuery;
@@ -15,7 +18,7 @@ abstract class Query implements QueryInterface
     public function __construct(
         protected DatabaseInterface $database,
         protected DialectInterface $dialect,
-        protected string|array|Alias|Raw|SubQuery $table
+        protected string|array|Alias|Sql|SubQuery $table
     ) {
     }
 
@@ -31,12 +34,22 @@ abstract class Query implements QueryInterface
         return $this->database->queryWithParams($queryWithParams, $emulatePrepare);
     }
 
-    public static function alias(string|array|Raw $identifier, string $alias): Alias
+    public static function alias(string|array|Sql $identifier, string $alias): Alias
     {
         return new Alias($identifier, $alias);
     }
 
-    public static function identifier(string|array|Raw $identifier): Identifier
+    public static function caseExpression(null|string|array|Sql $identifier = null): CaseExpression
+    {
+        return new CaseExpression($identifier);
+    }
+
+    public static function expression(string $sql, array $params): Expression
+    {
+        return new Expression($sql, $params);
+    }
+
+    public static function identifier(string|array|Sql $identifier): Identifier
     {
         return new Identifier($identifier);
     }

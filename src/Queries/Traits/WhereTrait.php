@@ -7,10 +7,9 @@ use DateTimeInterface;
 use Sentience\Database\Exceptions\MacroException;
 use Sentience\Database\Queries\Enums\ChainEnum;
 use Sentience\Database\Queries\Enums\ConditionEnum;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\ConditionGroup;
-use Sentience\Database\Queries\Objects\Identifier;
-use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\RawCondition;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
@@ -20,12 +19,12 @@ trait WhereTrait
     protected array $where = [];
     protected array $whereMacros = [];
 
-    public function whereEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function whereEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->equals($column, $value, ChainEnum::AND);
     }
 
-    public function whereNotEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function whereNotEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->notEquals($column, $value, ChainEnum::AND);
     }
@@ -80,32 +79,32 @@ trait WhereTrait
         return $this->notIn($column, $values, ChainEnum::AND);
     }
 
-    public function whereLessThan(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function whereLessThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->lessThan($column, $value, ChainEnum::AND);
     }
 
-    public function whereLessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function whereLessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->lessThanOrEquals($column, $value, ChainEnum::AND);
     }
 
-    public function whereGreaterThan(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function whereGreaterThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->greaterThan($column, $value, ChainEnum::AND);
     }
 
-    public function whereGreaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function whereGreaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->greaterThanOrEquals($column, $value, ChainEnum::AND);
     }
 
-    public function whereBetween(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $min, int|float|string|DateTimeInterface|Identifier|SelectQuery $max): static
+    public function whereBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
     {
         return $this->between($column, $min, $max, ChainEnum::AND);
     }
 
-    public function whereNotBetween(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $min, int|float|string|DateTimeInterface|Identifier|SelectQuery $max): static
+    public function whereNotBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
     {
         return $this->notBetween($column, $min, $max, ChainEnum::AND);
     }
@@ -145,7 +144,7 @@ trait WhereTrait
         return $this->group($callback, ChainEnum::AND);
     }
 
-    public function whereOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|Identifier|Raw|SelectQuery $value): static
+    public function whereOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->operator($column, $operator, $value, ChainEnum::AND);
     }
@@ -160,12 +159,12 @@ trait WhereTrait
         return $this->macro($macro, $args, ChainEnum::AND);
     }
 
-    public function orWhereEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function orWhereEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->equals($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereNotEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function orWhereNotEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->notEquals($column, $value, ChainEnum::OR);
     }
@@ -220,32 +219,32 @@ trait WhereTrait
         return $this->notIn($column, $values, ChainEnum::OR);
     }
 
-    public function orWhereLessThan(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function orWhereLessThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->lessThan($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereLessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function orWhereLessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->lessThanOrEquals($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereGreaterThan(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function orWhereGreaterThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->greaterThan($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereGreaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value): static
+    public function orWhereGreaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->greaterThanOrEquals($column, $value, ChainEnum::OR);
     }
 
-    public function orWhereBetween(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $min, int|float|string|DateTimeInterface|Identifier|SelectQuery $max): static
+    public function orWhereBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
     {
         return $this->between($column, $min, $max, ChainEnum::OR);
     }
 
-    public function orWhereNotBetween(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $min, int|float|string|DateTimeInterface|Identifier|SelectQuery $max): static
+    public function orWhereNotBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
     {
         return $this->notBetween($column, $min, $max, ChainEnum::OR);
     }
@@ -285,7 +284,7 @@ trait WhereTrait
         return $this->group($callback, ChainEnum::OR);
     }
 
-    public function orWhereOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|Identifier|Raw|SelectQuery $value): static
+    public function orWhereOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->operator($column, $operator, $value, ChainEnum::OR);
     }
@@ -300,12 +299,12 @@ trait WhereTrait
         return $this->macro($macro, $args, ChainEnum::OR);
     }
 
-    protected function equals(string|array $column, null|bool|int|float|string|DateTimeInterface|Identifier|SelectQuery $value, ChainEnum $chain): static
+    protected function equals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::EQUALS, $column, $value, $chain);
     }
 
-    protected function notEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|Identifier|SelectQuery $value, ChainEnum $chain): static
+    protected function notEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::NOT_EQUALS, $column, $value, $chain);
     }
@@ -360,32 +359,32 @@ trait WhereTrait
         return $this->addCondition(ConditionEnum::NOT_IN, $column, $values, $chain);
     }
 
-    protected function lessThan(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value, ChainEnum $chain): static
+    protected function lessThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::LESS_THAN, $column, $value, $chain);
     }
 
-    protected function lessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value, ChainEnum $chain): static
+    protected function lessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::LESS_THAN_OR_EQUALS, $column, $value, $chain);
     }
 
-    protected function greaterThan(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value, ChainEnum $chain): static
+    protected function greaterThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::GREATER_THAN, $column, $value, $chain);
     }
 
-    protected function greaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $value, ChainEnum $chain): static
+    protected function greaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::GREATER_THAN_OR_EQUALS, $column, $value, $chain);
     }
 
-    protected function between(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $min, int|float|string|DateTimeInterface|Identifier|SelectQuery $max, ChainEnum $chain): static
+    protected function between(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::BETWEEN, $column, [$min, $max], $chain);
     }
 
-    protected function notBetween(string|array $column, int|float|string|DateTimeInterface|Identifier|SelectQuery $min, int|float|string|DateTimeInterface|Identifier|SelectQuery $max, ChainEnum $chain): static
+    protected function notBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max, ChainEnum $chain): static
     {
         return $this->addCondition(ConditionEnum::NOT_BETWEEN, $column, [$min, $max], $chain);
     }
@@ -449,7 +448,7 @@ trait WhereTrait
         return $this->addConditionGroup($conditionGroup);
     }
 
-    protected function operator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|Identifier|Raw|SelectQuery $value, ChainEnum $chain): static
+    protected function operator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
         return $this->addCondition($operator, $column, $value, $chain);
     }

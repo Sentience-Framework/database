@@ -12,9 +12,9 @@ use Sentience\Database\Queries\CreateTableQuery;
 use Sentience\Database\Queries\DeleteQuery;
 use Sentience\Database\Queries\DropTableQuery;
 use Sentience\Database\Queries\InsertQuery;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
@@ -145,42 +145,42 @@ abstract class DatabaseAbstract implements DatabaseInterface
         return $this->adapter->lastInsertId($name);
     }
 
-    public function select(string|array|Alias|Raw|SubQuery $table): SelectQuery
+    public function select(string|array|Alias|Sql|SubQuery $table): SelectQuery
     {
         return new SelectQuery($this, $this->dialect, $table, $this->whereMacros);
     }
 
-    public function insert(string|array|Raw $table): InsertQuery
+    public function insert(string|array|Sql $table): InsertQuery
     {
         return new InsertQuery($this, $this->dialect, $table);
     }
 
-    public function update(string|array|Raw $table): UpdateQuery
+    public function update(string|array|Sql $table): UpdateQuery
     {
         return new UpdateQuery($this, $this->dialect, $table, $this->whereMacros);
     }
 
-    public function delete(string|array|Raw $table): DeleteQuery
+    public function delete(string|array|Sql $table): DeleteQuery
     {
         return new DeleteQuery($this, $this->dialect, $table, $this->whereMacros);
     }
 
-    public function createTable(string|array|Raw $table): CreateTableQuery
+    public function createTable(string|array|Sql $table): CreateTableQuery
     {
         return new CreateTableQuery($this, $this->dialect, $table);
     }
 
-    public function alterTable(string|array|Raw $table): AlterTableQuery
+    public function alterTable(string|array|Sql $table): AlterTableQuery
     {
         return new AlterTableQuery($this, $this->dialect, $table);
     }
 
-    public function dropTable(string|array|Raw $table): DropTableQuery
+    public function dropTable(string|array|Sql $table): DropTableQuery
     {
         return new DropTableQuery($this, $this->dialect, $table);
     }
 
-    public function table(string|array|Raw $table): Table
+    public function table(string|array|Sql $table): Table
     {
         return new Table($this, $this->dialect, $table);
     }

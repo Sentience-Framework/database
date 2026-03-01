@@ -4,6 +4,7 @@ namespace Sentience\Database\Queries\Traits;
 
 use DateTimeInterface;
 use Sentience\Database\Queries\Enums\TypeEnum;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\AddColumn;
 use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\AddPrimaryKeys;
@@ -11,7 +12,6 @@ use Sentience\Database\Queries\Objects\AddUniqueConstraint;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\DropColumn;
 use Sentience\Database\Queries\Objects\DropConstraint;
-use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\RenameColumn;
 use Sentience\Database\Queries\Query;
 
@@ -19,7 +19,7 @@ trait AltersTrait
 {
     protected array $alters = [];
 
-    public function addColumn(string $name, string $type, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Raw $default = null, bool $generatedByDefaultAsIdentity = false): static
+    public function addColumn(string $name, string $type, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Sql $default = null, bool $generatedByDefaultAsIdentity = false): static
     {
         $this->alters[] = new AddColumn($name, $type, $notNull, $default, $generatedByDefaultAsIdentity);
 
@@ -96,27 +96,27 @@ trait AltersTrait
         return $this->addInt($name, $bits, true, null, true);
     }
 
-    public function addBool(string $name, bool $notNull = false, null|bool|Raw $default = null): static
+    public function addBool(string $name, bool $notNull = false, null|bool|Sql $default = null): static
     {
         return $this->addColumn($name, $this->dialect->type(TypeEnum::BOOL), $notNull, $default);
     }
 
-    public function addInt(string $name, int $bits = 64, bool $notNull = false, null|int|Raw $default = null, bool $generatedByDefaultAsIdentity = false): static
+    public function addInt(string $name, int $bits = 64, bool $notNull = false, null|int|Sql $default = null, bool $generatedByDefaultAsIdentity = false): static
     {
         return $this->addColumn($name, $this->dialect->type(TypeEnum::INT, $bits), $notNull, $default, $generatedByDefaultAsIdentity);
     }
 
-    public function addFloat(string $name, int $bits = 64, bool $notNull = false, null|int|float|Raw $default = null): static
+    public function addFloat(string $name, int $bits = 64, bool $notNull = false, null|int|float|Sql $default = null): static
     {
         return $this->addColumn($name, $this->dialect->type(TypeEnum::FLOAT, $bits), $notNull, $default);
     }
 
-    public function addString(string $name, int $size = 255, bool $notNull = false, null|string|Raw $default = null): static
+    public function addString(string $name, int $size = 255, bool $notNull = false, null|string|Sql $default = null): static
     {
         return $this->addColumn($name, $this->dialect->type(TypeEnum::STRING, $size), $notNull, $default);
     }
 
-    public function addDateTime(string $name, int $size = 6, bool $notNull = false, null|DateTimeInterface|Raw $default = null): static
+    public function addDateTime(string $name, int $size = 6, bool $notNull = false, null|DateTimeInterface|Sql $default = null): static
     {
         return $this->addColumn($name, $this->dialect->type(TypeEnum::DATETIME, $size), $notNull, $default);
     }

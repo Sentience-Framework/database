@@ -4,8 +4,8 @@ namespace Sentience\Database\Queries;
 
 use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Traits\ReturningTrait;
 use Sentience\Database\Queries\Traits\WhereTrait;
 use Sentience\Database\Results\ResultInterface;
@@ -15,7 +15,7 @@ class DeleteQuery extends Query
     use ReturningTrait;
     use WhereTrait;
 
-    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Raw $table, array $whereMacros)
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table, array $whereMacros)
     {
         parent::__construct($database, $dialect, $table);
 

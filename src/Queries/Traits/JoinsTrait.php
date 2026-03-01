@@ -3,9 +3,9 @@
 namespace Sentience\Database\Queries\Traits;
 
 use Sentience\Database\Queries\Enums\JoinEnum;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Join;
-use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Query;
 
@@ -13,12 +13,12 @@ trait JoinsTrait
 {
     protected array $joins = [];
 
-    public function leftJoin(string|array|Alias|Raw|SubQuery $table, ?callable $on = null): static
+    public function leftJoin(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
     {
         return $this->addJoin(JoinEnum::LEFT_JOIN, $table, $on);
     }
 
-    public function innerJoin(string|array|Alias|Raw|SubQuery $table, ?callable $on = null): static
+    public function innerJoin(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
     {
         return $this->addJoin(JoinEnum::INNER_JOIN, $table, $on);
     }
@@ -30,7 +30,7 @@ trait JoinsTrait
         return $this;
     }
 
-    protected function addJoin(JoinEnum $join, string|array|Alias|Raw|SubQuery $table, ?callable $on): static
+    protected function addJoin(JoinEnum $join, string|array|Alias|Sql|SubQuery $table, ?callable $on): static
     {
         $join = new Join($join, $table);
 

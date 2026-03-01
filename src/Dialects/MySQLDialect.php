@@ -6,14 +6,13 @@ use DateTimeInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\DropConstraint;
-use Sentience\Database\Queries\Objects\Identifier;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
 
@@ -37,7 +36,7 @@ class MySQLDialect extends SQLDialect
 
     public function createTable(
         bool $ifNotExists,
-        string|array|Raw $table,
+        string|array|Sql $table,
         array $columns,
         array $primaryKeys,
         array $constraints
@@ -136,7 +135,7 @@ class MySQLDialect extends SQLDialect
             implode(
                 ', ',
                 array_map(
-                    function (null|bool|int|float|string|DateTimeInterface|Identifier|Raw|SelectQuery $value, string $key) use (&$params): string {
+                    function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, string $key) use (&$params): string {
                         return sprintf(
                             '%s = %s',
                             $this->escapeIdentifier($key),

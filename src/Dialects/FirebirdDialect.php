@@ -5,10 +5,10 @@ namespace Sentience\Database\Dialects;
 use Sentience\Database\DriverInterface;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\TypeEnum;
+use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Objects\Raw;
 
 class FirebirdDialect extends SQLDialect
 {
@@ -31,7 +31,7 @@ class FirebirdDialect extends SQLDialect
 
     public function createTable(
         bool $ifNotExists,
-        string|array|Alias|Raw $table,
+        string|array|Alias|Sql $table,
         array $columns,
         array $primaryKeys,
         array $constraints
@@ -63,7 +63,7 @@ class FirebirdDialect extends SQLDialect
 
     public function dropTable(
         bool $ifExists,
-        string|array|Alias|Raw $table
+        string|array|Alias|Sql $table
     ): QueryWithParams {
         $dropTableQuery = parent::dropTable(
             false,
