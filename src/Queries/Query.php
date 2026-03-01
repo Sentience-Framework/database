@@ -7,7 +7,6 @@ use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
-use Sentience\Database\Queries\Objects\CaseExpression;
 use Sentience\Database\Queries\Objects\Expression;
 use Sentience\Database\Queries\Objects\Identifier;
 use Sentience\Database\Queries\Objects\Raw;
@@ -39,12 +38,7 @@ abstract class Query implements QueryInterface
         return new Alias($identifier, $alias);
     }
 
-    public static function caseExpression(null|string|array|Sql $identifier = null): CaseExpression
-    {
-        return new CaseExpression($identifier);
-    }
-
-    public static function expression(string $sql, array $params): Expression
+    public static function expression(string $sql, array $params = []): Expression
     {
         return new Expression($sql, $params);
     }
