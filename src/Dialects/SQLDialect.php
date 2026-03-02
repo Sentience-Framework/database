@@ -246,7 +246,7 @@ class SQLDialect extends DialectAbstract
             $query .= match (true) {
                 $constraint instanceof UniqueConstraint => $this->buildUniqueConstraint($constraint),
                 $constraint instanceof ForeignKeyConstraint => $this->buildForeignKeyConstraint($constraint),
-                default => $constraint->sql
+                default => $constraint->rawSql($this)
             };
         }
 
@@ -280,7 +280,7 @@ class SQLDialect extends DialectAbstract
                     $alter instanceof AddUniqueConstraint => $this->buildAlterTableAddUniqueConstraint($alter),
                     $alter instanceof AddForeignKeyConstraint => $this->buildAlterTableAddForeignKeyConstraint($alter),
                     $alter instanceof DropConstraint => $this->buildAlterTableDropConstraint($alter),
-                    default => $alter->sql
+                    default => $alter->rawSql($this)
                 };
 
                 return new QueryWithParams($query, $params);

@@ -3,11 +3,10 @@
 namespace Sentience\Database\Queries\Objects;
 
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Queries\Interfaces\Sql;
 
 class Identifier extends Expression
 {
-    public function __construct(protected string|array|Sql $identifier)
+    public function __construct(protected string|array $identifier)
     {
     }
 

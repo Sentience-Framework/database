@@ -43,7 +43,7 @@ abstract class Query implements QueryInterface
         return new Expression($sql, $params);
     }
 
-    public static function identifier(string|array|Sql $identifier): Identifier
+    public static function identifier(string|array $identifier): Identifier
     {
         return new Identifier($identifier);
     }
