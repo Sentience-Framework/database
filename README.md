@@ -39,14 +39,14 @@ The goal of this database abstraction was to provide an interface that is univer
 - DROP TABLE
 
 ### Where conditions
-- Equals / Not equals
+- Equals (=) / Not equals (<>)
 - IS NULL / IS NOT NULL
-- LIKE / NOT LIKE case sensitive and insensitive (SQLITE uses LIKE converted to GLOB)
+- LIKE / NOT LIKE case sensitive (default) and insensitive (SQLITE uses LIKE converted to GLOB)
 - Starts with / Ends with (using LIKE)
 - Contains / Not contains (using LIKE)
 - IN / NOT IN
-- Less than / Less than or equals
-- Greater than / Greater than or equals
+- Less than (<) / Less than or equals (<=)
+- Greater than (>) / Greater than or equals (>=)
 - BETWEEN / NOT BETWEEN
 - Empty / Not empty (Mimicking PHP's empty function)
 - Regex / Not regex (SQLite also supported)
@@ -69,7 +69,7 @@ Ever used a database, and suddenly you realize that you're missing a functionali
 When a database doesn't support a feature, Sentience does its best to emulate this feature. Such examples are:
 
 - MySQL gets support for returning (with ->lastInsertId('') set)
-- SQLite gets support for regular expressions using REGEXP_LIKE
+- SQLite gets support for regular expressions using REGEXP_LIKE (Using REGEXP in raw queries is also supported)
 - Firebird, OCI, and SQLServer, get ON CONFLICT resolution support
 - Firebird, OCI, and SQLServer, get IF EXISTS and IF NOT EXISTS support
 
@@ -134,8 +134,8 @@ Some methods return a result. The results contain the following methods:
 ```php
 $result->columns(): array // An associative array of columns ['column' => 'type']
 $result->scalar(?string $column = null): mixed // $column null will return the first key in the associative array
-$result->fetchObject(string $class, array $constructorArgs = []): ?object
-$result->fetchObjects(string $class, array $constructorArgs = []): array
+$result->fetchObject(string $class = 'stdObject', array $constructorArgs = []): ?object
+$result->fetchObjects(string $class = 'stdObject', array $constructorArgs = []): array
 $result->fetchAssoc(): ?array
 $result->fetchAssocs(): array
 ```
@@ -314,7 +314,144 @@ $database->dropTable('table_1')
     ->execute();
 ```
 
-# 4 Adapter options
+# 4. Custom expressions
+
+Almost every abstraction comes with their own set of limitations. If you wish to extend the functionality of the abstraction, you can do this by creating a custom extension of the `Expression` class. Expression implements the `Sql` interface, which can be compiled to usable sql using a dialect.
+
+`Raw` and `Identifier` (usable with `Query::raw()` and `Query::identifier`) already implement this interface.
+
+Here is an example of a compilable `CASE` expression:
+
+```php
+use DateTimeInterface;
+use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Queries\Interfaces\Sql;
+use Sentience\Database\Queries\Objects\Expression;
+use Sentience\Database\Queries\SelectQuery;
+
+class CaseExpression extends Expression
+{
+    protected ?array $compiled = null;
+    protected array $whens = [];
+    protected bool $hasElse = false;
+    protected null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $else = null;
+
+    public function __construct(protected null|string|array|Sql $identifier)
+    {
+    }
+
+    public function when(
+        null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $when,
+        null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $then
+    ): static {
+        $this->compiled = null;
+
+        $this->whens[] = [$when, $then];
+
+        return $this;
+    }
+
+    public function else(null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $else): static
+    {
+        $this->compiled = null;
+
+        $this->hasElse = true;
+        $this->else = $else;
+
+        return $this;
+    }
+
+    public function sql(DialectInterface $dialect): string
+    {
+        if (!$this->compiled) {
+            $this->compile($dialect);
+        }
+
+        return $this->compiled[0];
+    }
+
+    public function params(DialectInterface $dialect): array
+    {
+        if (!$this->compiled) {
+            $this->compile($dialect);
+        }
+
+        return $this->compiled[1];
+    }
+
+    protected function compile(DialectInterface $dialect): void
+    {
+        $sql = 'CASE';
+        $params = [];
+
+        if ($this->identifier) {
+            $sql .= ' ';
+            $sql .= $dialect->escapeIdentifier($this->identifier);
+        }
+
+        foreach ($this->whens as $case) {
+            [$when, $then] = $case;
+
+            $sql .= ' WHEN ';
+
+            if ($when instanceof SelectQuery) {
+                $sql .= $this->addSelectQuery($params, $when);
+            } else if ($when instanceof Sql) {
+                $sql .= $this->addSql($dialect, $params, $when);
+            } else {
+                $sql .= '?';
+                $params[] = $when;
+            }
+
+            $sql .= ' THEN ';
+
+            if ($then instanceof SelectQuery) {
+                $sql .= $this->addSelectQuery($params, $then);
+            } else if ($then instanceof Sql) {
+                $sql .= $this->addSql($dialect, $params, $then);
+            } else {
+                $sql .= '?';
+                $params[] = $then;
+            }
+        }
+
+        if ($this->hasElse) {
+            $sql .= ' ELSE ';
+
+            if ($this->else instanceof SelectQuery) {
+                $sql .= $this->addSelectQuery($params, $this->else);
+            } else if ($this->else instanceof Sql) {
+                $sql .= $this->addSql($dialect, $params, $this->else);
+            } else {
+                $sql .= '?';
+                $params[] = $this->else;
+            }
+        }
+
+        $sql .= ' END';
+
+        $this->compiled = [$sql, $params];
+    }
+
+    protected function addSelectQuery(array &$params, SelectQuery $selectQuery): string
+    {
+        $queryWithParams = $selectQuery->toQueryWithParams();
+
+        array_push($params, ...$queryWithParams->params);
+
+        return '(' . $queryWithParams->query . ')';
+    }
+
+    protected function addSql(DialectInterface $dialect, array &$params, Sql $sql): string
+    {
+        array_push($params, ...$sql->params($dialect));
+
+        return $sql->rawSql($dialect);
+    }
+}
+```
+
+# 5 Adapter options
 
 The `AdapterInterface` class holds the options as public constants.
 
@@ -344,7 +481,7 @@ public const string OPTIONS_SQLSRV_TRUST_SERVER_CERTIFICATE = 'trust_server_cert
 
 Most options work on a "if they're in the options array, they're applied".
 
-# 5 Native upserts and emulated upserts (including RETURNING emulation)
+# 6 Native upserts and emulated upserts (including RETURNING emulation)
 
 MariaDB, MySQL, Postgres, and SQLite support some form of conflict resolution inside INSERT queries. MariaDB and MySQL support INSERT IGNORE and ON DUPLICATE KEY UPDATE, Postgres and SQLite support ON CONFLICT DO NOTHING and ON CONFLICT DO UPDATE.
 
@@ -352,14 +489,14 @@ For databases that do not support conflict resolution natively, Sentience emulat
 
 1. Perform select using on conflict columns as where conditions.
 2. Count == 0 --> perform insert.
-3. Count == 2 --> throw exception because the constraint is not unique.
+3. Count >= 2 --> throw exception because the constraint is not unique.
 4. Perform update using on conflict columns as where conditions.
 
 For databases that do not support returning (MariaDB < 10.5, MySQL) another select is performed using the on conflict constraint or the last insert id, to retrieve the inserted or updated record.
 
 If the dialect does not explicitly state that conflict resolution and returning are supported, it will use the fallback.
 
-# 6 Stored procedures
+# 7 Stored procedures
 
 If you want to re-use a query multiple times with a set list of parameters, you can create a stored procedure. To make them database intercompatible the procedures are stored inside the database class instead of the database.
 
@@ -420,7 +557,7 @@ $result = $database->executeImmutableStoredProcedure(
 );
 ```
 
-# 7 Integration in your project
+# 8 Integration in your project
 
 This database abstraction was created for the Sentience V3 framework, but will continue to evolve as its own package.
 
@@ -436,7 +573,7 @@ From there, add options, initialization queries, and anything else your project 
 
 If you wish to explore how this database is implemented, have a look at the parent project: [Sentience V3](https://github.com/Sentience-Framework/sentience-v3)
 
-# 8 Database specific implementations
+# 9 Database specific implementations
 
 Sentience offers specific classes for each database implementation. They are located in the `src/Databases` folders. They contain extra functionality that differs too much per database to include in the regular query classes. Things like schema dumping.
 
@@ -444,7 +581,7 @@ These functionalities were not implemented in the abstract database class becaus
 
 Since these functionalities are likely only used when you know which specific database you're using, they were bundled with their database specific implementations.
 
-# 9 Where macros
+# 10 Where macros
 
 To prevent needing to define the same conditions every time you make a query, you can add macros.
 
@@ -461,13 +598,13 @@ $itemPrice = 250;
 
 $usersAbleToBuyItemCount = $database->select('users')
     ->whereMacro('is_adult')
-    ->whereMacro('has_enough_money', [$itemPrice])
+    ->whereMacro('has_enough_money', [$itemPrice]) // ['itemPrice' => $itemPrice] also works for named arguments with defaults
     ->count();
 ```
 
 You can also use `orWhereMacro()` to chain them using OR. These functions are defined on the database class level. So each macro you define there can be used in select, update, or delete queries spawned from that class.
 
-# 10 Miscellaneous information about Sentience database
+# 11 Miscellaneous information about Sentience database
 
 1. Both named and unnamed parameters are supported for query building. The `QueryWithParams` automatically converts named params to placeholders.
 2. Mysqli does not officially support named params, so the `QueryWithParams` object automatically handles that for Mysqli.
