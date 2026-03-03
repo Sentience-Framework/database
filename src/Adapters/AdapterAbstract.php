@@ -95,7 +95,7 @@ abstract class AdapterAbstract implements AdapterInterface
     {
         return preg_match(
             sprintf(
-                '/%s/',
+                '/%s/u',
                 Query::escapeBackslash($pattern, ['/'])
             ),
             $value
@@ -106,9 +106,9 @@ abstract class AdapterAbstract implements AdapterInterface
     {
         return preg_match(
             sprintf(
-                '/%s/%s',
+                '/%s/u%s',
                 Query::escapeBackslash($pattern, ['/']),
-                $flags
+                str_ireplace('u', '', $flags)
             ),
             $value
         );
