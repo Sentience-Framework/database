@@ -31,9 +31,7 @@ class PgSQLDialect extends SQLDialect
                 '%s::TEXT %s %s',
                 $this->escapeIdentifier($condition->identifier),
                 $condition->condition->value,
-                $condition->value instanceof SelectQuery
-                ? $this->buildSelectQuery($params, $condition->value)
-                : $this->buildQuestionMarks($params, $condition->value)
+                $this->buildQuestionMarks($params, $condition->value)
             );
 
             return;
