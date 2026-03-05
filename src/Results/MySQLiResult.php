@@ -18,7 +18,6 @@ class MySQLiResult extends ResultAbstract
         MYSQLI_TYPE_FLOAT => 'FLOAT',
         MYSQLI_TYPE_GEOMETRY => 'GEOMETRY',
         MYSQLI_TYPE_INT24 => 'INT24',
-        MYSQLI_TYPE_INTERVAL => 'INTERVAL',
         MYSQLI_TYPE_JSON => 'JSON',
         MYSQLI_TYPE_LONG => 'LONG',
         MYSQLI_TYPE_LONGLONG => 'LONGLONG',
