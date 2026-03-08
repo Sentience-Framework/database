@@ -9,4 +9,5 @@ interface QueryInterface
     public function toQueryWithParams(): array|QueryWithParams;
     public function toSql(): string|array;
     public function execute(bool $emulatePrepare = false): mixed;
+    public function explain(bool $emulatePrepare = false): array;
 }

@@ -48,4 +48,9 @@ class AlterTableQuery extends Query
             $queriesWithParams
         );
     }
+
+    public function explain(bool $emulatePrepare = false): array
+    {
+        return [];
+    }
 }

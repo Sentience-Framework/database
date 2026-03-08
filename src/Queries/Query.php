@@ -33,6 +33,17 @@ abstract class Query implements QueryInterface
         return $this->database->queryWithParams($queryWithParams, $emulatePrepare);
     }
 
+    public function explain(bool $emulatePrepare = false): array
+    {
+        $queryWithParams = $this->toQueryWithParams();
+
+        $queryWithParams->query = "EXPLAIN {$queryWithParams->query}";
+
+        return $this->database
+            ->queryWithParams($queryWithParams, $emulatePrepare)
+            ->fetchAssocs();
+    }
+
     public static function alias(string|array|Sql $identifier, string $alias): Alias
     {
         return new Alias($identifier, $alias);

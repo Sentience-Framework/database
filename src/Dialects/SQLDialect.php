@@ -637,7 +637,7 @@ class SQLDialect extends DialectAbstract
             return;
         }
 
-        $query .= ' HAVING ' . $having->query;
+        $query .= " HAVING {$having->query}";
 
         array_push($params, ...$having->params);
     }
@@ -670,7 +670,7 @@ class SQLDialect extends DialectAbstract
             return;
         }
 
-        $query .= ' LIMIT ' . $limit;
+        $query .= " LIMIT {$limit}";
     }
 
     protected function buildOffset(string &$query, ?int $limit, ?int $offset): void
@@ -683,7 +683,7 @@ class SQLDialect extends DialectAbstract
             return;
         }
 
-        $query .= ' OFFSET ' . $offset;
+        $query .= " OFFSET {$offset}";
     }
 
     protected function buildOnConflict(string &$query, array &$params, ?OnConflict $onConflict, array $values, ?string $lastInsertId): void
@@ -760,7 +760,7 @@ class SQLDialect extends DialectAbstract
             )
             : '*';
 
-        $query .= ' RETURNING ' . $columns;
+        $query .= " RETURNING {$columns}";
     }
 
     protected function buildQuestionMarks(array &$params, null|bool|int|float|string|array|DateTimeInterface|Sql $value, bool $parentheses = true, string $separator = ', '): string
@@ -831,7 +831,7 @@ class SQLDialect extends DialectAbstract
                 ? $this->castToQuery($column->default)
                 : $column->default->rawSql($this);
 
-            $sql .= ' DEFAULT ' . $default;
+            $sql .= " DEFAULT {$default}";
         }
 
         return $sql;
@@ -1002,7 +1002,7 @@ class SQLDialect extends DialectAbstract
             ]
         );
 
-        return $char . $escaped . $char;
+        return "{$char}{$escaped}{$char}";
     }
 
     public function castToDriver(null|bool|int|float|string|DateTimeInterface $value): null|bool|int|float|string

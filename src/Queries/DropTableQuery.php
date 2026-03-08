@@ -35,4 +35,9 @@ class DropTableQuery extends Query
     {
         return parent::execute($emulatePrepare);
     }
+
+    public function explain(bool $emulatePrepare = false): array
+    {
+        return [];
+    }
 }

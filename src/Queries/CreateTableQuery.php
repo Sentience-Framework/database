@@ -48,6 +48,11 @@ class CreateTableQuery extends Query
         return parent::execute($emulatePrepare);
     }
 
+    public function explain(bool $emulatePrepare = false): array
+    {
+        return [];
+    }
+
     public function column(string $name, string $type, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Sql $default = null, bool $generatedByDefaultAsIdentity = false): static
     {
         $this->columns[] = new Column($name, $type, $notNull, $default, $generatedByDefaultAsIdentity);

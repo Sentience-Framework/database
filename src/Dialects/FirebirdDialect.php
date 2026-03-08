@@ -108,7 +108,7 @@ class FirebirdDialect extends SQLDialect
             return;
         }
 
-        $query .= ' ROWS ' . $limit;
+        $query .= " ROWS {$limit}";
     }
 
     protected function buildOffset(string &$query, ?int $limit, ?int $offset): void
