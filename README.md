@@ -147,7 +147,7 @@ Querybuilders are initialized from the database object. A query can be executed 
 ## 3.1 Select
 
 ```php
-$database->select(['public', 'table_1'], 'table1')
+$database->select(Query::alias(['public', 'table_1'], 'table1'))
     ->distinct()
     ->columns([
         'column1',
@@ -208,6 +208,8 @@ $database->select(['public', 'table_1'], 'table1')
     ->orderByDesc(Query::raw('column7'))
     ->limit(1)
     ->offset(10)
+    ->union($database->select('union'))
+    ->unionAll($database->select('union_all'))
     ->execute();
 ```
 
