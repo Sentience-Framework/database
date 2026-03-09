@@ -24,7 +24,8 @@ interface DialectInterface
         ?Having $having,
         array $orderBy,
         ?int $limit,
-        ?int $offset
+        ?int $offset,
+        array $unions
     ): QueryWithParams;
 
     public function insert(

@@ -16,6 +16,7 @@ use Sentience\Database\Queries\Traits\JoinsTrait;
 use Sentience\Database\Queries\Traits\LimitTrait;
 use Sentience\Database\Queries\Traits\OffsetTrait;
 use Sentience\Database\Queries\Traits\OrderByTrait;
+use Sentience\Database\Queries\Traits\UnionTrait;
 use Sentience\Database\Queries\Traits\WhereTrait;
 use Sentience\Database\Results\ResultInterface;
 
@@ -29,6 +30,7 @@ class SelectQuery extends Query
     use LimitTrait;
     use OffsetTrait;
     use OrderByTrait;
+    use UnionTrait;
     use WhereTrait;
 
     public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Alias|Sql|SubQuery $table, array $whereMacros)
@@ -50,7 +52,8 @@ class SelectQuery extends Query
             $this->having,
             $this->orderBy,
             $this->limit,
-            $this->offset
+            $this->offset,
+            $this->unions
         );
     }
 
@@ -88,7 +91,8 @@ class SelectQuery extends Query
             $this->having,
             [],
             $this->limit,
-            $this->offset
+            $this->offset,
+            $this->unions
         );
 
         return (int) $this->database
