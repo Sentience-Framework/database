@@ -193,6 +193,13 @@ class InsertQuery extends Query
         );
     }
 
+    public function into(string|array|Sql $table): static
+    {
+        $this->table = $table;
+
+        return $this;
+    }
+
     public function emulateOnConflict(string $lastInsertId, bool $inTransaction = false): static
     {
         $this->emulateOnConflict = true;

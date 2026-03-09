@@ -67,6 +67,13 @@ class SelectQuery extends Query
         return parent::execute($emulatePrepare);
     }
 
+    public function from(string|array|Alias|Sql|SubQuery $table): static
+    {
+        $this->table = $table;
+
+        return $this;
+    }
+
     public function count(null|string|array|Sql $column = null, bool $emulatePrepare = false): int
     {
         $queryWithParams = $this->dialect->select(

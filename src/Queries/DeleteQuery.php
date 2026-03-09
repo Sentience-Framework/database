@@ -40,4 +40,11 @@ class DeleteQuery extends Query
     {
         return parent::execute($emulatePrepare);
     }
+
+    public function from(string|array|Sql $table): static
+    {
+        $this->table = $table;
+
+        return $this;
+    }
 }
