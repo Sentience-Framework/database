@@ -690,11 +690,15 @@ class SQLDialect extends DialectAbstract
 
     protected function buildUnions(string &$query, array &$params, array $unions): void
     {
+        if (count($unions) > 0) {
+            $query = sprintf('(%s)', $query);
+        }
+
         foreach ($unions as $union) {
             $query .= sprintf(
                 ' %s %s',
                 $union->union->value,
-                $this->buildSelectQuery($params, $union->SelectQuery, false)
+                $this->buildSelectQuery($params, $union->selectQuery)
             );
         }
     }
@@ -804,14 +808,14 @@ class SQLDialect extends DialectAbstract
         return '?';
     }
 
-    protected function buildSelectQuery(array &$params, SelectQuery $selectQuery, bool $parentheses = true): string
+    protected function buildSelectQuery(array &$params, SelectQuery $selectQuery): string
     {
         $queryWithParams = $selectQuery->toQueryWithParams();
 
         array_push($params, ...$queryWithParams->params);
 
         return sprintf(
-            $parentheses ? '(%s)' : '%s',
+            '(%s)',
             $queryWithParams->query
         );
     }
