@@ -97,7 +97,7 @@ class Table
 
     public function update(array $values): UpdateQuery
     {
-        return $this->database->update($this->table)->values($values);
+        return $this->database->update($this->table)->updates($values);
     }
 
     public function delete(): DeleteQuery

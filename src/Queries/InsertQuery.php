@@ -61,6 +61,10 @@ class InsertQuery extends Query
 
     protected function upsert(bool $emulatePrepare): ResultInterface
     {
+        if (count($this->values) > 1) {
+            throw new QueryException('emulated upsert does not support multiple insert values');
+        }
+
         if (is_string($this->onConflict->conflict)) {
             throw new QueryException('database does not support named constraints');
         }
@@ -68,11 +72,11 @@ class InsertQuery extends Query
         $conflict = [];
 
         foreach ($this->onConflict->conflict as $column) {
-            if (!array_key_exists($column, $this->values)) {
+            if (!array_key_exists($column, $this->values[0])) {
                 throw new QueryException('insert values does not contain constraint columns');
             }
 
-            $value = $this->values[$column];
+            $value = $this->values[0][$column];
 
             $conflict[$column] = $value;
         }
@@ -153,10 +157,10 @@ class InsertQuery extends Query
         $updateQuery = $this->database->update($this->table);
 
         $updates = !is_null($this->onConflict->updates)
-            ? (count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values)
+            ? (count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values[0])
             : $conflict;
 
-        $updateQuery->values($updates);
+        $updateQuery->updates($updates);
 
         foreach ($conflict as $column => $value) {
             $updateQuery->whereEquals($column, $value);
