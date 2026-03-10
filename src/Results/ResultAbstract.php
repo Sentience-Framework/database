@@ -15,6 +15,16 @@ abstract class ResultAbstract implements ResultInterface
         return $column ? ($assoc[$column] ?? null) : current($assoc);
     }
 
+    public function scalars(?string $column = null): array
+    {
+        $assocs = $this->fetchAssocs();
+
+        return array_map(
+            fn (array $assoc): mixed => $column ? ($assoc[$column] ?? null) : current($assoc),
+            $assocs
+        );
+    }
+
     public function fetchObject(string $class = 'stdClass', array $constructorArgs = []): ?object
     {
         $assoc = $this->fetchAssoc();
