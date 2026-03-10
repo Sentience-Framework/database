@@ -9,6 +9,8 @@ use Sentience\Database\Exceptions\QueryWithParamsException;
 class QueryWithParams
 {
     public const string INI_PCRE_JIT = 'pcre.jit';
+    public const string INI_PCRE_BACKTRACE_LIMIT = 'pcre.backtrack_limit';
+    public const string INI_PCRE_RECURSION_LIMIT = 'pcre.recursion_limit';
     public const string REGEX_PATTERN_QUESTION_MARKS = '/(?:\'(?:\\\\.|[^\\\\\'])*\'|\"(?:\\\\.|[^\\\\\"])*\"|\`(?:\\\\.|[^\\\\\`])*\`|\[(?:\\\\.|[^\[\]])*?\]|(\?)(?=(?:[^\'\"\`\[\]]|\'(?:\\\\.|[^\\\\\'])*\'|\"(?:\\\\.|[^\\\\\"])*\"|\`(?:\\\\.|[^\\\\\`])*\`|\[(?:\\\\.|[^\[\]])*?\])*$)|(?:\-\-[^\r\n]*|\/\*[\s\S]*?\*\/|\#.*))/m';
     public const string REGEX_PATTERN_NAMED_PARAMS = '/(?:\'(?:\\\\.|[^\\\\\'])*\'|\"(?:\\\\.|[^\\\\\"])*\"|\`(?:\\\\.|[^\\\\\`])*\`|\[(?:\\\\.|[^\[\]])*?\]|(\:\w+)(?=(?:[^\'\"\`\[\]]|\'(?:\\\\.|[^\\\\\'])*\'|\"(?:\\\\.|[^\\\\\"])*\"|\`(?:\\\\.|[^\\\\\`])*\`|\[(?:\\\\.|[^\[\]])*?\])*$)|(?:\-\-[^\r\n]*|\/\*[\s\S]*?\*\/|\#.*))/m';
 
@@ -124,17 +126,29 @@ class QueryWithParams
 
     protected function pregReplaceCallback(string|array $pattern, callable $callback, string|array $subject): null|string|array
     {
-        $ini = ini_get(static::INI_PCRE_JIT);
+        $iniPcreJit = ini_get(static::INI_PCRE_JIT);
+        $iniPcreBacktraceLimit = ini_get(static::INI_PCRE_BACKTRACE_LIMIT);
+        $iniPcreRecursionLimit = ini_get(static::INI_PCRE_RECURSION_LIMIT);
 
-        ini_set(static::INI_PCRE_JIT, '0');
+        ini_set(static::INI_PCRE_JIT, (string) 0);
+        ini_set(static::INI_PCRE_BACKTRACE_LIMIT, (string) PHP_INT_MAX);
+        ini_set(static::INI_PCRE_RECURSION_LIMIT, (string) PHP_INT_MAX);
 
         try {
             return preg_replace_callback($pattern, $callback, $subject);
         } catch (Throwable $exception) {
             throw $exception;
         } finally {
-            if (!is_bool($ini)) {
-                ini_set(static::INI_PCRE_JIT, $ini);
+            if (!is_bool($iniPcreJit)) {
+                ini_set(static::INI_PCRE_JIT, $iniPcreJit);
+            }
+
+            if (!is_bool($iniPcreBacktraceLimit)) {
+                ini_set(static::INI_PCRE_BACKTRACE_LIMIT, $iniPcreBacktraceLimit);
+            }
+
+            if (!is_bool($iniPcreRecursionLimit)) {
+                ini_set(static::INI_PCRE_RECURSION_LIMIT, $iniPcreRecursionLimit);
             }
         }
     }
