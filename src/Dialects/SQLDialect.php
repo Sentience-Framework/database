@@ -29,6 +29,7 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\RenameColumn;
 use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Objects\UniqueConstraint;
+use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
 
 class SQLDialect extends DialectAbstract
@@ -114,30 +115,50 @@ class SQLDialect extends DialectAbstract
 
         $this->buildTable($query, $params, $table);
 
+        $columns = [];
+
+        array_walk(
+            $values,
+            function (array $values) use (&$columns): void {
+                foreach (array_keys($values) as $column) {
+                    if (in_array($column, $columns)) {
+                        continue;
+                    }
+
+                    $columns[] = $column;
+                }
+            }
+        );
+
         $query .= sprintf(
             ' (%s)',
             implode(
                 ', ',
                 array_map(
                     fn (string $column): string => $this->escapeIdentifier($column),
-                    array_keys($values)
+                    $columns
                 )
             )
         );
 
-        $query .= sprintf(
-            ' VALUES (%s)',
-            implode(
-                ', ',
-                array_map(
-                    function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value) use (&$params): string {
-                        return $value instanceof SelectQuery
-                            ? $this->buildSelectQuery($params, $value)
-                            : $this->buildQuestionMarks($params, $value);
-                    },
-                    $values
-                )
-            )
+        $query .= ' VALUES';
+
+        array_walk(
+            $values,
+            function (array $values, int $index) use (&$query, &$params, $columns): void {
+                foreach ($columns as $column) {
+                    $value = !array_key_exists($column, $values)
+                        ? Query::raw('DEFAULT')
+                        : $values[$column];
+
+                    unset($values[$column]);
+
+                    $values[$column] = $value;
+                }
+
+                $query .= $index > 0 ? ', ' : ' ';
+                $query .= $this->buildQuestionMarks($params, $values);
+            }
         );
 
         $this->buildOnConflict($query, $params, $onConflict, $values, $lastInsertId);
@@ -148,12 +169,12 @@ class SQLDialect extends DialectAbstract
 
     public function update(
         string|array|Sql $table,
-        array $values,
+        array $updates,
         array $where,
         ?array $returning
     ): QueryWithParams {
-        if (count($values) == 0) {
-            throw new QueryException('no update values specified');
+        if (count($updates) == 0) {
+            throw new QueryException('no updates specified');
         }
 
         $query = 'UPDATE';
@@ -174,8 +195,8 @@ class SQLDialect extends DialectAbstract
                         : $this->buildQuestionMarks($params, $value)
                     );
                 },
-                $values,
-                array_keys($values)
+                $updates,
+                array_keys($updates)
             )
         );
 
@@ -734,7 +755,26 @@ class SQLDialect extends DialectAbstract
             return;
         }
 
-        $updates = count($onConflict->updates) > 0 ? $onConflict->updates : $values;
+        $updates = count($onConflict->updates) == 0
+            ? (function () use ($values): array {
+                $columns = [];
+
+                array_walk(
+                    $values,
+                    function (array $values) use (&$columns): void {
+                        foreach (array_keys($values) as $column) {
+                            if (array_key_exists($column, $columns)) {
+                                continue;
+                            }
+
+                            $columns[$column] = Query::identifier(['excluded', $column]);
+                        }
+                    }
+                );
+
+                return $columns;
+            })()
+            : $onConflict->updates;
 
         $query .= sprintf(
             'UPDATE SET %s',

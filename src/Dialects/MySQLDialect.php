@@ -118,7 +118,31 @@ class MySQLDialect extends SQLDialect
         }
 
         $updates = !$insertIgnore
-            ? (count($onConflict->updates) > 0 ? $onConflict->updates : $values)
+            ? (count($onConflict->updates) == 0
+                ? (function () use ($values): array {
+                    $columns = [];
+
+                    array_walk(
+                        $values,
+                        function (array $values) use (&$columns): void {
+                            foreach (array_keys($values) as $column) {
+                                if (array_key_exists($column, $columns)) {
+                                    continue;
+                                }
+
+                                $columns[$column] = Query::raw(
+                                    sprintf(
+                                        'values(%s)',
+                                        $this->escapeIdentifier($column)
+                                    )
+                                );
+                            }
+                        }
+                    );
+
+                    return $columns;
+                })()
+                : $onConflict->updates)
             : [];
 
         if ($lastInsertId) {

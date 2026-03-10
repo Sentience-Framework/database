@@ -163,7 +163,7 @@ UpdateQuery->toSql(): string
 UpdateQuery->execute(bool $emulatePrepare): \Sentience\Database\Results\ResultInterface
 UpdateQuery->explain(bool $emulatePrepare): array
 UpdateQuery->returning(array $columns): static
-UpdateQuery->values(array $values): static
+UpdateQuery->updates(array $updates): static
 UpdateQuery->whereEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value): static
 UpdateQuery->whereNotEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value): static
 UpdateQuery->whereIsNull(array|string $column): static

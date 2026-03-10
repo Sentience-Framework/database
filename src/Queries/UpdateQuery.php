@@ -7,14 +7,14 @@ use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Traits\ReturningTrait;
-use Sentience\Database\Queries\Traits\ValuesTrait;
+use Sentience\Database\Queries\Traits\UpdatesTrait;
 use Sentience\Database\Queries\Traits\WhereTrait;
 use Sentience\Database\Results\ResultInterface;
 
 class UpdateQuery extends Query
 {
     use ReturningTrait;
-    use ValuesTrait;
+    use UpdatesTrait;
     use WhereTrait;
 
     public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table, array $whereMacros)
@@ -28,7 +28,7 @@ class UpdateQuery extends Query
     {
         return $this->dialect->update(
             $this->table,
-            $this->values,
+            $this->updates,
             $this->where,
             $this->returning
         );
