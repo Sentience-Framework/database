@@ -6,9 +6,9 @@ trait ValuesTrait
 {
     protected array $values = [];
 
-    public function values(array $values): static
+    public function values(array ...$values): static
     {
-        $this->values[] = $values;
+        array_push($this->values, ...$values);
 
         return $this;
     }

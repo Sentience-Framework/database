@@ -24,9 +24,9 @@ class Table
         return $this->database->select($this->table)->columns($columns);
     }
 
-    public function insert(array $values): InsertQuery
+    public function insert(array ...$values): InsertQuery
     {
-        return $this->database->insert($this->table)->values($values);
+        return $this->database->insert($this->table)->values(...$values);
     }
 
     public function selectOrInsert(array $columns, array $values, ?string $lastInsertId = null, bool $emulatePrepare = false): ResultInterface
