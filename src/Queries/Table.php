@@ -71,7 +71,7 @@ class Table
 
                 return $conditionGroup;
             })
-            ->count(null, $emulatePrepare) > 0;
+            ->count($emulatePrepare) > 0;
 
         if ($exists) {
             return $this->update($values)

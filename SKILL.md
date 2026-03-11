@@ -69,7 +69,7 @@ Query::escapeLikeChars(string $string, bool $escapeBackslash): string
 SelectQuery->toSql(): string
 SelectQuery->execute(bool $emulatePrepare): \Sentience\Database\Results\ResultInterface
 SelectQuery->from(\Sentience\Database\Queries\Objects\Alias|Sentience\Database\Queries\Interfaces\Sql|Sentience\Database\Queries\Objects\SubQuery|array|string $table): static
-SelectQuery->count(\Sentience\Database\Queries\Interfaces\Sql|array|string|null $column, bool $emulatePrepare): int
+SelectQuery->count(bool $emulatePrepare): int
 SelectQuery->explain(bool $emulatePrepare): array
 SelectQuery->columns(array $columns): static
 SelectQuery->distinct(): static

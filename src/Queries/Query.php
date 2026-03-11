@@ -7,6 +7,7 @@ use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
+use Sentience\Database\Queries\Objects\CurrentTimestamp;
 use Sentience\Database\Queries\Objects\Expression;
 use Sentience\Database\Queries\Objects\Identifier;
 use Sentience\Database\Queries\Objects\Raw;
@@ -47,6 +48,11 @@ abstract class Query implements QueryInterface
     public static function alias(string|array|Sql $identifier, string $alias): Alias
     {
         return new Alias($identifier, $alias);
+    }
+
+    public static function currentTimestamp(): CurrentTimestamp
+    {
+        return new CurrentTimestamp();
     }
 
     public static function expression(string $sql, array $params = []): Expression
