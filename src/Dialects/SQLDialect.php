@@ -563,7 +563,7 @@ class SQLDialect extends DialectAbstract
         }
 
         $query .= sprintf(
-            'cast(%s as %s) %s cast(%s as %s)',
+            'cast(%s AS %s) %s cast(%s AS %s)',
             $this->escapeIdentifier($condition->identifier),
             $castType,
             $operator,

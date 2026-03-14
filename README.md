@@ -498,65 +498,14 @@ For databases that do not support returning (MariaDB < 10.5, MySQL) another sele
 
 If the dialect does not explicitly state that conflict resolution and returning are supported, it will use the fallback.
 
-# 7 Stored procedures
+# 7 Strict comparisons
 
-If you want to re-use a query multiple times with a set list of parameters, you can create a stored procedure. To make them database intercompatible the procedures are stored inside the database class instead of the database.
+In weaker typed databases, like MySQL / MariaDB, the type system automatically casts the column and input value to something it can compare easily.
 
-To create a mutable stored procedure, you do the following:
+->whereEquals() and ->whereNotEquals() get an extra option for strict comparisons, by casting the column and value to the SQL type of the input value. Thus producing SQL that looks like this:
+
 ```php
-$database->createMutableStoredProcedure(
-    'insert_movie'
-    function (string $title, string $description) use ($database): Query {
-        return $database->insert('movies')
-            ->values([
-                'title' => $title,
-                'description' => $description
-            ])
-            ->onConflictIgnore(['title', 'description']);
-    }
-);
-```
-
-Which you can later call using the name:
-```php
-$movies = [
-    ['title' => 'Star Wars', 'description' => 'Wars in the stars'],
-    ['title' => 'Back To The Future', 'description' => 'A film about time travel']
-];
-
-foreach($movies as $movie) {
-    $database->executeMutableStoredProcedure(
-        'insert_movie',
-        $movie
-    );
-}
-```
-
-If you wish to mutate the query, you can pass in an extra command:
-```php
-foreach($movies as $movie) {
-    $database->executeMutableStoredProcedure(
-        'insert_movie',
-        $movie,
-        function (InsertQuery $insertQuery) {
-            $insertQuery->onConflictIgnore('movies_uniq')
-                ->returning(['id']);
-        }
-    );
-}
-```
-
-If you want the query to be immutable, you can do the following:
-```php
-$database->createImmutableStoredProcedure(
-    'movies_cleanup',
-    'DELETE FROM "movies" WHERE "published_at" < ?'
-);
-
-$result = $database->executeImmutableStoredProcedure(
-    'movies_cleanup',
-    [new DateTime('2025-01-01')]
-);
+WHERE cast("column" AS BIGINT) = cast(12345678 AS BIGINT)
 ```
 
 # 8 Integration in your project
