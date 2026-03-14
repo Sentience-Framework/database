@@ -2,11 +2,9 @@
 
 namespace Sentience\Database\Databases;
 
-use BackedEnum;
 use Throwable;
 use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Exceptions\DatabaseException;
 use Sentience\Database\Queries\AlterTableQuery;
 use Sentience\Database\Queries\CreateTableQuery;
 use Sentience\Database\Queries\DeleteQuery;
@@ -16,7 +14,6 @@ use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\SubQuery;
-use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
 use Sentience\Database\Queries\Table;
 use Sentience\Database\Queries\UpdateQuery;
@@ -25,9 +22,6 @@ use Sentience\Database\Results\ResultInterface;
 abstract class DatabaseAbstract implements DatabaseInterface
 {
     protected array $savepoints = [];
-    protected array $whereMacros = [];
-    protected array $mutableStoredProcedures = [];
-    protected array $immutableStoredProcedures = [];
 
     public function __construct(
         protected AdapterInterface $adapter,
@@ -147,7 +141,7 @@ abstract class DatabaseAbstract implements DatabaseInterface
 
     public function select(string|array|Alias|Sql|SubQuery $table): SelectQuery
     {
-        return new SelectQuery($this, $this->dialect, $table, $this->whereMacros);
+        return new SelectQuery($this, $this->dialect, $table);
     }
 
     public function insert(string|array|Sql $table): InsertQuery
@@ -157,12 +151,12 @@ abstract class DatabaseAbstract implements DatabaseInterface
 
     public function update(string|array|Sql $table): UpdateQuery
     {
-        return new UpdateQuery($this, $this->dialect, $table, $this->whereMacros);
+        return new UpdateQuery($this, $this->dialect, $table);
     }
 
     public function delete(string|array|Sql $table): DeleteQuery
     {
-        return new DeleteQuery($this, $this->dialect, $table, $this->whereMacros);
+        return new DeleteQuery($this, $this->dialect, $table);
     }
 
     public function createTable(string|array|Sql $table): CreateTableQuery
@@ -183,66 +177,5 @@ abstract class DatabaseAbstract implements DatabaseInterface
     public function table(string|array|Sql $table): Table
     {
         return new Table($this, $this->dialect, $table);
-    }
-
-    public function addWhereMacro(string|BackedEnum $macro, callable $callback): static
-    {
-        $key = $macro instanceof BackedEnum ? $macro->value : $macro;
-
-        $this->whereMacros[$key] = $callback;
-
-        return $this;
-    }
-
-    public function getAvailableMutableStoredProcedures(): array
-    {
-        return array_keys($this->mutableStoredProcedures);
-    }
-
-    public function getAvailableImmutableStoredProcedures(): array
-    {
-        return array_keys($this->immutableStoredProcedures);
-    }
-
-    public function createMutableStoredProcedure(string $name, callable $callback): void
-    {
-        $this->mutableStoredProcedures[$name] = $callback;
-    }
-
-    public function createImmutableStoredProcedure(string $name, string $query): void
-    {
-        $this->mutableStoredProcedures[$name] = $query;
-    }
-
-    public function executeMutableStoredProcedure(string $name, array $params = [], ?callable $callback = null, bool $emulatePrepare = false): ResultInterface
-    {
-        if (!array_key_exists($name, $this->mutableStoredProcedures)) {
-            throw new DatabaseException('mutable stored procedure does not exist');
-        }
-
-        $query = $this->mutableStoredProcedures[$name](...$params);
-
-        if (!($query instanceof Query)) {
-            throw new DatabaseException('mutable stored procedure callback must return a query class');
-        }
-
-        if ($callback) {
-            $callback($query);
-        }
-
-        return $query->execute($emulatePrepare);
-    }
-
-    public function executeImmutableStoredProcedure(string $name, array $params = [], bool $emulatePrepare = false): ResultInterface
-    {
-        if (!array_key_exists($name, $this->mutableStoredProcedures)) {
-            throw new DatabaseException('mutable stored procedure does not exist');
-        }
-
-        return $this->prepared(
-            $this->mutableStoredProcedures[$name],
-            $params,
-            $emulatePrepare
-        );
     }
 }

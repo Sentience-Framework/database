@@ -33,11 +33,9 @@ class SelectQuery extends Query
     use UnionTrait;
     use WhereTrait;
 
-    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Alias|Sql|SubQuery $table, array $whereMacros)
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Alias|Sql|SubQuery $table)
     {
         parent::__construct($database, $dialect, $table);
-
-        $this->whereMacros = $whereMacros;
     }
 
     public function toQueryWithParams(): QueryWithParams

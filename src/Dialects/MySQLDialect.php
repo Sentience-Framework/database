@@ -32,6 +32,10 @@ class MySQLDialect extends SQLDialect
         "\x1A" => '\\Z',
         "'" => "\\'"
     ];
+    public const array STRICT_CAST_TYPES = [
+        'float' => 'UNSIGNED',
+        'string' => 'CHAR'
+    ];
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 
     public function createTable(

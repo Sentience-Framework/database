@@ -84,8 +84,8 @@ SelectQuery->orderByAsc(\Sentience\Database\Queries\Interfaces\Sql|array|string 
 SelectQuery->orderByDesc(\Sentience\Database\Queries\Interfaces\Sql|array|string $column): static
 SelectQuery->union(\Sentience\Database\Queries\SelectQuery $selectQuery): static
 SelectQuery->unionAll(\Sentience\Database\Queries\SelectQuery $selectQuery): static
-SelectQuery->whereEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value): static
-SelectQuery->whereNotEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value): static
+SelectQuery->whereEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value, bool $strict = false): static
+SelectQuery->whereNotEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value, bool $strict = false): static
 SelectQuery->whereIsNull(array|string $column): static
 SelectQuery->whereIsNotNull(array|string $column): static
 SelectQuery->whereLike(array|string $column, string $value, bool $caseInsensitive): static
@@ -164,7 +164,7 @@ UpdateQuery->execute(bool $emulatePrepare): \Sentience\Database\Results\ResultIn
 UpdateQuery->explain(bool $emulatePrepare): array
 UpdateQuery->returning(array $columns): static
 UpdateQuery->updates(array $updates): static
-UpdateQuery->whereEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value): static
+UpdateQuery->whereEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value, bool $strict = false): static
 UpdateQuery->whereNotEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value): static
 UpdateQuery->whereIsNull(array|string $column): static
 UpdateQuery->whereIsNotNull(array|string $column): static
@@ -229,7 +229,7 @@ DeleteQuery->execute(bool $emulatePrepare): \Sentience\Database\Results\ResultIn
 DeleteQuery->from(\Sentience\Database\Queries\Interfaces\Sql|array|string $table): static
 DeleteQuery->explain(bool $emulatePrepare): array
 DeleteQuery->returning(array $columns): static
-DeleteQuery->whereEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value): static
+DeleteQuery->whereEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value, bool $strict = false): static
 DeleteQuery->whereNotEquals(array|string $column, \DateTimeInterface|Sentience\Database\Queries\SelectQuery|Sentience\Database\Queries\Interfaces\Sql|string|int|float|bool|null $value): static
 DeleteQuery->whereIsNull(array|string $column): static
 DeleteQuery->whereIsNotNull(array|string $column): static

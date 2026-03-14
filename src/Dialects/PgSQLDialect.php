@@ -24,22 +24,6 @@ class PgSQLDialect extends SQLDialect
     ];
     public const bool BOOL = true;
 
-    protected function buildConditionOperator(string &$query, array &$params, Condition $condition): void
-    {
-        if (is_string($condition->value) && in_array($condition->condition, [ConditionEnum::EQUALS, ConditionEnum::NOT_EQUALS])) {
-            $query .= sprintf(
-                '%s::TEXT %s %s',
-                $this->escapeIdentifier($condition->identifier),
-                $condition->condition->value,
-                $this->buildQuestionMarks($params, $condition->value)
-            );
-
-            return;
-        }
-
-        parent::buildConditionOperator($query, $params, $condition);
-    }
-
     protected function buildConditionLike(string &$query, array &$params, Condition $condition): void
     {
         [$value, $caseInsensitive] = $condition->value;

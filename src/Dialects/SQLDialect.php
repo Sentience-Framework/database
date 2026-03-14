@@ -39,6 +39,7 @@ class SQLDialect extends DialectAbstract
     public const string ESCAPE_IDENTIFIER = '"';
     public const string ESCAPE_STRING = "'";
     public const array ESCAPE_CHARS = ["\0" => ''];
+    public const array STRICT_CAST_TYPES = [];
     public const bool BOOL = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
     public const bool ON_CONFLICT = false;
@@ -482,6 +483,8 @@ class SQLDialect extends DialectAbstract
         }
 
         match ($condition->condition) {
+            ConditionEnum::EQUALS,
+            ConditionEnum::NOT_EQUALS => $this->buildConditionEquals($query, $params, $condition),
             ConditionEnum::BETWEEN,
             ConditionEnum::NOT_BETWEEN => $this->buildConditionBetween($query, $params, $condition),
             ConditionEnum::LIKE,
@@ -499,16 +502,6 @@ class SQLDialect extends DialectAbstract
 
     protected function buildConditionOperator(string &$query, array &$params, Condition $condition): void
     {
-        if (is_null($condition->value) && in_array($condition->condition, [ConditionEnum::EQUALS, ConditionEnum::NOT_EQUALS])) {
-            $query .= sprintf(
-                '%s %s',
-                $this->escapeIdentifier($condition->identifier),
-                $condition->condition == ConditionEnum::EQUALS ? 'IS NULL' : 'IS NOT NULL'
-            );
-
-            return;
-        }
-
         $operator = is_subclass_of($condition->condition, BackedEnum::class)
             ? $condition->condition->value
             : $condition->condition;
@@ -522,6 +515,62 @@ class SQLDialect extends DialectAbstract
             $this->escapeIdentifier($condition->identifier),
             $operator,
             $value
+        );
+    }
+
+    protected function buildConditionEquals(string &$query, array &$params, Condition $condition): void
+    {
+        [$value, $strict] = $condition->value;
+
+        if (is_null($value)) {
+            $query .= sprintf(
+                '%s %s',
+                $this->escapeIdentifier($condition->identifier),
+                $condition->condition == ConditionEnum::EQUALS ? 'IS NULL' : 'IS NOT NULL'
+            );
+
+            return;
+        }
+
+        if (!$strict) {
+            $condition->value = $value;
+
+            $this->buildConditionOperator($query, $params, $condition);
+
+            return;
+        }
+
+        $operator = is_subclass_of($condition->condition, BackedEnum::class)
+            ? $condition->condition->value
+            : $condition->condition;
+
+        $type = get_debug_type($value);
+
+        $castType = static::STRICT_CAST_TYPES[$type] ?? match ($type) {
+            'bool' => $this->type(TypeEnum::BOOL),
+            'int' => $this->type(TypeEnum::INT, 64),
+            'float' => $this->type(TypeEnum::FLOAT, 64),
+            'string' => $this->type(TypeEnum::STRING, PHP_INT_MAX),
+            default => is_subclass_of($value, DateTimeInterface::class) ? $this->type(TypeEnum::DATETIME, 6) : null
+        };
+
+        if (!$type) {
+            $condition->value = $value;
+
+            $this->buildConditionOperator($query, $params, $condition);
+
+            return;
+        }
+
+        $query .= sprintf(
+            'cast(%s as %s) %s cast(%s as %s)',
+            $this->escapeIdentifier($condition->identifier),
+            $castType,
+            $operator,
+            $value instanceof SelectQuery
+            ? $this->buildSelectQuery($params, $value)
+            : $this->buildQuestionMarks($params, $value),
+            $castType
         );
     }
 

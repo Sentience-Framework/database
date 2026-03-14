@@ -9,9 +9,8 @@ class ConditionGroup
 {
     use WhereTrait;
 
-    public function __construct(public ChainEnum $chain, array $whereMacros)
+    public function __construct(public ChainEnum $chain)
     {
-        $this->whereMacros = $whereMacros;
     }
 
     public function getConditions(): array

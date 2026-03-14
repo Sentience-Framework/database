@@ -17,11 +17,9 @@ class UpdateQuery extends Query
     use UpdatesTrait;
     use WhereTrait;
 
-    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table, array $whereMacros)
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table)
     {
         parent::__construct($database, $dialect, $table);
-
-        $this->whereMacros = $whereMacros;
     }
 
     public function toQueryWithParams(): QueryWithParams

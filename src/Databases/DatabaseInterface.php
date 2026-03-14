@@ -36,11 +36,4 @@ interface DatabaseInterface
     public function alterTable(string|array|Sql $table): AlterTableQuery;
     public function dropTable(string|array|Sql $table): DropTableQuery;
     public function table(string|array|Sql $table): Table;
-    public function addWhereMacro(string $macro, callable $callback): static;
-    public function getAvailableMutableStoredProcedures(): array;
-    public function getAvailableImmutableStoredProcedures(): array;
-    public function createMutableStoredProcedure(string $name, callable $callback): void;
-    public function createImmutableStoredProcedure(string $name, string $query): void;
-    public function executeMutableStoredProcedure(string $name, array $params = [], ?callable $callback = null, bool $emulatePrepare = false): ResultInterface;
-    public function executeImmutableStoredProcedure(string $name, array $params = [], bool $emulatePrepare = false): ResultInterface;
 }

@@ -4,7 +4,6 @@ namespace Sentience\Database\Queries\Traits;
 
 use BackedEnum;
 use DateTimeInterface;
-use Sentience\Database\Exceptions\MacroException;
 use Sentience\Database\Queries\Enums\ChainEnum;
 use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
@@ -17,16 +16,15 @@ use Sentience\Database\Queries\SelectQuery;
 trait WhereTrait
 {
     protected array $where = [];
-    protected array $whereMacros = [];
 
-    public function whereEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function whereEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $strict = false): static
     {
-        return $this->equals($column, $value, ChainEnum::AND);
+        return $this->equals($column, $value, $strict, ChainEnum::AND);
     }
 
-    public function whereNotEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function whereNotEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $strict = false): static
     {
-        return $this->notEquals($column, $value, ChainEnum::AND);
+        return $this->notEquals($column, $value, $strict, ChainEnum::AND);
     }
 
     public function whereIsNull(string|array $column): static
@@ -154,19 +152,14 @@ trait WhereTrait
         return $this->addRawCondition($sql, $values, ChainEnum::AND);
     }
 
-    public function whereMacro(string|BackedEnum $macro, array $args = []): static
+    public function orWhereEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $strict = false): static
     {
-        return $this->macro($macro, $args, ChainEnum::AND);
+        return $this->equals($column, $value, $strict, ChainEnum::OR);
     }
 
-    public function orWhereEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function orWhereNotEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $strict = false): static
     {
-        return $this->equals($column, $value, ChainEnum::OR);
-    }
-
-    public function orWhereNotEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
-    {
-        return $this->notEquals($column, $value, ChainEnum::OR);
+        return $this->notEquals($column, $value, $strict, ChainEnum::OR);
     }
 
     public function orWhereIsNull(string|array $column): static
@@ -294,19 +287,14 @@ trait WhereTrait
         return $this->addRawCondition($sql, $values, ChainEnum::OR);
     }
 
-    public function orWhereMacro(string|BackedEnum $macro, array $args = []): static
+    protected function equals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $strict, ChainEnum $chain): static
     {
-        return $this->macro($macro, $args, ChainEnum::OR);
+        return $this->addCondition(ConditionEnum::EQUALS, $column, [$value, $strict], $chain);
     }
 
-    protected function equals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
+    protected function notEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $strict, ChainEnum $chain): static
     {
-        return $this->addCondition(ConditionEnum::EQUALS, $column, $value, $chain);
-    }
-
-    protected function notEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
-    {
-        return $this->addCondition(ConditionEnum::NOT_EQUALS, $column, $value, $chain);
+        return $this->addCondition(ConditionEnum::NOT_EQUALS, $column, [$value, $strict], $chain);
     }
 
     protected function isNull(string|array $column, ChainEnum $chain): static
@@ -395,7 +383,7 @@ trait WhereTrait
             fn (ConditionGroup $conditionGroup): ConditionGroup => $conditionGroup
                 ->orWhereIsNull($column)
                 ->orWhereEquals($column, 0)
-                ->orWhereEquals($column, ''),
+                ->orWhereEquals($column, '', true),
             $chain
         );
     }
@@ -406,7 +394,7 @@ trait WhereTrait
             fn (ConditionGroup $conditionGroup): ConditionGroup => $conditionGroup
                 ->whereIsNotNull($column)
                 ->whereNotEquals($column, 0)
-                ->whereNotEquals($column, ''),
+                ->whereNotEquals($column, '', true),
             $chain
         );
     }
@@ -433,7 +421,7 @@ trait WhereTrait
 
     protected function group(callable $callback, ChainEnum $chain): static
     {
-        $conditionGroup = new ConditionGroup($chain, $this->whereMacros);
+        $conditionGroup = new ConditionGroup($chain);
 
         $conditionGroup = $callback($conditionGroup) ?? $conditionGroup;
 
@@ -451,22 +439,6 @@ trait WhereTrait
     protected function operator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
         return $this->addCondition($operator, $column, $value, $chain);
-    }
-
-    protected function macro(string|BackedEnum $macro, array $args, ChainEnum $chain): static
-    {
-        $key = $macro instanceof BackedEnum ? $macro->value : $macro;
-
-        if (!array_key_exists($key, $this->whereMacros)) {
-            throw new MacroException("macro {$macro} does not exist");
-        }
-
-        return $this->group(
-            function (ConditionGroup $conditionGroup) use ($key, $args): void {
-                $this->whereMacros[$key]($conditionGroup, ...$args);
-            },
-            $chain
-        );
     }
 
     protected function addCondition(string|BackedEnum $condition, null|string|array $identifier, mixed $value, ChainEnum $chain): static
