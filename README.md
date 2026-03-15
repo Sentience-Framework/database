@@ -498,11 +498,11 @@ For databases that do not support returning (MariaDB < 10.5, MySQL) another sele
 
 If the dialect does not explicitly state that conflict resolution and returning are supported, it will use the fallback.
 
-# 7 Strict comparisons
+# 7 Cast comparisons
 
-In weaker typed databases, like MySQL / MariaDB, the type system automatically casts the column and input value to something it can compare easily.
+In weaker typed databases, like MySQL / MariaDB, the type system automatically casts the column and input value to something it can compare easily (usually VARCHAR).
 
-->whereEquals() and ->whereNotEquals() get an extra option for strict comparisons, by casting the column and value to the SQL type of the input value. Thus producing SQL that looks like this:
+->whereEquals() and ->whereNotEquals() get an extra option for casted comparisons, by casting the column and value to the SQL type of the input value. Thus producing SQL that looks like this:
 
 ```php
 WHERE cast("column" AS BIGINT) = cast(12345678 AS BIGINT)

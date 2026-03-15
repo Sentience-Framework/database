@@ -520,7 +520,7 @@ class SQLDialect extends DialectAbstract
 
     protected function buildConditionEquals(string &$query, array &$params, Condition $condition): void
     {
-        [$value, $strict] = $condition->value;
+        [$value, $cast] = $condition->value;
 
         if (is_null($value)) {
             $query .= sprintf(
@@ -532,7 +532,7 @@ class SQLDialect extends DialectAbstract
             return;
         }
 
-        if (!$strict) {
+        if (!$cast) {
             $condition->value = $value;
 
             $this->buildConditionOperator($query, $params, $condition);
@@ -554,7 +554,7 @@ class SQLDialect extends DialectAbstract
             default => is_subclass_of($value, DateTimeInterface::class) ? $this->type(TypeEnum::DATETIME, 6) : null
         };
 
-        if (!$type) {
+        if (!$castType) {
             $condition->value = $value;
 
             $this->buildConditionOperator($query, $params, $condition);
