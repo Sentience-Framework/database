@@ -18,6 +18,12 @@ use Sentience\Database\Queries\SelectQuery;
 
 class MySQLDialect extends SQLDialect
 {
+    public const array CAST_TYPES = [
+        'bool' => 'UNSIGNED',
+        'int' => 'UNSIGNED',
+        'float' => 'DECIMAL',
+        'string' => 'CHAR'
+    ];
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
     public const bool ESCAPE_ANSI = false;
     public const string ESCAPE_IDENTIFIER = '`';
@@ -31,10 +37,6 @@ class MySQLDialect extends SQLDialect
         "\b" => '\\b',
         "\x1A" => '\\Z',
         "'" => "\\'"
-    ];
-    public const array STRICT_CAST_TYPES = [
-        'float' => 'UNSIGNED',
-        'string' => 'CHAR'
     ];
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 

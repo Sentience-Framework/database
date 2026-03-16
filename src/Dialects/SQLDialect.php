@@ -34,12 +34,12 @@ use Sentience\Database\Queries\SelectQuery;
 
 class SQLDialect extends DialectAbstract
 {
+    public const array CAST_TYPES = [];
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s';
     public const bool ESCAPE_ANSI = true;
     public const string ESCAPE_IDENTIFIER = '"';
     public const string ESCAPE_STRING = "'";
     public const array ESCAPE_CHARS = ["\0" => ''];
-    public const array STRICT_CAST_TYPES = [];
     public const bool BOOL = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
     public const bool ON_CONFLICT = false;
@@ -546,7 +546,7 @@ class SQLDialect extends DialectAbstract
 
         $type = get_debug_type($value);
 
-        $castType = static::STRICT_CAST_TYPES[$type] ?? match ($type) {
+        $castType = static::CAST_TYPES[$type] ?? match ($type) {
             'bool' => $this->type(TypeEnum::BOOL),
             'int' => $this->type(TypeEnum::INT, 64),
             'float' => $this->type(TypeEnum::FLOAT, 64),
