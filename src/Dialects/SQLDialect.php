@@ -496,25 +496,21 @@ class SQLDialect extends DialectAbstract
             ConditionEnum::EXISTS,
             ConditionEnum::NOT_EXISTS => $this->buildConditionExists($query, $params, $condition),
             ConditionEnum::RAW => $this->buildConditionRaw($query, $params, $condition),
-            default => $this->buildConditionOperator($query, $params, $condition)
+            default => $this->buildConditionOperator($query, $params, $condition->identifier, $condition->condition, $condition->value)
         };
     }
 
-    protected function buildConditionOperator(string &$query, array &$params, Condition $condition): void
+    protected function buildConditionOperator(string &$query, array &$params, string|array $identifier, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): void
     {
-        $operator = is_subclass_of($condition->condition, BackedEnum::class)
-            ? $condition->condition->value
-            : $condition->condition;
-
-        $value = $condition->value instanceof SelectQuery
-            ? $this->buildSelectQuery($params, $condition->value)
-            : $this->buildQuestionMarks($params, $condition->value);
-
         $query .= sprintf(
             '%s %s %s',
-            $this->escapeIdentifier($condition->identifier),
-            $operator,
-            $value
+            $this->escapeIdentifier($identifier),
+            is_subclass_of($operator, BackedEnum::class)
+            ? $operator->value
+            : $operator,
+            $value instanceof SelectQuery
+            ? $this->buildSelectQuery($params, $value)
+            : $this->buildQuestionMarks($params, $value)
         );
     }
 
@@ -533,9 +529,7 @@ class SQLDialect extends DialectAbstract
         }
 
         if (!$cast) {
-            $condition->value = $value;
-
-            $this->buildConditionOperator($query, $params, $condition);
+            $this->buildConditionOperator($query, $params, $condition->identifier, $condition->condition, $value);
 
             return;
         }
@@ -555,9 +549,7 @@ class SQLDialect extends DialectAbstract
         };
 
         if (!$castType) {
-            $condition->value = $value;
-
-            $this->buildConditionOperator($query, $params, $condition);
+            $this->buildConditionOperator($query, $params, $condition->identifier, $condition->condition, $value);
 
             return;
         }
@@ -616,7 +608,7 @@ class SQLDialect extends DialectAbstract
             return;
         }
 
-        $this->buildConditionOperator($query, $params, $condition);
+        $this->buildConditionOperator($query, $params, $condition->identifier, $condition->condition, $condition->value);
     }
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
