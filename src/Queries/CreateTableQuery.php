@@ -94,6 +94,11 @@ class CreateTableQuery extends Query
         return $this->column($name, $this->dialect->type(TypeEnum::STRING, $size), $notNull, $default);
     }
 
+    public function text(string $name, bool $notNull = false, null|string|Sql $default = null): static
+    {
+        return $this->string($name, PHP_INT_MAX, $notNull, $default);
+    }
+
     public function dateTime(string $name, int $size = 6, bool $notNull = false, null|DateTimeInterface|Sql $default = null): static
     {
         return $this->column($name, $this->dialect->type(TypeEnum::DATETIME, $size), $notNull, $default);

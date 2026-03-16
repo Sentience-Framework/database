@@ -116,6 +116,11 @@ trait AltersTrait
         return $this->addColumn($name, $this->dialect->type(TypeEnum::STRING, $size), $notNull, $default);
     }
 
+    public function addText(string $name, bool $notNull = false, null|string|Sql $default = null): static
+    {
+        return $this->addString($name, PHP_INT_MAX, $notNull, $default);
+    }
+
     public function addDateTime(string $name, int $size = 6, bool $notNull = false, null|DateTimeInterface|Sql $default = null): static
     {
         return $this->addColumn($name, $this->dialect->type(TypeEnum::DATETIME, $size), $notNull, $default);
