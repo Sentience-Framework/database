@@ -421,7 +421,7 @@ class SQLDialect extends DialectAbstract
             implode(
                 ', ',
                 array_map(
-                    fn (string $column): string => $this->escapeIdentifier($column),
+                    fn (string|array|Sql $column): string => $this->escapeIdentifier($column),
                     $distinct
                 )
             )
