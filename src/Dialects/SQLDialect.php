@@ -41,13 +41,14 @@ class SQLDialect extends DialectAbstract
     public const string ESCAPE_STRING = "'";
     public const array ESCAPE_CHARS = ["\0" => ''];
     public const bool BOOL = false;
+    public const bool DISTINCT_ON = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
     public const bool ON_CONFLICT = false;
     public const bool RETURNING = false;
     public const bool SAVEPOINTS = true;
 
     public function select(
-        bool $distinct,
+        ?array $distinct,
         array $columns,
         string|array|Alias|Sql|SubQuery $table,
         array $joins,
@@ -62,9 +63,7 @@ class SQLDialect extends DialectAbstract
         $query = 'SELECT';
         $params = [];
 
-        if ($distinct) {
-            $query .= ' DISTINCT';
-        }
+        $this->buildDistinct($query, $distinct);
 
         $query .= ' ';
         $query .= count($columns) > 0
@@ -397,6 +396,34 @@ class SQLDialect extends DialectAbstract
             sprintf(
                 'ROLLBACK TO %s',
                 $this->escapeIdentifier($name)
+            )
+        );
+    }
+
+    protected function buildDistinct(string &$query, ?array $distinct): void
+    {
+        if (is_null($distinct)) {
+            return;
+        }
+
+        $query .= ' DISTINCT';
+
+        if (count($distinct) == 0) {
+            return;
+        }
+
+        if (!static::DISTINCT_ON) {
+            throw new QueryException('DISTINCT ON is not supported');
+        }
+
+        $query .= sprintf(
+            ' ON (%s)',
+            implode(
+                ', ',
+                array_map(
+                    fn (string $column): string => $this->escapeIdentifier($column),
+                    $distinct
+                )
             )
         );
     }

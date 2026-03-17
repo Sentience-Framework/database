@@ -15,7 +15,7 @@ use Sentience\Database\Queries\Objects\SubQuery;
 interface DialectInterface
 {
     public function select(
-        bool $distinct,
+        ?array $distinct,
         array $columns,
         string|array|Alias|Sql|SubQuery $table,
         array $joins,

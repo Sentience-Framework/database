@@ -23,6 +23,7 @@ class PgSQLDialect extends SQLDialect
         "\v" => '\\v'
     ];
     public const bool BOOL = true;
+    public const bool DISTINCT_ON = true;
 
     protected function buildConditionLike(string &$query, array &$params, Condition $condition): void
     {

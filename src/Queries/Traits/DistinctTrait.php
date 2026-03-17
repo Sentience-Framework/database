@@ -4,11 +4,11 @@ namespace Sentience\Database\Queries\Traits;
 
 trait DistinctTrait
 {
-    protected bool $distinct = false;
+    protected ?array $distinct = null;
 
-    public function distinct(): static
+    public function distinct($on = []): static
     {
-        $this->distinct = true;
+        $this->distinct = $on;
 
         return $this;
     }
