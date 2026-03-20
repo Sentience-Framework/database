@@ -1161,6 +1161,18 @@ class SQLDialect extends DialectAbstract
                 : (string) $bool;
         }
 
+        if (is_int($value)) {
+            return sprintf('%d', $value);
+        }
+
+        if (is_float($value)) {
+            preg_replace(
+                '/(\.[0-9]+?)[0]+$/',
+                '$1',
+                sprintf('%.53f', $value)
+            );
+        }
+
         if (is_string($value)) {
             return $this->escapeString($value);
         }
