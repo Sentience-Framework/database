@@ -7,7 +7,6 @@ use DateTimeInterface;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
-use Sentience\Database\Queries\Objects\Having;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\SubQuery;
@@ -21,7 +20,7 @@ interface DialectInterface
         array $joins,
         array $where,
         array $groupBy,
-        ?Having $having,
+        array $having,
         array $orderBy,
         ?int $limit,
         ?int $offset,

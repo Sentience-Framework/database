@@ -9,6 +9,7 @@ use Throwable;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
+use Sentience\Database\Queries\Interfaces\ConditionGroup;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\AddColumn;
 use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
@@ -18,11 +19,9 @@ use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
-use Sentience\Database\Queries\Objects\ConditionGroup;
 use Sentience\Database\Queries\Objects\DropColumn;
 use Sentience\Database\Queries\Objects\DropConstraint;
 use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
-use Sentience\Database\Queries\Objects\Having;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\OrderBy;
 use Sentience\Database\Queries\Objects\QueryWithParams;
@@ -54,7 +53,7 @@ class SQLDialect extends DialectAbstract
         array $joins,
         array $where,
         array $groupBy,
-        ?Having $having,
+        array $having,
         array $orderBy,
         ?int $limit,
         ?int $offset,
@@ -688,7 +687,7 @@ class SQLDialect extends DialectAbstract
     protected function buildConditionGroup(string &$query, array &$params, int $index, ConditionGroup $group): void
     {
         if ($index > 0) {
-            $query .= sprintf(' %s ', $group->chain->value);
+            $query .= sprintf(' %s ', $group->getChain()->value);
         }
 
         $conditions = $group->getConditions();
@@ -722,15 +721,19 @@ class SQLDialect extends DialectAbstract
         );
     }
 
-    protected function buildHaving(string &$query, array &$params, ?Having $having): void
+    protected function buildHaving(string &$query, array &$params, array $having): void
     {
-        if (is_null($having)) {
+        if (count($having) == 0) {
             return;
         }
 
-        $query .= " HAVING {$having->query}";
+        $query .= ' HAVING ';
 
-        array_push($params, ...$having->params);
+        foreach ($having as $index => $condition) {
+            $condition instanceof Condition
+                ? $this->buildCondition($query, $params, $index, $condition)
+                : $this->buildConditionGroup($query, $params, $index, $condition);
+        }
     }
 
     protected function buildOrderBy(string &$query, array $orderBy): void

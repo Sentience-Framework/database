@@ -7,8 +7,8 @@ use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Interfaces\Sql;
-use Sentience\Database\Queries\Objects\ConditionGroup;
 use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\WhereGroup;
 use Sentience\Database\Queries\Traits\LastInsertIdTrait;
 use Sentience\Database\Queries\Traits\OnConflictTrait;
 use Sentience\Database\Queries\Traits\ReturningTrait;
@@ -82,7 +82,7 @@ class InsertQuery extends Query
         }
 
         $result = $this->select(
-            function (ConditionGroup $conditionGroup) use ($conflict): void {
+            function (WhereGroup $conditionGroup) use ($conflict): void {
                 foreach ($conflict as $column => $value) {
                     $conditionGroup->whereEquals($column, $value);
                 }
@@ -137,7 +137,7 @@ class InsertQuery extends Query
         $lastInsertId = $this->database->lastInsertId();
 
         return $this->select(
-            function (ConditionGroup $conditionGroup) use ($lastInsertId): ConditionGroup {
+            function (WhereGroup $conditionGroup) use ($lastInsertId): WhereGroup {
                 if (empty($lastInsertId)) {
                     return $conditionGroup;
                 }
@@ -177,7 +177,7 @@ class InsertQuery extends Query
         }
 
         return $this->select(
-            function (ConditionGroup $conditionGroup) use ($conflict): void {
+            function (WhereGroup $conditionGroup) use ($conflict): void {
                 foreach ($conflict as $column => $value) {
                     $conditionGroup->whereEquals($column, $value);
                 }

@@ -6,7 +6,7 @@ use Throwable;
 use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Interfaces\Sql;
-use Sentience\Database\Queries\Objects\ConditionGroup;
+use Sentience\Database\Queries\Objects\WhereGroup;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
 
@@ -32,7 +32,7 @@ class Table
     public function selectOrInsert(array $columns, array $values, ?string $lastInsertId = null, bool $emulatePrepare = false): ResultInterface
     {
         $result = $this->select()
-            ->whereGroup(function (ConditionGroup $conditionGroup) use ($columns, $values): ConditionGroup {
+            ->whereGroup(function (WhereGroup $conditionGroup) use ($columns, $values): WhereGroup {
                 foreach ($columns as $column) {
                     $conditionGroup->whereEquals($column, $values[$column]);
                 }
@@ -64,7 +64,7 @@ class Table
     public function insertOrUpdate(array $columns, array $values, ?string $lastInsertId = null, bool $emulatePrepare = false): ResultInterface
     {
         $exists = $this->select()
-            ->whereGroup(function (ConditionGroup $conditionGroup) use ($columns, $values): ConditionGroup {
+            ->whereGroup(function (WhereGroup $conditionGroup) use ($columns, $values): WhereGroup {
                 foreach ($columns as $column) {
                     $conditionGroup->whereEquals($column, $values[$column]);
                 }
@@ -75,7 +75,7 @@ class Table
 
         if ($exists) {
             return $this->update($values)
-                ->whereGroup(function (ConditionGroup $conditionGroup) use ($columns, $values): ConditionGroup {
+                ->whereGroup(function (WhereGroup $conditionGroup) use ($columns, $values): WhereGroup {
                     foreach ($columns as $column) {
                         $conditionGroup->whereEquals($column, $values[$column]);
                     }
