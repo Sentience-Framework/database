@@ -175,6 +175,10 @@ trait ConditionsTrait
                         return null;
                     }
 
+                    if ($class == ConditionGroup::class) {
+                        return null;
+                    }
+
                     return $class;
                 }
 
