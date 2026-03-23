@@ -72,7 +72,7 @@ abstract class Query implements QueryInterface
 
     public static function subQuery(SelectQuery $selectQuery, string $alias): SubQuery
     {
-        return new SubQuery(clone $selectQuery, $alias);
+        return new SubQuery($selectQuery, $alias);
     }
 
     public static function now(): DateTime
