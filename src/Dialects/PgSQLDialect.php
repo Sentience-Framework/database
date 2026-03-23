@@ -82,7 +82,7 @@ class PgSQLDialect extends SQLDialect
 
     public function parseDateTime(string $string): ?DateTime
     {
-        if (preg_match('/[\+\-][0-9]{2}$/', $string)) {
+        if ((bool) preg_match('/[\+\-][0-9]{2}$/', $string)) {
             $string .= ':00';
         }
 
