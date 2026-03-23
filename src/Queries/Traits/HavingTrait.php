@@ -47,22 +47,22 @@ trait HavingTrait
 
     public function havingStartsWith(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
-        return $this->startsWith($this->having, $column, $value, $escapeBackslash, $caseInsensitive, ChainEnum::AND);
+        return $this->startsWith($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::AND);
     }
 
     public function havingEndsWith(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
-        return $this->endsWith($this->having, $column, $value, $escapeBackslash, $caseInsensitive, ChainEnum::AND);
+        return $this->endsWith($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::AND);
     }
 
     public function havingContains(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
-        return $this->contains($this->having, $column, $value, $escapeBackslash, $caseInsensitive, ChainEnum::AND);
+        return $this->contains($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::AND);
     }
 
     public function havingNotContains(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
-        return $this->notContains($this->having, $column, $value, $escapeBackslash, $caseInsensitive, ChainEnum::AND);
+        return $this->notContains($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::AND);
     }
 
     public function havingIn(string|array $column, array|SelectQuery $values): static

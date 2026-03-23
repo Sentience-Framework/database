@@ -47,22 +47,22 @@ trait WhereTrait
 
     public function whereStartsWith(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
-        return $this->startsWith($this->where, $column, $value, $escapeBackslash, $caseInsensitive, ChainEnum::AND);
+        return $this->startsWith($this->where, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::AND);
     }
 
     public function whereEndsWith(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
-        return $this->endsWith($this->where, $column, $value, $escapeBackslash, $caseInsensitive, ChainEnum::AND);
+        return $this->endsWith($this->where, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::AND);
     }
 
     public function whereContains(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
-        return $this->contains($this->where, $column, $value, $escapeBackslash, $caseInsensitive, ChainEnum::AND);
+        return $this->contains($this->where, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::AND);
     }
 
     public function whereNotContains(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
-        return $this->notContains($this->where, $column, $value, $escapeBackslash, $caseInsensitive, ChainEnum::AND);
+        return $this->notContains($this->where, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::AND);
     }
 
     public function whereIn(string|array $column, array|SelectQuery $values): static
