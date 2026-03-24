@@ -122,6 +122,8 @@ class SQLiteDialect extends SQLDialect
 
     protected function buildUniqueConstraint(UniqueConstraint $uniqueConstraint): string
     {
+        $uniqueConstraint = clone $uniqueConstraint;
+
         $uniqueConstraint->name = null;
 
         return parent::buildUniqueConstraint($uniqueConstraint);
@@ -129,6 +131,8 @@ class SQLiteDialect extends SQLDialect
 
     protected function buildForeignKeyConstraint(ForeignKeyConstraint $foreignKeyConstraint): string
     {
+        $foreignKeyConstraint = clone $foreignKeyConstraint;
+
         $foreignKeyConstraint->name = null;
 
         return parent::buildForeignKeyConstraint($foreignKeyConstraint);
