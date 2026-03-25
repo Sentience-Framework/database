@@ -69,7 +69,11 @@ class SQLDialect extends DialectAbstract
             ? implode(
                 ', ',
                 array_map(
-                    function (string|array|Alias|Sql|SubQuery $column) use (&$params): string {
+                    function (string|array|Alias|SelectQuery|Sql|SubQuery $column) use (&$params): string {
+                        if ($column instanceof SelectQuery) {
+                            return $this->buildSelectQuery($params, $column);
+                        }
+
                         if ($column instanceof SubQuery) {
                             $column = $column->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
                                 return $this->buildSelectQuery($params, $selectQuery);
