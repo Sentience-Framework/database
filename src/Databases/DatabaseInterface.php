@@ -29,6 +29,8 @@ interface DatabaseInterface
     public function transaction(callable $callback, bool $releaseSavepoints = false, ?string $name = null): mixed;
     public function lastInsertId(?string $name = null): null|int|string;
     public function select(string|array|Alias|Sql|SubQuery $table): SelectQuery;
+    public function selectTable(string|array|Sql $table, ?string $alias = null): SelectQuery;
+    public function selectSubQuery(SelectQuery $selectQuery, string $alias): SelectQuery;
     public function insert(string|array|Sql $table): InsertQuery;
     public function update(string|array|Sql $table): UpdateQuery;
     public function delete(string|array|Sql $table): DeleteQuery;
