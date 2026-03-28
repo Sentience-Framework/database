@@ -41,7 +41,7 @@ class Database extends DatabaseAbstract
     {
         $availableDrivers = [];
 
-        if (class_exists(PDOAdapter::PDO)) {
+        if (PDOAdapter::extensionsInstalled()) {
             foreach (PDO::getAvailableDrivers() as $pdoDriver) {
                 $driver = Driver::tryFrom($pdoDriver);
 
@@ -57,7 +57,7 @@ class Database extends DatabaseAbstract
             }
         }
 
-        if (class_exists(MySQLiAdapter::MYSQLI)) {
+        if (MySQLiAdapter::extensionsInstalled()) {
             foreach ([Driver::MYSQL, Driver::MARIADB] as $driver) {
                 if (in_array($driver, $availableDrivers)) {
                     continue;
@@ -67,7 +67,7 @@ class Database extends DatabaseAbstract
             }
         }
 
-        if (class_exists(SQLite3Adapter::SQLITE3)) {
+        if (SQLite3Adapter::extensionsInstalled()) {
             if (!in_array(Driver::SQLITE, $availableDrivers)) {
                 $availableDrivers[] = Driver::SQLITE;
             }

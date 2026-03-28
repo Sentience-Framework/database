@@ -8,15 +8,12 @@ use SQLite3Stmt;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\DriverInterface;
-use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\SQLite3Result;
 use Sentience\Database\Sockets\SocketAbstract;
 
 class SQLite3Adapter extends AdapterAbstract
 {
-    public const string SQLITE3 = 'SQLite3';
-
     protected SQLite3 $sqlite3;
 
     public function __construct(
@@ -27,10 +24,6 @@ class SQLite3Adapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
-        if (!class_exists(static::SQLITE3)) {
-            throw new AdapterException('SQLite3 extension is not installed');
-        }
-
         parent::__construct(
             $driver,
             $name,
@@ -208,5 +201,10 @@ class SQLite3Adapter extends AdapterAbstract
         if (!($this->options[static::OPTIONS_PERSISTENT] ?? false)) {
             $this->sqlite3->close();
         }
+    }
+
+    public static function extensionsInstalled(): bool
+    {
+        return class_exists('SQLite3');
     }
 }

@@ -7,7 +7,6 @@ use mysqli;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\DriverInterface;
-use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\MySQLiResult;
@@ -16,7 +15,6 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 class MySQLiAdapter extends AdapterAbstract
 {
-    public const string MYSQLI = 'mysqli';
     public const string MYSQLI_NULL = 's';
     public const string MYSQLI_INT = 'i';
     public const string MYSQLI_FLOAT = 'd';
@@ -32,10 +30,6 @@ class MySQLiAdapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
-        if (!class_exists(static::MYSQLI)) {
-            throw new AdapterException('mysqli extension is not installed');
-        }
-
         if (!$socket) {
             throw new DriverException('this driver requires a socket');
         }
@@ -231,5 +225,10 @@ class MySQLiAdapter extends AdapterAbstract
         if (!($this->options[static::OPTIONS_PERSISTENT] ?? false)) {
             $this->mysqli->close();
         }
+    }
+
+    public static function extensionsInstalled(): bool
+    {
+        return class_exists('mysqli');
     }
 }

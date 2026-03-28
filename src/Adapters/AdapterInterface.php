@@ -42,4 +42,5 @@ interface AdapterInterface
     public function rollbackSavepoint(DialectInterface $dialect, string $name): void;
     public function inTransaction(): bool;
     public function lastInsertId(?string $name = null): null|int|string;
+    public static function extensionsInstalled(): bool;
 }

@@ -9,7 +9,6 @@ use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\DriverInterface;
-use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Exceptions\DriverException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\PDOResult;
@@ -18,8 +17,6 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 class PDOAdapter extends AdapterAbstract
 {
-    public const string PDO = 'PDO';
-
     protected PDO $pdo;
 
     public function __construct(
@@ -30,10 +27,6 @@ class PDOAdapter extends AdapterAbstract
         array $options,
         ?Closure $debug
     ) {
-        if (!class_exists(static::PDO)) {
-            throw new AdapterException('PDO extension is not installed');
-        }
-
         parent::__construct(
             $driver,
             $name,
@@ -455,5 +448,10 @@ class PDOAdapter extends AdapterAbstract
         if ($this->driver == Driver::SQLITE) {
             $this->sqliteOptimize($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false);
         }
+    }
+
+    public static function extensionsInstalled(): bool
+    {
+        return class_exists('PDO');
     }
 }

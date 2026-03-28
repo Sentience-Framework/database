@@ -6,6 +6,7 @@ use Closure;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\DriverInterface;
+use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Sockets\SocketAbstract;
 
@@ -24,6 +25,9 @@ abstract class AdapterAbstract implements AdapterInterface
         protected array $options,
         protected ?Closure $debug
     ) {
+        if (!static::extensionsInstalled()) {
+            throw new AdapterException('required extensions not installed');
+        }
     }
 
     protected function mysqlNames(string $charset, ?string $collation): void
