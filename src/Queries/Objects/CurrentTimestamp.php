@@ -3,8 +3,9 @@
 namespace Sentience\Database\Queries\Objects;
 
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Queries\Interfaces\Sql;
 
-class CurrentTimestamp extends Expression
+class CurrentTimestamp implements Sql
 {
     public function __construct()
     {

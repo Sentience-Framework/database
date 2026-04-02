@@ -3,8 +3,9 @@
 namespace Sentience\Database\Queries\Objects;
 
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Queries\Interfaces\Sql;
 
-class Raw extends Expression
+class Raw implements Sql
 {
     public function __construct(protected string $sql)
     {
