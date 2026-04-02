@@ -21,7 +21,7 @@ use Sentience\Database\Queries\Objects\UniqueConstraint;
 
 class SQLiteDialect extends SQLDialect
 {
-    public const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
+    public const string DATETIME_FORMAT = 'Y-m-d H:i:s';
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 
     public function createTable(
