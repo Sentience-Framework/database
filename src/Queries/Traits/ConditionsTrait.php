@@ -238,6 +238,18 @@ trait ConditionsTrait
         return $this;
     }
 
+    protected function addExpressionf(array &$conditions, string $format, array $values, ChainEnum $chain): static
+    {
+        $conditions[] = new Condition(
+            ConditionEnum::RAW,
+            null,
+            Query::expressionf($format, ...$values),
+            $chain
+        );
+
+        return $this;
+    }
+
     protected function addRawCondition(array &$conditions, string $sql, array $values, ChainEnum $chain): static
     {
         $rawCondition = new RawCondition($sql, $values, $chain);

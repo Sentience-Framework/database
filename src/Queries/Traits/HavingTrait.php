@@ -145,6 +145,11 @@ trait HavingTrait
         return $this->operator($this->having, $column, $operator, $value, ChainEnum::AND);
     }
 
+    public function havingf(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
+    {
+        return $this->addExpressionf($this->where, $format, $values, ChainEnum::OR);
+    }
+
     public function having(string $sql, array $values = []): static
     {
         return $this->addRawCondition($this->having, $sql, $values, ChainEnum::AND);
@@ -278,6 +283,11 @@ trait HavingTrait
     public function orHavingOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->operator($this->having, $column, $operator, $value, ChainEnum::OR);
+    }
+
+    public function orHavingf(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
+    {
+        return $this->addExpressionf($this->where, $format, $values, ChainEnum::OR);
     }
 
     public function orHaving(string $sql, array $values = []): static

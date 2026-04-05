@@ -145,6 +145,11 @@ trait WhereTrait
         return $this->operator($this->where, $column, $operator, $value, ChainEnum::AND);
     }
 
+    public function wheref(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
+    {
+        return $this->addExpressionf($this->where, $format, $values, ChainEnum::OR);
+    }
+
     public function where(string $sql, array $values = []): static
     {
         return $this->addRawCondition($this->where, $sql, $values, ChainEnum::AND);
@@ -278,6 +283,11 @@ trait WhereTrait
     public function orWhereOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->operator($this->where, $column, $operator, $value, ChainEnum::OR);
+    }
+
+    public function orWheref(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
+    {
+        return $this->addExpressionf($this->where, $format, $values, ChainEnum::OR);
     }
 
     public function orWhere(string $sql, array $values = []): static

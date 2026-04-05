@@ -683,9 +683,9 @@ class SQLDialect extends DialectAbstract
 
     protected function buildConditionRaw(string &$query, array &$params, Condition $condition): void
     {
-        $query .= sprintf('(%s)', $condition->identifier);
+        $query .= sprintf('(%s)', $condition->value->sql($this));
 
-        array_push($params, ...$condition->value);
+        array_push($params, ...$condition->value->params($this));
     }
 
     protected function buildConditionGroup(string &$query, array &$params, int $index, ConditionGroup $group): void

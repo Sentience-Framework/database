@@ -4,6 +4,7 @@ namespace Sentience\Database\Queries\Objects;
 
 use Sentience\Database\Queries\Enums\ChainEnum;
 use Sentience\Database\Queries\Enums\ConditionEnum;
+use Sentience\Database\Queries\Query;
 
 class RawCondition extends QueryWithParams
 {
@@ -21,8 +22,8 @@ class RawCondition extends QueryWithParams
     {
         return new Condition(
             ConditionEnum::RAW,
-            $this->query,
-            $this->params,
+            null,
+            Query::expression($this->query, $this->params),
             $this->chain
         );
     }

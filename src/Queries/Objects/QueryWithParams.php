@@ -5,9 +5,8 @@ namespace Sentience\Database\Queries\Objects;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Exceptions\QueryWithParamsException;
-use Sentience\Database\Queries\Interfaces\Sql;
 
-class QueryWithParams implements Sql
+class QueryWithParams
 {
     public const string INI_PCRE_JIT = 'pcre.jit';
     public const string INI_PCRE_BACKTRACE_LIMIT = 'pcre.backtrack_limit';
@@ -19,21 +18,6 @@ class QueryWithParams implements Sql
         public string $query,
         public array $params = []
     ) {
-    }
-
-    public function sql(DialectInterface $dialect): string
-    {
-        return $this->query;
-    }
-
-    public function params(DialectInterface $dialect): array
-    {
-        return $this->params;
-    }
-
-    public function rawSql(DialectInterface $dialect): string
-    {
-        return $this->toSql($dialect);
     }
 
     public function namedParamsToQuestionMarks(): static
