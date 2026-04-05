@@ -45,16 +45,16 @@ trait JoinsTrait
         return $this->innerJoin(Query::subQuery($selectQuery, $alias), $on);
     }
 
-    public function join(string $join): static
+    public function joinf(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
     {
-        $this->joins[] = Query::raw($join);
+        $this->joins[] = Query::expressionf($format, ...$values);
 
         return $this;
     }
 
-    public function joinf(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
+    public function join(string $join): static
     {
-        $this->joins[] = Query::expressionf($format, ...$values);
+        $this->joins[] = Query::raw($join);
 
         return $this;
     }
