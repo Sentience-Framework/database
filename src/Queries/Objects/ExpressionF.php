@@ -88,7 +88,7 @@ class ExpressionF implements Sql
                 if ($value instanceof SelectQuery) {
                     $queryWithParams = $value->toQueryWithParams();
 
-                    array_push($value, ...$queryWithParams->params);
+                    array_push($this->params, ...$queryWithParams->params);
 
                     return sprintf(
                         '(%s)',
@@ -97,7 +97,7 @@ class ExpressionF implements Sql
                 }
 
                 if ($value instanceof Sql) {
-                    array_push($value, ...$value->params($dialect));
+                    array_push($this->params, ...$value->params($dialect));
 
                     return $value->sql($dialect);
                 }
