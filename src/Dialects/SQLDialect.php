@@ -959,9 +959,9 @@ class SQLDialect extends DialectAbstract
         }
 
         if (!is_null($column->default)) {
-            $default = !($column->default instanceof Sql)
-                ? $this->castToQuery($column->default)
-                : $column->default->rawSql($this);
+            $default = $column->default instanceof Sql
+                ? $column->default->rawSql($this)
+                : $this->castToQuery($column->default);
 
             $sql .= " DEFAULT {$default}";
         }
