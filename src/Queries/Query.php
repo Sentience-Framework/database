@@ -103,17 +103,6 @@ abstract class Query implements QueryInterface
         return static::escape($string, ['\\', ...$chars]);
     }
 
-    public static function escapeLikeChars(string $string, bool $escapeBackslash = false): string
-    {
-        $chars = ['%', '_', '-', '^', '[', ']'];
-
-        if ($escapeBackslash) {
-            array_unshift($chars, '\\');
-        }
-
-        return static::escape($string, $chars);
-    }
-
     protected static function escape(string $string, array $chars, string $replacement = '\\\\$0', string $pattern = '/%s/'): string
     {
         $escaped = $string;

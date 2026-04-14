@@ -52,22 +52,22 @@ trait ConditionsTrait
 
     protected function startsWith(array &$conditions, string|array $column, string $value, bool $caseInsensitive, bool $escapeBackslash, ChainEnum $chain): static
     {
-        return $this->like($conditions, $column, Query::escapeLikeChars($value, $escapeBackslash) . '%', $caseInsensitive, $chain);
+        return $this->like($conditions, $column, $this->escapeLikeChars($value, $escapeBackslash) . '%', $caseInsensitive, $chain);
     }
 
     protected function endsWith(array &$conditions, string|array $column, string $value, bool $caseInsensitive, bool $escapeBackslash, ChainEnum $chain): static
     {
-        return $this->like($conditions, $column, '%' . Query::escapeLikeChars($value, $escapeBackslash), $caseInsensitive, $chain);
+        return $this->like($conditions, $column, '%' . $this->escapeLikeChars($value, $escapeBackslash), $caseInsensitive, $chain);
     }
 
     protected function contains(array &$conditions, string|array $column, string $value, bool $caseInsensitive, bool $escapeBackslash, ChainEnum $chain): static
     {
-        return $this->like($conditions, $column, '%' . Query::escapeLikeChars($value, $escapeBackslash) . '%', $caseInsensitive, $chain);
+        return $this->like($conditions, $column, '%' . $this->escapeLikeChars($value, $escapeBackslash) . '%', $caseInsensitive, $chain);
     }
 
     protected function notContains(array &$conditions, string|array $column, string $value, bool $caseInsensitive, bool $escapeBackslash, ChainEnum $chain): static
     {
-        return $this->notLike($conditions, $column, '%' . Query::escapeLikeChars($value, $escapeBackslash) . '%', $caseInsensitive, $chain);
+        return $this->notLike($conditions, $column, '%' . $this->escapeLikeChars($value, $escapeBackslash) . '%', $caseInsensitive, $chain);
     }
 
     protected function in(array &$conditions, string|array $column, array|SelectQuery $values, ChainEnum $chain): static
@@ -257,5 +257,16 @@ trait ConditionsTrait
         $conditions[] = $rawCondition->toCondition();
 
         return $this;
+    }
+
+    protected function escapeLikeChars(string $string, bool $escapeBackslash): string
+    {
+        $chars = ['%', '_', '-', '^', '[', ']'];
+
+        if ($escapeBackslash) {
+            array_unshift($chars, '\\');
+        }
+
+        return Query::escapeBackslash($string, $chars);
     }
 }
