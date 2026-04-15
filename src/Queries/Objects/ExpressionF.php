@@ -26,7 +26,7 @@ class ExpressionF implements Sql
     public function sql(DialectInterface $dialect): string
     {
         if (is_null($this->sql)) {
-            $this->compile($dialect);
+            $this->build($dialect);
         }
 
         return $this->sql;
@@ -35,7 +35,7 @@ class ExpressionF implements Sql
     public function params(DialectInterface $dialect): array
     {
         if (is_null($this->params)) {
-            $this->compile($dialect);
+            $this->build($dialect);
         }
 
         return $this->params;
@@ -51,7 +51,7 @@ class ExpressionF implements Sql
         return $queryWithParams->toSql($dialect);
     }
 
-    protected function compile(DialectInterface $dialect): void
+    protected function build(DialectInterface $dialect): void
     {
         $pattern = '/(?<!\%)\%(\.[0-9]{0,53})?(['
             . implode(
