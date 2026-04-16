@@ -122,9 +122,8 @@ class ExpressionF implements Sql
                     default => (string) $value
                 };
 
-                $this->params[] = $param;
-
                 $this->sql .= '?';
+                $this->params[] = $param;
                 $this->rawSql .= $dialect->castToQuery($param);
             }
 
