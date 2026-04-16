@@ -16,6 +16,7 @@ class ExpressionF implements Sql
 
     protected ?string $sql = null;
     protected ?array $params = null;
+    protected ?string $rawSql = null;
 
     public function __construct(
         protected string $format,
@@ -43,69 +44,74 @@ class ExpressionF implements Sql
 
     public function rawSql(DialectInterface $dialect): string
     {
-        $queryWithParams = new QueryWithParams(
-            $this->sql($dialect),
-            $this->params($dialect)
-        );
+        if (is_null($this->rawSql)) {
+            $this->build($dialect);
+        }
 
-        return $queryWithParams->toSql($dialect);
+        return $this->rawSql;
     }
 
     protected function build(DialectInterface $dialect): void
     {
         $pattern = '/(?<!\%)\%(\.[0-9]{0,53})?(['
-            . implode(
-                '',
-                [
-                    ...static::BOOL_MODIFIERS,
-                    ...static::INT_MODIFIERS,
-                    ...static::FLOAT_MODIFIERS,
-                    ...static::STRING_MODIFIERS
-                ]
-            )
+            . implode('', [
+                ...static::BOOL_MODIFIERS,
+                ...static::INT_MODIFIERS,
+                ...static::FLOAT_MODIFIERS,
+                ...static::STRING_MODIFIERS
+            ])
             . '])/';
 
-        $index = 0;
-
+        $this->sql = '';
         $this->params = [];
-        $this->sql = preg_replace_callback(
-            $pattern,
-            function (array $match) use ($dialect, &$index): string {
-                if (!array_key_exists($index, $this->values)) {
-                    throw new ArgumentCountError(
-                        sprintf(
-                            '%d arguments are required, %d given',
-                            $index + 1,
-                            count($this->values)
-                        )
-                    );
-                }
+        $this->rawSql = '';
 
-                $value = $this->values[$index];
+        if (!preg_match_all($pattern, $this->format, $matches, PREG_OFFSET_CAPTURE)) {
+            $this->sql = $this->format;
+            $this->rawSql = $this->format;
 
-                $index++;
+            return;
+        }
 
-                if ($value instanceof SelectQuery) {
-                    $queryWithParams = $value->toQueryWithParams();
+        $offset = 0;
 
-                    array_push($this->params, ...$queryWithParams->params);
+        foreach ($matches[0] as $index => $match) {
+            [$matchText, $matchOffset] = $match;
 
-                    return sprintf(
-                        '(%s)',
-                        $queryWithParams->query
-                    );
-                }
+            $beforeMatch = substr($this->format, $offset, $matchOffset - $offset);
 
-                if ($value instanceof Sql) {
-                    array_push($this->params, ...$value->params($dialect));
+            $this->sql .= $beforeMatch;
+            $this->rawSql .= $beforeMatch;
 
-                    return $value->sql($dialect);
-                }
+            if (!array_key_exists($index, $this->values)) {
+                throw new ArgumentCountError(
+                    sprintf(
+                        '%d arguments are required, %d given',
+                        $index + 1,
+                        count($this->values)
+                    )
+                );
+            }
 
-                $precision = $match[1];
-                $type = $match[2];
+            $value = $this->values[$index];
 
-                $this->params[] = match (true) {
+            if ($value instanceof SelectQuery) {
+                $queryWithParams = $value->toQueryWithParams();
+
+                array_push($this->params, ...$queryWithParams->params);
+
+                $this->sql .= sprintf('(%s)', $queryWithParams->query);
+                $this->rawSql .= sprintf('(%s)', $queryWithParams->toSql($dialect));
+            } elseif ($value instanceof Sql) {
+                array_push($this->params, ...$value->params($dialect));
+
+                $this->sql .= $value->sql($dialect);
+                $this->rawSql .= $value->rawSql($dialect);
+            } else {
+                $type = $matches[2][$index][0];
+                $precision = $matches[1][$index][0];
+
+                $param = match (true) {
                     is_null($value) => null,
                     is_object($value) => $value,
                     in_array($type, static::BOOL_MODIFIERS) => (bool) $value,
@@ -116,9 +122,18 @@ class ExpressionF implements Sql
                     default => (string) $value
                 };
 
-                return '?';
-            },
-            $this->format
-        );
+                $this->params[] = $param;
+
+                $this->sql .= '?';
+                $this->rawSql .= $dialect->castToQuery($param);
+            }
+
+            $offset = $matchOffset + strlen($matchText);
+        }
+
+        $afterMatches = substr($this->format, $offset);
+
+        $this->sql .= $afterMatches;
+        $this->rawSql .= $afterMatches;
     }
 }
