@@ -633,7 +633,7 @@ class SQLDialect extends DialectAbstract
     protected function buildConditionIn(string &$query, array &$params, Condition $condition): void
     {
         if (!($condition->value instanceof SelectQuery) && count($condition->value) == 0) {
-            $query .= $condition->condition == ConditionEnum::IN ? '1 <> 1' : '1 = 1';
+            $query .= $condition->condition == ConditionEnum::IN ? '1 = 0' : '1 = 1';
 
             return;
         }
