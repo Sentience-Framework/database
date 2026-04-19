@@ -95,15 +95,15 @@ abstract class Query implements QueryInterface
 
     public static function escapeAnsi(string $string, array $chars): string
     {
-        return static::escape($string, $chars, '$0$0');
+        return static::escape($string, $chars, '$0$0', '/%s/');
     }
 
     public static function escapeBackslash(string $string, array $chars): string
     {
-        return static::escape($string, ['\\', ...$chars]);
+        return static::escape($string, ['\\', ...$chars], '\\\\$0', '/%s/');
     }
 
-    protected static function escape(string $string, array $chars, string $replacement = '\\\\$0', string $pattern = '/%s/'): string
+    protected static function escape(string $string, array $chars, string $replacement, string $pattern): string
     {
         $escaped = $string;
 
