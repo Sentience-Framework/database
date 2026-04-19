@@ -20,7 +20,7 @@ class MySQLDialect extends SQLDialect
 {
     public const array CAST_TYPES = [
         'bool' => 'UNSIGNED',
-        'int' => 'UNSIGNED',
+        'int' => 'SIGNED',
         'float' => 'DECIMAL',
         'string' => 'CHAR'
     ];

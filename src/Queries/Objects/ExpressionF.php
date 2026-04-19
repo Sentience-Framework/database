@@ -100,8 +100,8 @@ class ExpressionF implements Sql
 
                 array_push($this->params, ...$queryWithParams->params);
 
-                $this->sql .= sprintf('(%s)', $queryWithParams->query);
-                $this->rawSql .= sprintf('(%s)', $queryWithParams->toSql($dialect));
+                $this->sql .= $queryWithParams->query;
+                $this->rawSql .= $queryWithParams->toSql($dialect);
             } elseif ($value instanceof Sql) {
                 array_push($this->params, ...$value->params($dialect));
 
