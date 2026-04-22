@@ -16,7 +16,7 @@ trait ColumnsTrait
     {
         $this->columns = array_map(
             function (string|array|Alias|SelectQuery|Sql|SubQuery $column, string $alias): string|array|Alias|SelectQuery|Sql|SubQuery {
-                if ($column instanceof Alias || $column instanceof SubQuery || ctype_digit($alias)) {
+                if ($column instanceof Alias || $column instanceof SubQuery || (bool) preg_match('/^[0-9]+$/', (string) $alias)) {
                     return $column;
                 }
 

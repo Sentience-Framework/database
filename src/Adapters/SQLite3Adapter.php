@@ -146,7 +146,7 @@ class SQLite3Adapter extends AdapterAbstract
                 default => SQLITE3_TEXT
             };
 
-            ctype_digit((string) $key)
+            ((bool) preg_match('/^[0-9]+$/', (string) $key))
                 ? $this->bindValue($sqlite3Stmt, $key, $value, $type)
                 : $this->bindParam($sqlite3Stmt, $key, $value, $type);
         }

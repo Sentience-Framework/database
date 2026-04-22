@@ -70,7 +70,7 @@ class QueryWithParams
         );
 
         foreach ($params as $key => $value) {
-            if (!ctype_digit((string) $key)) {
+            if (!((bool) preg_match('/^[0-9]+$/', (string) $key))) {
                 return $this->toSqlNamedParams($params);
             }
         }

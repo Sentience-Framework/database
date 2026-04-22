@@ -350,7 +350,7 @@ class PDOAdapter extends AdapterAbstract
                 default => PDO::PARAM_STR
             };
 
-            ctype_digit((string) $key)
+            ((bool) preg_match('/^[0-9]+$/', (string) $key))
                 ? $this->bindValue($pdoStatement, $key, $value, $type)
                 : $this->bindParam($pdoStatement, $key, $value, $type);
         }
@@ -416,7 +416,7 @@ class PDOAdapter extends AdapterAbstract
             return null;
         }
 
-        if (ctype_digit((string) $lastInsertId)) {
+        if ((bool) preg_match('/^[0-9]+$/', (string) $lastInsertId)) {
             return (int) $lastInsertId;
         }
 
