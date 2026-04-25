@@ -59,17 +59,17 @@ enum Driver: string implements DriverInterface
         );
     }
 
-    public function getDialect(int|string $version): DialectInterface
+    public function getDialect(int|string $version, array $options = []): DialectInterface
     {
         return match ($this) {
-            static::FIREBIRD => new FirebirdDialect($this, $version),
+            static::FIREBIRD => new FirebirdDialect($this, $version, $options),
             static::MARIADB,
-            static::MYSQL => new MySQLDialect($this, $version),
-            static::OCI => new OCIDialect($this, $version),
-            static::PGSQL => new PgSQLDialect($this, $version),
-            static::SQLITE => new SQLiteDialect($this, $version),
-            static::SQLSRV => new SQLServerDialect($this, $version),
-            default => new SQLDialect($this, $version)
+            static::MYSQL => new MySQLDialect($this, $version, $options),
+            static::OCI => new OCIDialect($this, $version, $options),
+            static::PGSQL => new PgSQLDialect($this, $version, $options),
+            static::SQLITE => new SQLiteDialect($this, $version, $options),
+            static::SQLSRV => new SQLServerDialect($this, $version, $options),
+            default => new SQLDialect($this, $version, $options)
         };
     }
 }

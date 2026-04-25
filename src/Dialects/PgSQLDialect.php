@@ -10,6 +10,8 @@ use Sentience\Database\Queries\Objects\Condition;
 
 class PgSQLDialect extends SQLDialect
 {
+    public const string OPTIONS_USE_TILDE_REGEX = 'use_tilde_regex';
+
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
     public const array ESCAPE_CHARS = [
         '\\' => '\\\\',
@@ -41,7 +43,7 @@ class PgSQLDialect extends SQLDialect
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
     {
-        if ($this->version >= 1500) {
+        if ($this->version >= 1500 && (!$this->options[static::OPTIONS_USE_TILDE_REGEX] ?? false)) {
             parent::buildConditionRegex($query, $params, $condition);
 
             return;

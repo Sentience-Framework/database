@@ -7,8 +7,9 @@ use Sentience\Database\DriverInterface;
 abstract class DialectAbstract implements DialectInterface
 {
     protected int $version;
+    protected array $options;
 
-    public function __construct(protected DriverInterface $driver, int|string $version)
+    public function __construct(protected DriverInterface $driver, int|string $version, array $options)
     {
         if (is_int($version)) {
             $this->version = $version;
@@ -33,5 +34,6 @@ abstract class DialectAbstract implements DialectInterface
         }
 
         $this->version = $number;
+        $this->options = [...($options[SQLDialect::class] ?? []), ...($options[static::class] ?? [])];
     }
 }

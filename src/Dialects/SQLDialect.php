@@ -1114,12 +1114,12 @@ class SQLDialect extends DialectAbstract
                     $identifier
                 )
             )
-            : $this->escape($identifier, $this::ESCAPE_IDENTIFIER);
+            : $this->escape($identifier, static::ESCAPE_IDENTIFIER);
     }
 
     public function escapeString(string $string): string
     {
-        return $this->escape($string, $this::ESCAPE_STRING);
+        return $this->escape($string, static::ESCAPE_STRING);
     }
 
     protected function escape(string $string, string $char): string
@@ -1200,7 +1200,7 @@ class SQLDialect extends DialectAbstract
 
     public function castDateTime(DateTimeInterface $dateTimeInterface): null|bool|int|float|string
     {
-        return $dateTimeInterface->format($this::DATETIME_FORMAT);
+        return $dateTimeInterface->format(static::DATETIME_FORMAT);
     }
 
     public function parseBool(null|bool|int|float|string $bool): bool
@@ -1214,7 +1214,7 @@ class SQLDialect extends DialectAbstract
 
     public function parseDateTime(string $string): ?DateTime
     {
-        $dateTime = DateTime::createFromFormat($this::DATETIME_FORMAT, $string);
+        $dateTime = DateTime::createFromFormat(static::DATETIME_FORMAT, $string);
 
         if ($dateTime) {
             return $dateTime;

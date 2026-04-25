@@ -16,17 +16,17 @@ class FirebirdDialect extends SQLDialect
     public const bool BOOL = true;
     public const bool RETURNING = true;
 
-    public function __construct(DriverInterface $driver, int|string $version)
+    public function __construct(DriverInterface $driver, int|string $version, array $options)
     {
         if (is_int($version)) {
-            parent::__construct($driver, $version);
+            parent::__construct($driver, $version, $options);
 
             return;
         }
 
         preg_match('/Firebird\s(\d+\.\d+)/', $version, $match);
 
-        parent::__construct($driver, $match[1] ?? $version);
+        parent::__construct($driver, $match[1] ?? $version, $options);
     }
 
     public function createTable(

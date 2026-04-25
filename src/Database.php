@@ -32,12 +32,12 @@ class Database extends DatabaseAbstract
 
         $version = $adapter->version();
 
-        $dialect = $driver->getDialect($version);
+        $dialect = $driver->getDialect($version, $options);
 
         return new static($adapter, $dialect);
     }
 
-    public static function getAvailableDrivers(): array
+    public static function drivers(): array
     {
         $availableDrivers = [];
 

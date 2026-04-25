@@ -30,7 +30,7 @@ class SQLiteDatabase extends DatabaseAbstract
 
         $version = $adapter->version();
 
-        $dialect = $driver->getDialect($version);
+        $dialect = $driver->getDialect($version, $options);
 
         return new static($adapter, $dialect);
     }

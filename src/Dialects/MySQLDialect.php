@@ -18,6 +18,8 @@ use Sentience\Database\Queries\SelectQuery;
 
 class MySQLDialect extends SQLDialect
 {
+    public const string OPTIONS_USE_REGEXP = 'use_regexp';
+
     public const array CAST_TYPES = [
         'bool' => 'UNSIGNED',
         'int' => 'SIGNED',
@@ -90,7 +92,7 @@ class MySQLDialect extends SQLDialect
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
     {
-        if ($this->driver == Driver::MYSQL && $this->version >= 80000) {
+        if ($this->driver == Driver::MYSQL && $this->version >= 80000 && !($this->options[static::OPTIONS_USE_REGEXP] ?? false)) {
             parent::buildConditionRegex($query, $params, $condition);
 
             return;

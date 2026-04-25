@@ -20,5 +20,5 @@ interface DriverInterface
         bool $usePDOAdapter = false
     ): AdapterInterface;
 
-    public function getDialect(int|string $version): DialectInterface;
+    public function getDialect(int|string $version, array $options = []): DialectInterface;
 }

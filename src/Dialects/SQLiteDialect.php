@@ -21,6 +21,8 @@ use Sentience\Database\Queries\Objects\UniqueConstraint;
 
 class SQLiteDialect extends SQLDialect
 {
+    public const string OPTIONS_USE_REGEXP = 'use_regexp';
+
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s';
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 
@@ -96,6 +98,23 @@ class SQLiteDialect extends SQLDialect
                 '%' => '*',
                 '_' => '?'
             ]
+        );
+    }
+
+    protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
+    {
+        if (!($this->options[static::OPTIONS_USE_REGEXP] ?? false)) {
+            parent::buildConditionRegex($query, $params, $condition);
+
+            return;
+        }
+
+        parent::buildConditionRegexOperator(
+            $query,
+            $params,
+            $condition,
+            'REGEXP',
+            'NOT REGEXP'
         );
     }
 

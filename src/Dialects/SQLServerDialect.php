@@ -14,6 +14,8 @@ use Sentience\Database\Queries\Query;
 
 class SQLServerDialect extends SQLDialect
 {
+    public const string OPTIONS_USE_DOUBLEQUOTES = 'use_doublequotes';
+
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s.v';
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 
@@ -165,7 +167,7 @@ class SQLServerDialect extends SQLDialect
 
     protected function escape(string $string, string $char): string
     {
-        if ($char == static::ESCAPE_IDENTIFIER) {
+        if ($char == static::ESCAPE_IDENTIFIER && $this->options[static::OPTIONS_USE_DOUBLEQUOTES] ?? false) {
             return '[' . Query::escapeAnsi($string, ['[', ']']) . ']';
         }
 

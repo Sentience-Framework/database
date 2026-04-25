@@ -12,7 +12,7 @@ class FirebirdDatabase extends DatabaseAbstract
 {
     public const Driver DRIVER = Driver::FIREBIRD;
 
-    public static function fromNetwork(
+    public static function host(
         string $name,
         string $username,
         ?string $password,
@@ -34,7 +34,7 @@ class FirebirdDatabase extends DatabaseAbstract
 
         $version = $adapter->version();
 
-        $dialect = $driver->getDialect($version);
+        $dialect = $driver->getDialect($version, $options);
 
         return new static($adapter, $dialect);
     }
