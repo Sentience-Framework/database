@@ -13,6 +13,7 @@ class Join
 
     public function __construct(
         public JoinEnum $join,
+        public bool $lateral,
         public string|array|Alias|Sql|SubQuery $table
     ) {
     }

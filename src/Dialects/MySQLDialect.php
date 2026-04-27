@@ -239,6 +239,11 @@ class MySQLDialect extends SQLDialect
         };
     }
 
+    public function lateral(): bool
+    {
+        return $this->driver == Driver::MYSQL && $this->version >= 80014;
+    }
+
     public function onConflict(): bool
     {
         if ($this->driver == Driver::MARIADB) {

@@ -3,6 +3,7 @@
 namespace Sentience\Database\Dialects;
 
 use Sentience\Database\Exceptions\QueryException;
+use Sentience\Database\Queries\Enums\JoinEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
@@ -10,7 +11,9 @@ use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Query;
+use Sentience\Database\Queries\SelectQuery;
 
 class SQLServerDialect extends SQLDialect
 {
@@ -172,6 +175,58 @@ class SQLServerDialect extends SQLDialect
         }
 
         return parent::escape($string, $char);
+    }
+
+    protected function buildJoins(string &$query, array &$params, array $joins): void
+    {
+        if (count($joins) == 0) {
+            return;
+        }
+
+        $query .= ' ';
+
+        foreach ($joins as $index => $join) {
+            if ($index > 0) {
+                $query .= ' ';
+            }
+
+            if ($join instanceof Sql) {
+                $query .= $this->buildSql($params, $join);
+
+                continue;
+            }
+
+            $table = $join->table instanceof SubQuery
+                ? $join->table->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
+                    return $this->buildSelectQuery($params, $selectQuery);
+                })
+                : $join->table;
+
+            $query .= sprintf(
+                '%s %s ON ',
+                $join->lateral
+                ? match ($join->join) {
+                    JoinEnum::LEFT_JOIN => 'OUTER APPLY',
+                    JoinEnum::INNER_JOIN => 'CROSS APPLY'
+                }
+                : $join->join->value,
+                $this->escapeIdentifier($table)
+            );
+
+            $conditions = $join->getConditions();
+
+            if (count($conditions) == 0) {
+                $query .= $this->castToQuery(true);
+
+                continue;
+            }
+
+            foreach ($conditions as $index => $condition) {
+                $condition instanceof Condition
+                    ? $this->buildCondition($query, $params, $index, $condition)
+                    : $this->buildConditionGroup($query, $params, $index, $condition);
+            }
+        }
     }
 
     public function type(TypeEnum $type, ?int $size = null): string

@@ -101,6 +101,7 @@ interface DialectInterface
     public function type(TypeEnum $type, ?int $size = null): string;
     public function bool(): bool;
     public function generatedByDefaultAsIdentity(): bool;
+    public function lateral(): bool;
     public function onConflict(): bool;
     public function returning(): bool;
     public function savepoints(): bool;

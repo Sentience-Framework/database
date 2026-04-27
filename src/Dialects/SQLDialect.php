@@ -42,6 +42,7 @@ class SQLDialect extends DialectAbstract
     public const bool BOOL = false;
     public const bool DISTINCT_ON = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
+    public const bool LATERAL = false;
     public const bool ON_CONFLICT = false;
     public const bool RETURNING = false;
     public const bool SAVEPOINTS = true;
@@ -463,6 +464,10 @@ class SQLDialect extends DialectAbstract
                 continue;
             }
 
+            if ($join->lateral && !$this->lateral()) {
+                throw new QueryException('LATERAL is not supported');
+            }
+
             $table = $join->table instanceof SubQuery
                 ? $join->table->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
                     return $this->buildSelectQuery($params, $selectQuery);
@@ -471,7 +476,7 @@ class SQLDialect extends DialectAbstract
 
             $query .= sprintf(
                 '%s %s ON ',
-                $join->join->value,
+                $join->join->value . ($join->lateral ? ' LATERAL' : ''),
                 $this->escapeIdentifier($table)
             );
 
@@ -1246,6 +1251,11 @@ class SQLDialect extends DialectAbstract
     public function generatedByDefaultAsIdentity(): bool
     {
         return static::GENERATED_BY_DEFAULT_AS_IDENTITY;
+    }
+
+    public function lateral(): bool
+    {
+        return static::LATERAL;
     }
 
     public function onConflict(): bool
