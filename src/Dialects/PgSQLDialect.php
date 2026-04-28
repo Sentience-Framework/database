@@ -11,6 +11,7 @@ use Sentience\Database\Queries\Objects\Condition;
 class PgSQLDialect extends SQLDialect
 {
     public const string OPTIONS_USE_TILDE_REGEX = 'use_tilde_regex';
+    public const string OPTIONS_USE_SERIALS = 'use_serials';
 
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
     public const array ESCAPE_CHARS = [
@@ -43,7 +44,7 @@ class PgSQLDialect extends SQLDialect
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
     {
-        if ($this->version >= 1500 && (!$this->options[static::OPTIONS_USE_TILDE_REGEX] ?? false)) {
+        if ($this->version >= 1500 && !($this->options[static::OPTIONS_USE_TILDE_REGEX] ?? false)) {
             parent::buildConditionRegex($query, $params, $condition);
 
             return;
@@ -64,7 +65,7 @@ class PgSQLDialect extends SQLDialect
             return parent::buildColumn($column);
         }
 
-        if (!$this->generatedByDefaultAsIdentity()) {
+        if (!$this->generatedByDefaultAsIdentity() || $this->options[static::OPTIONS_USE_SERIALS] ?? false) {
             $typeIsUppercase = (bool) preg_match('/[A-Z]/', $column->type);
 
             $serialColumn = new Column(
@@ -106,6 +107,11 @@ class PgSQLDialect extends SQLDialect
             TypeEnum::DATETIME => 'TIMESTAMP',
             default => parent::type($type, $size)
         };
+    }
+
+    public function distinctOn(): bool
+    {
+        return $this->version >= 702;
     }
 
     public function generatedByDefaultAsIdentity(): bool

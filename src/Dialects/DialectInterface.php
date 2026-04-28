@@ -100,6 +100,7 @@ interface DialectInterface
     public function parseDateTime(string $string): ?DateTime;
     public function type(TypeEnum $type, ?int $size = null): string;
     public function bool(): bool;
+    public function distinctOn(): bool;
     public function generatedByDefaultAsIdentity(): bool;
     public function lateral(): bool;
     public function onConflict(): bool;

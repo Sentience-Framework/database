@@ -416,7 +416,7 @@ class SQLDialect extends DialectAbstract
             return;
         }
 
-        if (!static::DISTINCT_ON) {
+        if (!$this->distinctOn()) {
             throw new QueryException('DISTINCT ON is not supported');
         }
 
@@ -1246,6 +1246,11 @@ class SQLDialect extends DialectAbstract
     public function bool(): bool
     {
         return static::BOOL;
+    }
+
+    public function distinctOn(): bool
+    {
+        return static::DISTINCT_ON;
     }
 
     public function generatedByDefaultAsIdentity(): bool
