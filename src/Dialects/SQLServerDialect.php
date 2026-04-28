@@ -9,11 +9,10 @@ use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
+use Sentience\Database\Queries\Objects\Join;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Query;
-use Sentience\Database\Queries\SelectQuery;
 
 class SQLServerDialect extends SQLDialect
 {
@@ -179,54 +178,29 @@ class SQLServerDialect extends SQLDialect
 
     protected function buildJoins(string &$query, array &$params, array $joins): void
     {
-        if (count($joins) == 0) {
-            return;
-        }
+        parent::buildJoins(
+            $query,
+            $params,
+            array_map(
+                function (Join $join): Join {
+                    if (!$join->join->lateral()) {
+                        return $join;
+                    }
 
-        $query .= ' ';
+                    $join = clone $join;
 
-        foreach ($joins as $index => $join) {
-            if ($index > 0) {
-                $query .= ' ';
-            }
+                    $join->join = match ($join->join) {
+                        JoinEnum::JOIN_LATERAL,
+                        JoinEnum::INNER_JOIN_LATERAL => JoinEnum::CROSS_JOIN,
+                        JoinEnum::LEFT_JOIN_LATERAL => JoinEnum::OUTER_APPLY,
+                        default => $join->join
+                    };
 
-            if ($join instanceof Sql) {
-                $query .= $this->buildSql($params, $join);
-
-                continue;
-            }
-
-            $table = $join->table instanceof SubQuery
-                ? $join->table->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
-                    return $this->buildSelectQuery($params, $selectQuery);
-                })
-                : $join->table;
-
-            $query .= sprintf(
-                '%s %s ON ',
-                $join->lateral
-                ? match ($join->join) {
-                    JoinEnum::LEFT_JOIN => 'OUTER APPLY',
-                    JoinEnum::INNER_JOIN => 'CROSS APPLY'
-                }
-                : $join->join->value,
-                $this->escapeIdentifier($table)
-            );
-
-            $conditions = $join->getConditions();
-
-            if (count($conditions) == 0) {
-                $query .= $this->castToQuery(true);
-
-                continue;
-            }
-
-            foreach ($conditions as $index => $condition) {
-                $condition instanceof Condition
-                    ? $this->buildCondition($query, $params, $index, $condition)
-                    : $this->buildConditionGroup($query, $params, $index, $condition);
-            }
-        }
+                    return $join;
+                },
+                $joins
+            )
+        );
     }
 
     public function type(TypeEnum $type, ?int $size = null): string
