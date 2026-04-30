@@ -90,19 +90,19 @@ trait JoinsTrait
         return $this->outerApply(Query::subQuery($selectQuery, $alias), $on);
     }
 
-    public function crossJoin(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
+    public function crossApply(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
     {
         return $this->addJoin(JoinEnum::INNER_JOIN_LATERAL, $table, $on);
     }
 
-    public function crossJoinTable(string|array|Sql $table, ?callable $on = null, ?string $alias = null): static
+    public function crossApplyTable(string|array|Sql $table, ?callable $on = null, ?string $alias = null): static
     {
-        return $this->crossJoin($alias ? Query::alias($table, $alias) : $table, $on);
+        return $this->crossApply($alias ? Query::alias($table, $alias) : $table, $on);
     }
 
-    public function crossJoinSubQuery(SelectQuery $selectQuery, string $alias, ?callable $on = null): static
+    public function crossApplySubQuery(SelectQuery $selectQuery, string $alias, ?callable $on = null): static
     {
-        return $this->crossJoin(Query::subQuery($selectQuery, $alias), $on);
+        return $this->crossApply(Query::subQuery($selectQuery, $alias), $on);
     }
 
     public function joinf(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
