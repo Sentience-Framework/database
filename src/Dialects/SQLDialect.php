@@ -8,6 +8,7 @@ use DateTimeInterface;
 use Throwable;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\ConditionEnum;
+use Sentience\Database\Queries\Enums\JoinEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\ConditionGroup;
 use Sentience\Database\Queries\Interfaces\Sql;
@@ -464,7 +465,7 @@ class SQLDialect extends DialectAbstract
                 continue;
             }
 
-            if ($join->join->lateral() && !$this->lateral()) {
+            if (in_array($join->join, [JoinEnum::LEFT_JOIN_LATERAL, JoinEnum::INNER_JOIN_LATERAL]) && !$this->lateral()) {
                 throw new QueryException('LATERAL is not supported');
             }
 
@@ -474,26 +475,45 @@ class SQLDialect extends DialectAbstract
                 })
                 : $join->table;
 
-            $query .= sprintf(
-                '%s %s ON ',
-                $join->join->value,
-                $this->escapeIdentifier($table)
-            );
-
-            $conditions = $join->getConditions();
-
-            if (count($conditions) == 0) {
-                $query .= $this->castToQuery(true);
-
-                continue;
-            }
-
-            foreach ($conditions as $index => $condition) {
-                $condition instanceof Condition
-                    ? $this->buildCondition($query, $params, $index, $condition)
-                    : $this->buildConditionGroup($query, $params, $index, $condition);
-            }
+            match ($join->join) {
+                JoinEnum::LEFT_JOIN,
+                JoinEnum::LEFT_JOIN_LATERAL => $this->buildLeftJoin($query, $params, $join->join, $table, $join->getConditions()),
+                JoinEnum::INNER_JOIN,
+                JoinEnum::INNER_JOIN_LATERAL => $this->buildLeftJoin($query, $params, $join->join, $table, $join->getConditions()),
+                default => $this->buildJoin($query, $params, $join->join, $table, $join->getConditions())
+            };
         }
+    }
+
+    protected function buildJoin(string &$query, array &$params, string|JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    {
+        $query .= sprintf(
+            '%s %s ON ',
+            $join instanceof JoinEnum ? $join->value : $join,
+            $this->escapeIdentifier($table)
+        );
+
+        if (count($conditions) == 0) {
+            $query .= $this->castToQuery(true);
+
+            return;
+        }
+
+        foreach ($conditions as $index => $condition) {
+            $condition instanceof Condition
+                ? $this->buildCondition($query, $params, $index, $condition)
+                : $this->buildConditionGroup($query, $params, $index, $condition);
+        }
+    }
+
+    protected function buildLeftJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    {
+        $this->buildJoin($query, $params, $join, $table, $conditions);
+    }
+
+    protected function buildInnerJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    {
+        $this->buildJoin($query, $params, $join, $table, $conditions);
     }
 
     protected function buildWhere(string &$query, array &$params, array $where): void

@@ -39,7 +39,7 @@ class Database extends DatabaseAbstract
 
     public static function drivers(): array
     {
-        $availableDrivers = [];
+        $drivers = [];
 
         if (PDOAdapter::extensionsInstalled()) {
             foreach (PDO::getAvailableDrivers() as $pdoDriver) {
@@ -49,30 +49,30 @@ class Database extends DatabaseAbstract
                     continue;
                 }
 
-                $availableDrivers[] = $driver;
+                $drivers[] = $driver;
             }
 
-            if (in_array(Driver::MYSQL, $availableDrivers)) {
-                $availableDrivers[] = Driver::MARIADB;
+            if (in_array(Driver::MYSQL, $drivers)) {
+                $drivers[] = Driver::MARIADB;
             }
         }
 
         if (MySQLiAdapter::extensionsInstalled()) {
             foreach ([Driver::MYSQL, Driver::MARIADB] as $driver) {
-                if (in_array($driver, $availableDrivers)) {
+                if (in_array($driver, $drivers)) {
                     continue;
                 }
 
-                $availableDrivers[] = $driver;
+                $drivers[] = $driver;
             }
         }
 
         if (SQLite3Adapter::extensionsInstalled()) {
-            if (!in_array(Driver::SQLITE, $availableDrivers)) {
-                $availableDrivers[] = Driver::SQLITE;
+            if (!in_array(Driver::SQLITE, $drivers)) {
+                $drivers[] = Driver::SQLITE;
             }
         }
 
-        return $availableDrivers;
+        return $drivers;
     }
 }

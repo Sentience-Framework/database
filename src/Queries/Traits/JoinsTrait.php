@@ -75,6 +75,36 @@ trait JoinsTrait
         return $this->innerJoinLateral(Query::subQuery($selectQuery, $alias), $on);
     }
 
+    public function outerApply(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
+    {
+        return $this->addJoin(JoinEnum::LEFT_JOIN_LATERAL, $table, $on);
+    }
+
+    public function outerApplyTable(string|array|Sql $table, ?callable $on = null, ?string $alias = null): static
+    {
+        return $this->outerApply($alias ? Query::alias($table, $alias) : $table, $on);
+    }
+
+    public function outerApplySubQuery(SelectQuery $selectQuery, string $alias, ?callable $on = null): static
+    {
+        return $this->outerApply(Query::subQuery($selectQuery, $alias), $on);
+    }
+
+    public function crossJoin(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
+    {
+        return $this->addJoin(JoinEnum::INNER_JOIN_LATERAL, $table, $on);
+    }
+
+    public function crossJoinTable(string|array|Sql $table, ?callable $on = null, ?string $alias = null): static
+    {
+        return $this->crossJoin($alias ? Query::alias($table, $alias) : $table, $on);
+    }
+
+    public function crossJoinSubQuery(SelectQuery $selectQuery, string $alias, ?callable $on = null): static
+    {
+        return $this->crossJoin(Query::subQuery($selectQuery, $alias), $on);
+    }
+
     public function joinf(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
     {
         $this->joins[] = Query::expressionf($format, ...$values);

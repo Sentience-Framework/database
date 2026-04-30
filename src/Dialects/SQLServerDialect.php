@@ -9,7 +9,6 @@ use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
-use Sentience\Database\Queries\Objects\Join;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Query;
@@ -83,6 +82,16 @@ class SQLServerDialect extends SQLDialect
         );
 
         return new QueryWithParams($query, $dropTableQuery->params);
+    }
+
+    protected function buildLeftJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    {
+        $this->buildJoin($query, $params, $join == JoinEnum::LEFT_JOIN_LATERAL ? 'OUTER APPLY' : $join, $table, $conditions);
+    }
+
+    protected function buildInnerJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    {
+        $this->buildJoin($query, $params, $join == JoinEnum::INNER_JOIN_LATERAL ? 'CROSS APPLY' : $join, $table, $conditions);
     }
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
@@ -174,33 +183,6 @@ class SQLServerDialect extends SQLDialect
         }
 
         return parent::escape($string, $char);
-    }
-
-    protected function buildJoins(string &$query, array &$params, array $joins): void
-    {
-        parent::buildJoins(
-            $query,
-            $params,
-            array_map(
-                function (Join $join): Join {
-                    if (!$join->join->lateral()) {
-                        return $join;
-                    }
-
-                    $join = clone $join;
-
-                    $join->join = match ($join->join) {
-                        JoinEnum::JOIN_LATERAL,
-                        JoinEnum::INNER_JOIN_LATERAL => JoinEnum::CROSS_JOIN,
-                        JoinEnum::LEFT_JOIN_LATERAL => JoinEnum::OUTER_APPLY,
-                        default => $join->join
-                    };
-
-                    return $join;
-                },
-                $joins
-            )
-        );
     }
 
     public function type(TypeEnum $type, ?int $size = null): string
