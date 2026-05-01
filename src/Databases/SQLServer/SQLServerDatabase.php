@@ -11,7 +11,7 @@ class SQLServerDatabase extends DatabaseAbstract
 {
     public const Driver DRIVER = Driver::SQLSRV;
 
-    public static function host(
+    public static function network(
         string $name,
         string $username,
         ?string $password,

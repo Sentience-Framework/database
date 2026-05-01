@@ -12,7 +12,7 @@ class MySQLDatabase extends DatabaseAbstract
 {
     public const Driver DRIVER = Driver::MYSQL;
 
-    public static function host(
+    public static function network(
         string $name,
         string $username,
         ?string $password,

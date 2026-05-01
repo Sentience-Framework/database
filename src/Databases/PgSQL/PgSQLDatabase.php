@@ -12,7 +12,7 @@ class PgSQLDatabase extends DatabaseAbstract
 {
     public const Driver DRIVER = Driver::PGSQL;
 
-    public static function host(
+    public static function network(
         string $name,
         string $username,
         ?string $password,
