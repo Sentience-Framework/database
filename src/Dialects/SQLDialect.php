@@ -479,7 +479,7 @@ class SQLDialect extends DialectAbstract
                 JoinEnum::LEFT_JOIN,
                 JoinEnum::LEFT_JOIN_LATERAL => $this->buildLeftJoin($query, $params, $join->join, $table, $join->getConditions()),
                 JoinEnum::INNER_JOIN,
-                JoinEnum::INNER_JOIN_LATERAL => $this->buildLeftJoin($query, $params, $join->join, $table, $join->getConditions()),
+                JoinEnum::INNER_JOIN_LATERAL => $this->buildInnerJoin($query, $params, $join->join, $table, $join->getConditions()),
                 default => $this->buildJoin($query, $params, $join->join, $table, $join->getConditions())
             };
         }
