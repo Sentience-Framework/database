@@ -19,7 +19,7 @@ class SQLiteDatabase extends DatabaseAbstract
     ): static {
         $driver = static::DRIVER;
 
-        $adapter = $driver->getAdapter(
+        $adapter = $driver->adapter(
             $file,
             null,
             $queries,
@@ -30,7 +30,7 @@ class SQLiteDatabase extends DatabaseAbstract
 
         $version = $adapter->version();
 
-        $dialect = $driver->getDialect($version, $options);
+        $dialect = $driver->dialect($version, $options);
 
         return new static($adapter, $dialect);
     }

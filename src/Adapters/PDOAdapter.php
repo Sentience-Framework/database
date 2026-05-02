@@ -82,7 +82,7 @@ class PDOAdapter extends AdapterAbstract
         if ($driver == Driver::SQLITE) {
             return sprintf(
                 '%s:%s',
-                $driver->name(),
+                $driver->driver(),
                 $name
             );
         }
@@ -94,7 +94,7 @@ class PDOAdapter extends AdapterAbstract
         if ($driver == Driver::FIREBIRD) {
             return sprintf(
                 '%s:dbname=%s/%d:%s',
-                $driver->name(),
+                $driver->driver(),
                 $socket->host,
                 $socket->port,
                 $name
@@ -104,7 +104,7 @@ class PDOAdapter extends AdapterAbstract
         if ($driver == Driver::OCI) {
             return sprintf(
                 '%s:dbname=//%s:%d/%s',
-                $driver->name(),
+                $driver->driver(),
                 $socket->host,
                 $socket->port,
                 $name
@@ -114,7 +114,7 @@ class PDOAdapter extends AdapterAbstract
         if ($driver == Driver::SQLSRV) {
             return sprintf(
                 '%s:Server=%s,%d;Database=%s;Encrypt=%s;TrustServerCertificate=%s',
-                $driver->name(),
+                $driver->driver(),
                 $socket->host,
                 $socket->port,
                 $name,
@@ -125,7 +125,7 @@ class PDOAdapter extends AdapterAbstract
 
         $build = fn (array $dsn): string => sprintf(
             '%s:%s',
-            $driver == Driver::MARIADB ? Driver::MYSQL->value : $driver->name(),
+            $driver == Driver::MARIADB ? Driver::MYSQL->driver() : $driver->driver(),
             implode(
                 ';',
                 array_map(

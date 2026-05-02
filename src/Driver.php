@@ -27,12 +27,12 @@ enum Driver: string implements DriverInterface
     case SQLITE = 'sqlite';
     case SQLSRV = 'sqlsrv';
 
-    public function name(): string
+    public function driver(): string
     {
         return $this->value;
     }
 
-    public function getAdapter(
+    public function adapter(
         string $name,
         ?SocketAbstract $socket,
         array $queries,
@@ -59,7 +59,7 @@ enum Driver: string implements DriverInterface
         );
     }
 
-    public function getDialect(int|string $version, array $options = []): DialectInterface
+    public function dialect(int|string $version, array $options = []): DialectInterface
     {
         return match ($this) {
             static::FIREBIRD => new FirebirdDialect($this, $version, $options),

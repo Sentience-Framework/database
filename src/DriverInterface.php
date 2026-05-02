@@ -9,9 +9,9 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 interface DriverInterface
 {
-    public function name(): string;
+    public function driver(): string;
 
-    public function getAdapter(
+    public function adapter(
         string $name,
         ?SocketAbstract $socket,
         array $queries,
@@ -20,5 +20,5 @@ interface DriverInterface
         bool $usePDOAdapter = false
     ): AdapterInterface;
 
-    public function getDialect(int|string $version, array $options = []): DialectInterface;
+    public function dialect(int|string $version, array $options = []): DialectInterface;
 }

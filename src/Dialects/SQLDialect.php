@@ -644,7 +644,7 @@ class SQLDialect extends DialectAbstract
     {
         [$value, $caseInsensitive] = $condition->value;
 
-        $identifier = $condition->identifier;
+        $identifier = $this->escapeIdentifier($condition->identifier);
         $questionMark = $this->buildQuestionMarks($params, $value);
 
         $query .= sprintf(

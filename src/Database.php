@@ -21,7 +21,7 @@ class Database extends DatabaseAbstract
         ?Closure $debug = null,
         bool $usePDOAdapter = false
     ): static {
-        $adapter = $driver->getAdapter(
+        $adapter = $driver->adapter(
             $name,
             $socket,
             $queries,
@@ -32,7 +32,7 @@ class Database extends DatabaseAbstract
 
         $version = $adapter->version();
 
-        $dialect = $driver->getDialect($version, $options);
+        $dialect = $driver->dialect($version, $options);
 
         return new static($adapter, $dialect);
     }

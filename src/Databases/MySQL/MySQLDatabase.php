@@ -25,7 +25,7 @@ class MySQLDatabase extends DatabaseAbstract
     ): static {
         $driver = static::DRIVER;
 
-        $adapter = $driver->getAdapter(
+        $adapter = $driver->adapter(
             $name,
             new NetworkSocket($host, $port, $username, $password),
             $queries,
@@ -36,7 +36,7 @@ class MySQLDatabase extends DatabaseAbstract
 
         $version = $adapter->version();
 
-        $dialect = $driver->getDialect($version, $options);
+        $dialect = $driver->dialect($version, $options);
 
         return new static($adapter, $dialect);
     }
@@ -53,7 +53,7 @@ class MySQLDatabase extends DatabaseAbstract
     ): static {
         $driver = static::DRIVER;
 
-        $adapter = $driver->getAdapter(
+        $adapter = $driver->adapter(
             $name,
             new UnixSocket($unixSocket, null, $username, $password),
             $queries,
@@ -64,7 +64,7 @@ class MySQLDatabase extends DatabaseAbstract
 
         $version = $adapter->version();
 
-        $dialect = $driver->getDialect($version, $options);
+        $dialect = $driver->dialect($version, $options);
 
         return new static($adapter, $dialect);
     }
