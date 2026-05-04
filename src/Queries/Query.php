@@ -41,7 +41,7 @@ abstract class Query implements QueryInterface
     {
         $queryWithParams = $this->toQueryWithParams();
 
-        $queryWithParams->query = "EXPLAIN {$queryWithParams->query}";
+        $queryWithParams->query = sprintf('EXPLAIN %s', $queryWithParams->query);
 
         return $this->database
             ->queryWithParams($queryWithParams, $emulatePrepare)

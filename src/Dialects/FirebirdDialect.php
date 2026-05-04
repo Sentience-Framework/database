@@ -120,11 +120,7 @@ class FirebirdDialect extends SQLDialect
         $rows = $offset + 1;
         $to = $rows + $limit - 1;
 
-        $query .= sprintf(
-            ' ROWS %d TO %d',
-            $rows,
-            $to
-        );
+        $query .= " ROWS {$rows} TO {$to}";
     }
 
     public function type(TypeEnum $type, ?int $size = null): string
@@ -134,5 +130,10 @@ class FirebirdDialect extends SQLDialect
             TypeEnum::DATETIME => 'TIMESTAMP',
             default => parent::type($type, $size)
         };
+    }
+
+    public function lateral(): bool
+    {
+        return $this->version >= 300;
     }
 }

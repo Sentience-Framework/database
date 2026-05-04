@@ -70,13 +70,14 @@ class FirebirdDatabase extends DatabaseAbstract
         return $this->select(Query::alias(Query::raw('RDB$RELATION_FIELDS'), 'R'))
             ->columns([
                 Query::alias(Query::raw('R.RDB$FIELD_NAME'), 'field_name'),
-                Query::alias(Query::raw('F.RDB$FIELD_TYPE'), 'field_type'),
+                Query::alias(Query::raw('T.RDB$TYPE_NAME'), 'field_type'),
                 Query::alias(Query::raw('F.RDB$FIELD_LENGTH'), 'field_length'),
                 Query::alias(Query::raw('CSET.RDB$CHARACTER_SET_NAME'), 'field_charset')
             ])
             ->join('LEFT JOIN RDB$FIELDS AS F ON R.RDB$FIELD_SOURCE = F.RDB$FIELD_NAME')
             ->join('LEFT JOIN RDB$CHARACTER_SETS AS CSET ON F.RDB$CHARACTER_SET_ID = CSET.RDB$CHARACTER_SET_ID')
-            ->where('R.RDB$RELATION_NAME = ?', [$table])
+            ->joinf('LEFT JOIN RDB$TYPES AS T ON F.RDB$FIELD_TYPE = T.RDB$TYPE AND T.RDB$FIELD_NAME = %s', 'RDB$FIELD_TYPE')
+            ->wheref('R.RDB$RELATION_NAME = %s', $table)
             ->orderByAsc(Query::raw('R.RDB$FIELD_POSITION'))
             ->execute()
             ->fetchAssocs();

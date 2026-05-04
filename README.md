@@ -14,6 +14,13 @@
 
 The Sentience database abstraction offers a lightweight, no dependencies, database implementation. Through the use of adapter classes it can wrap around PDO, mysqli, and SQLite3. Through the use of easy to extend interfaces it's easy to add your adapters and dialects and use them natively in the Sentience database implementation.
 
+# Install the package
+
+The package requires composer
+```
+composer require sentience/database
+```
+
 ### Fully supported database dialects
 - Firebird (PDO)
 - MariaDB (PDO / Mysqli)
@@ -49,7 +56,7 @@ The goal of this database abstraction was to provide an interface that is univer
 - Greater than (>) / Greater than or equals (>=)
 - BETWEEN / NOT BETWEEN
 - Empty / Not empty (Mimicking PHP's empty function)
-- Regex / Not regex (SQLite also supported)
+- Regex / Not regex (SQLite also supported using regexp_like and REGEXP)
 - EXISTS / NOT EXISTS (sub query)
 - Group
 - Operator
@@ -95,7 +102,7 @@ $driver = Driver::from('pgsql');
 // - 'sqlsrv'
 ```
 
-Once the driver is initialized you can initialize a database instance using `::connect`, `::pdo`, or by passing in an `AdapterInterface` and `DialectInterface` manually.
+Once the driver is initialized you can initialize a database instance using `::connect`, or on a database specific class using `::network`, `::unixSocket`, or `::file`. You can also initialize a database class by passing in an `AdapterInterface` and `DialectInterface` manually.
 
 ```php
 use Sentience\Database\Database;
@@ -167,6 +174,13 @@ $database->select(Query::alias(['public', 'table_1'], 'table1'))
         'innerjoin_table',
         fn (Join $join): Join => $join->on(
             ['innerjoin_table', 'join_column'],
+            ['on_table', 'on_column']
+        )->whereBetween(['innerjoin_table', 'join_column'], 0, 9999)
+    )
+    ->innerJoinLateral(
+        'innerjoin_table_lateral',
+        fn (Join $join): Join => $join->on(
+            ['innerjoin_table_lateral', 'join_column'],
             ['on_table', 'on_column']
         )->whereBetween(['innerjoin_table', 'join_column'], 0, 9999)
     )
@@ -500,7 +514,7 @@ If the dialect does not explicitly state that conflict resolution and returning 
 
 # 7 Cast comparisons
 
-In weaker typed databases, like MySQL / MariaDB, the type system automatically casts the column and input value to something it can compare easily (usually VARCHAR).
+In weaker typed databases, like MySQL / MariaDB and SQLite, the type system automatically casts the column and input value to something it can compare easily (usually VARCHAR).
 
 ->whereEquals() and ->whereNotEquals() get an extra option for casted comparisons, by casting the column and value to the SQL type of the input value. Thus producing SQL that looks like this:
 
@@ -532,29 +546,6 @@ These functionalities were not implemented in the abstract database class becaus
 
 Since these functionalities are likely only used when you know which specific database you're using, they were bundled with their database specific implementations.
 
-# 10 Where macros
-
-To prevent needing to define the same conditions every time you make a query, you can add macros.
-
-```php
-$database->addWhereMacro('is_adult', function (ConditionGroup $conditionGroup): void {
-    return $conditionGroup->whereGreaterThanOrEquals('age', 18);
-});
-
-$database->addWhereMacro('has_enough_money', function (ConditionGroup $conditionGroup, float $itemPrice): void {
-    return $conditionGroup->whereGreaterThanOrEquals('bank_balance', $itemPrice);
-});
-
-$itemPrice = 250;
-
-$usersAbleToBuyItemCount = $database->select('users')
-    ->whereMacro('is_adult')
-    ->whereMacro('has_enough_money', [$itemPrice]) // ['itemPrice' => $itemPrice] also works for named arguments with defaults
-    ->count();
-```
-
-You can also use `orWhereMacro()` to chain them using OR. These functions are defined on the database class level. So each macro you define there can be used in select, update, or delete queries spawned from that class.
-
 # 11 Miscellaneous information about Sentience database
 
 1. Both named and unnamed parameters are supported for query building. The `QueryWithParams` automatically converts named params to placeholders.
@@ -565,7 +556,7 @@ You can also use `orWhereMacro()` to chain them using OR. These functions are de
 6. Query::alias() can be used to create aliasses for your tables or columns, without having to resort to using raw statements.
 7. Query::raw() offers a way to use raw unparameterized SQL in your queries.
 8. Query::now() spawns a new DateTime object.
-9. Empty IN or NOT IN lists compile to 1 <> 1 or 1 = 1.
+9. Empty IN or NOT IN lists compile to 1 = 0 or 1 = 1.
 10. Oracle OCI is implemented according to the available documentation online. Unlike the other databases which were tested in real world scenarios with Docker containers, Oracle OCI has not been tested.
 11. Postgres is best supported, followed closely by MySQL (only for missing specific conflict handling)
 12. When calling `->leftJoin()` or `->innerJoin()` with only a table, without a callback as the second argument, it joins `ON TRUE` (or `ON 1` for dialects that don't support native booleans)

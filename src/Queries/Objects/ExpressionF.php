@@ -76,7 +76,7 @@ class ExpressionF implements Sql
         $offset = 0;
 
         foreach ($matches[0] as $index => $match) {
-            [$matchText, $matchOffset] = $match;
+            [$matchString, $matchOffset] = $match;
 
             $beforeMatch = substr($this->format, $offset, $matchOffset - $offset);
 
@@ -127,7 +127,7 @@ class ExpressionF implements Sql
                 $this->rawSql .= $dialect->castToQuery($param);
             }
 
-            $offset = $matchOffset + strlen($matchText);
+            $offset = $matchOffset + strlen($matchString);
         }
 
         $afterMatches = substr($this->format, $offset);
