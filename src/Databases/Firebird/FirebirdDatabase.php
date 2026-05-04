@@ -13,7 +13,7 @@ class FirebirdDatabase extends DatabaseAbstract
     public const Driver DRIVER = Driver::FIREBIRD;
 
     public static function network(
-        string $name,
+        string $file,
         string $username,
         ?string $password,
         string $host = 'localhost',
@@ -25,7 +25,7 @@ class FirebirdDatabase extends DatabaseAbstract
         $driver = static::DRIVER;
 
         $adapter = $driver->adapter(
-            $name,
+            $file,
             new NetworkSocket($host, $port, $username, $password),
             $queries,
             $options,
