@@ -10,7 +10,7 @@ class SQLiteDatabase extends DatabaseAbstract
 {
     public const Driver DRIVER = Driver::SQLITE;
 
-    public static function fromFile(
+    public static function file(
         string $file,
         array $queries = [],
         array $options = [],
@@ -41,7 +41,7 @@ class SQLiteDatabase extends DatabaseAbstract
         ?Closure $debug = null,
         bool $usePDOAdapter = false
     ): static {
-        return static::fromFile(
+        return static::file(
             ':memory:',
             $queries,
             $options,
