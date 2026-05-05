@@ -13,7 +13,7 @@ use Sentience\Database\Sockets\SocketAbstract;
 abstract class AdapterAbstract implements AdapterInterface
 {
     public const string REGEXP_FUNCTION = 'REGEXP';
-    public const string REGEXP_LIKE_FUNCTION = 'REGEXP_LIKE';
+    public const string REGEXP_LIKE_FUNCTION = 'regexp_like';
 
     protected bool $inTransaction = false;
 
