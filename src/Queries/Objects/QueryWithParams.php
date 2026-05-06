@@ -11,8 +11,7 @@ class QueryWithParams
     public const string INI_PCRE_JIT = 'pcre.jit';
     public const string INI_PCRE_BACKTRACE_LIMIT = 'pcre.backtrack_limit';
     public const string INI_PCRE_RECURSION_LIMIT = 'pcre.recursion_limit';
-    public const string REGEX_PATTERN_QUESTION_MARKS = '/(?:\'(?:\\\\.|[^\\\\\'])*\'|\"(?:\\\\.|[^\\\\\"])*\"|\`(?:\\\\.|[^\\\\\`])*\`|\[(?:\\\\.|[^\[\]])*?\]|(\?)(?=(?:[^\'\"\`\[\]]|\'(?:\\\\.|[^\\\\\'])*\'|\"(?:\\\\.|[^\\\\\"])*\"|\`(?:\\\\.|[^\\\\\`])*\`|\[(?:\\\\.|[^\[\]])*?\])*$)|(?:\-\-[^\r\n]*|\/\*[\s\S]*?\*\/|\#.*))/m';
-    public const string REGEX_PATTERN_NAMED_PARAMS = '/(?:\'(?:\\\\.|[^\\\\\'])*\'|\"(?:\\\\.|[^\\\\\"])*\"|\`(?:\\\\.|[^\\\\\`])*\`|\[(?:\\\\.|[^\[\]])*?\]|(?<!\:)(\:\w+)(?=(?:[^\'\"\`\[\]]|\'(?:\\\\.|[^\\\\\'])*\'|\"(?:\\\\.|[^\\\\\"])*\"|\`(?:\\\\.|[^\\\\\`])*\`|\[(?:\\\\.|[^\[\]])*?\])*$)|(?:\-\-[^\r\n]*|\/\*[\s\S]*?\*\/|\#.*))/m';
+    public const string REGEX_PATTERN = '/(?:\'(?:\\\\.|[^\\\\\'])*\'|\"(?:\\\\.|[^\\\\\"])*\"|\`(?:\\\\.|[^\\\\\`])*\`|\[(?:\\\\.|[^\[\]])*?\]|(\?)|(?<!\:)(\:\w+)(?=(?:[^\'\"\`\[\]]|\'(?:\\\\.|[^\\\\\'])*\'|\"(?:\\\\.|[^\\\\\"])*\"|\`(?:\\\\.|[^\\\\\`])*\`|\[(?:\\\\.|[^\[\]])*?\])*$)|(?:\-\-[^\r\n]*|\/\*[\s\S]*?\*\/|\#.*))/m';
 
     public function __construct(
         public string $query,
@@ -29,21 +28,21 @@ class QueryWithParams
         $params = [];
 
         $query = $this->pregReplaceCallback(
-            static::REGEX_PATTERN_NAMED_PARAMS,
-            function (array $match) use (&$params): mixed {
-                if (!$this->isQuestionMarkOrNamedParamMatch($match)) {
-                    return $match[0];
+            static::REGEX_PATTERN,
+            function (array $match) use (&$params, &$index): string {
+                [$sql, $questionMark, $namedParm] = $match;
+
+                if ($namedParm) {
+                    if (!array_key_exists($namedParm, $this->params)) {
+                        throw new QueryWithParamsException("named param {$namedParm} does not exist");
+                    }
+
+                    $params[] = $this->params[$namedParm];
+
+                    return '?';
                 }
 
-                $key = $match[1];
-
-                if (!array_key_exists($key, $this->params)) {
-                    $this->throwNamedParamDoesNotExistException($key);
-                }
-
-                $params[] = $this->params[$key];
-
-                return '?';
+                return $sql;
             },
             $this->query
         );
@@ -64,67 +63,49 @@ class QueryWithParams
             return $this->query;
         }
 
-        $params = array_map(
-            fn (mixed $param): mixed => $dialect->castToQuery($param),
-            $this->params
-        );
+        $questionMarks = [];
+        $namedParams = [];
 
-        foreach ($params as $key => $value) {
-            if (!((bool) preg_match('/^[0-9]+$/', (string) $key))) {
-                return $this->toSqlNamedParams($params);
+        foreach ($this->params as $param => $value) {
+            if ((bool) preg_match('/^[0-9]+$/', (string) $param)) {
+                $questionMarks[] = $value;
+
+                continue;
             }
+
+            $namedParams[$param] = $value;
         }
 
-        return $this->toSqlQuestionMarks($params);
-    }
-
-    protected function toSqlQuestionMarks(array $params): string
-    {
         $index = 0;
 
         return $this->pregReplaceCallback(
-            static::REGEX_PATTERN_QUESTION_MARKS,
-            function (array $match) use ($params, &$index): mixed {
-                if (!$this->isQuestionMarkOrNamedParamMatch($match)) {
-                    return $match[0];
+            static::REGEX_PATTERN,
+            function (array $match) use ($dialect, $questionMarks, $namedParams, &$index): string {
+                [$sql, $questionMark, $namedParm] = $match;
+
+                if ($questionMark) {
+                    if (!array_key_exists($index, $questionMarks)) {
+                        throw new QueryWithParamsException('question mark and param count do not match');
+                    }
+
+                    return $dialect->castToQuery($questionMarks[$index++]);
                 }
 
-                if (!array_key_exists($index, $params)) {
-                    throw new QueryWithParamsException('question mark and value count do not match');
+                if ($namedParm) {
+                    if (!array_key_exists($namedParm, $namedParams)) {
+                        throw new QueryWithParamsException("named param {$namedParm} does not exist");
+                    }
+
+                    return $dialect->castToQuery($namedParams[$namedParm]);
                 }
 
-                $value = $params[$index];
-
-                $index++;
-
-                return $value;
+                return $sql;
             },
             $this->query
         );
     }
 
-    protected function toSqlNamedParams(array $params): string
-    {
-        return $this->pregReplaceCallback(
-            static::REGEX_PATTERN_NAMED_PARAMS,
-            function (array $match) use ($params): mixed {
-                if (!$this->isQuestionMarkOrNamedParamMatch($match)) {
-                    return $match[0];
-                }
-
-                $key = $match[1];
-
-                if (!array_key_exists($key, $params)) {
-                    $this->throwNamedParamDoesNotExistException($key);
-                }
-
-                return $params[$key];
-            },
-            $this->query
-        );
-    }
-
-    protected function pregReplaceCallback(string|array $pattern, callable $callback, string|array $subject): null|string|array
+    protected function pregReplaceCallback(string $pattern, callable $callback, string $subject): string
     {
         $iniPcreJit = ini_get(static::INI_PCRE_JIT);
         $iniPcreBacktraceLimit = ini_get(static::INI_PCRE_BACKTRACE_LIMIT);
@@ -135,7 +116,7 @@ class QueryWithParams
         ini_set(static::INI_PCRE_RECURSION_LIMIT, (string) PHP_INT_MAX);
 
         try {
-            return preg_replace_callback($pattern, $callback, $subject);
+            return (string) preg_replace_callback($pattern, $callback, $subject, -1, $count, PREG_UNMATCHED_AS_NULL);
         } catch (Throwable $exception) {
             throw $exception;
         } finally {
@@ -151,15 +132,5 @@ class QueryWithParams
                 ini_set(static::INI_PCRE_RECURSION_LIMIT, $iniPcreRecursionLimit);
             }
         }
-    }
-
-    protected function isQuestionMarkOrNamedParamMatch(array $match): bool
-    {
-        return count($match) > 1;
-    }
-
-    protected function throwNamedParamDoesNotExistException(string $key): void
-    {
-        throw new QueryWithParamsException("named param {$key} does not exist");
     }
 }
