@@ -118,6 +118,7 @@ trait ConditionsTrait
                 ->whereIsNull($column)
                 ->orWhereEquals($column, 0)
                 ->orWhereEquals($column, '', true),
+            false,
             WhereGroup::class,
             $chain
         );
@@ -131,6 +132,7 @@ trait ConditionsTrait
                 ->whereIsNotNull($column)
                 ->whereNotEquals($column, 0)
                 ->whereNotEquals($column, '', true),
+            false,
             WhereGroup::class,
             $chain
         );
@@ -156,15 +158,15 @@ trait ConditionsTrait
         return $this->addCondition($conditions, ConditionEnum::NOT_EXISTS, null, $selectQuery, $chain);
     }
 
-    protected function group(array &$conditions, callable $callback, string $conditionGroup, ChainEnum $chain): static
+    protected function group(array &$conditions, callable $callback, bool $not, string $conditionGroup, ChainEnum $chain): static
     {
-        $group = (function () use ($callback, $conditionGroup, $chain): ConditionGroup {
+        $group = (function () use ($callback, $not, $conditionGroup, $chain): ConditionGroup {
             $reflectionFunction = new ReflectionFunction($callback);
 
             $reflectionType = ($reflectionFunction->getParameters()[0] ?? null)?->getType();
 
             if (!$reflectionType) {
-                return new $conditionGroup($chain);
+                return new $conditionGroup($chain, $not);
             }
 
             $type = function (ReflectionType $reflectionType) use (&$type): ?string {
@@ -200,10 +202,10 @@ trait ConditionsTrait
             $class = $type($reflectionType);
 
             if (!$class) {
-                return new $conditionGroup($chain);
+                return new $conditionGroup($chain, $not);
             }
 
-            return new $class($chain);
+            return new $class($chain, $not);
         })();
 
         $group = $callback($group) ?? $group;

@@ -137,7 +137,12 @@ trait HavingTrait
 
     public function havingGroup(callable $callback): static
     {
-        return $this->group($this->having, $callback, HavingGroup::class, ChainEnum::AND);
+        return $this->group($this->having, $callback, false, HavingGroup::class, ChainEnum::AND);
+    }
+
+    public function havingNotGroup(callable $callback): static
+    {
+        return $this->group($this->having, $callback, true, HavingGroup::class, ChainEnum::AND);
     }
 
     public function havingOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static
@@ -277,7 +282,12 @@ trait HavingTrait
 
     public function orHavingGroup(callable $callback): static
     {
-        return $this->group($this->having, $callback, HavingGroup::class, ChainEnum::OR);
+        return $this->group($this->having, $callback, false, HavingGroup::class, ChainEnum::OR);
+    }
+
+    public function orHavingNotGroup(callable $callback): static
+    {
+        return $this->group($this->having, $callback, true, HavingGroup::class, ChainEnum::OR);
     }
 
     public function orHavingOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static

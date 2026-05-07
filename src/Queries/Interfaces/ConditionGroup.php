@@ -6,7 +6,8 @@ use Sentience\Database\Queries\Enums\ChainEnum;
 
 interface ConditionGroup
 {
-    public function __construct(ChainEnum $chain);
+    public function __construct(ChainEnum $chain, bool $not);
     public function getChain(): ChainEnum;
     public function getConditions(): array;
+    public function getNot(): bool;
 }

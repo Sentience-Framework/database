@@ -10,8 +10,10 @@ class HavingGroup implements ConditionGroup
 {
     use HavingTrait;
 
-    public function __construct(protected ChainEnum $chain)
-    {
+    public function __construct(
+        protected ChainEnum $chain,
+        protected bool $not
+    ) {
     }
 
     public function getChain(): ChainEnum
@@ -22,5 +24,10 @@ class HavingGroup implements ConditionGroup
     public function getConditions(): array
     {
         return $this->having;
+    }
+
+    public function getNot(): bool
+    {
+        return $this->not;
     }
 }

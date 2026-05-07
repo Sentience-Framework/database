@@ -137,7 +137,12 @@ trait WhereTrait
 
     public function whereGroup(callable $callback): static
     {
-        return $this->group($this->where, $callback, WhereGroup::class, ChainEnum::AND);
+        return $this->group($this->where, $callback, false, WhereGroup::class, ChainEnum::AND);
+    }
+
+    public function whereNotGroup(callable $callback): static
+    {
+        return $this->group($this->where, $callback, true, WhereGroup::class, ChainEnum::AND);
     }
 
     public function whereOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static
@@ -277,7 +282,12 @@ trait WhereTrait
 
     public function orWhereGroup(callable $callback): static
     {
-        return $this->group($this->where, $callback, WhereGroup::class, ChainEnum::OR);
+        return $this->group($this->where, $callback, false, WhereGroup::class, ChainEnum::OR);
+    }
+
+    public function orWhereNotGroup(callable $callback): static
+    {
+        return $this->group($this->where, $callback, true, WhereGroup::class, ChainEnum::OR);
     }
 
     public function orWhereOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static

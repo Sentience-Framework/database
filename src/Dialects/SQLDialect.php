@@ -721,6 +721,10 @@ class SQLDialect extends DialectAbstract
 
         $conditions = $group->getConditions();
 
+        if ($group->getNot()) {
+            $query .= 'NOT ';
+        }
+
         $query .= '(';
 
         foreach ($conditions as $index => $condition) {
