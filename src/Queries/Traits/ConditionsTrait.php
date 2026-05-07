@@ -214,7 +214,7 @@ trait ConditionsTrait
             return $this;
         }
 
-        if (count($group->getConditions()) == 0) {
+        if (count($group->conditions()) == 0) {
             return $this;
         }
 

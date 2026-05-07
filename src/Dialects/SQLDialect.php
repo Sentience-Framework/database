@@ -477,10 +477,10 @@ class SQLDialect extends DialectAbstract
 
             match ($join->join) {
                 JoinEnum::LEFT_JOIN,
-                JoinEnum::LEFT_JOIN_LATERAL => $this->buildLeftJoin($query, $params, $join->join, $table, $join->getConditions()),
+                JoinEnum::LEFT_JOIN_LATERAL => $this->buildLeftJoin($query, $params, $join->join, $table, $join->conditions()),
                 JoinEnum::INNER_JOIN,
-                JoinEnum::INNER_JOIN_LATERAL => $this->buildInnerJoin($query, $params, $join->join, $table, $join->getConditions()),
-                default => $this->buildJoin($query, $params, $join->join, $table, $join->getConditions())
+                JoinEnum::INNER_JOIN_LATERAL => $this->buildInnerJoin($query, $params, $join->join, $table, $join->conditions()),
+                default => $this->buildJoin($query, $params, $join->join, $table, $join->conditions())
             };
         }
     }
@@ -716,12 +716,12 @@ class SQLDialect extends DialectAbstract
     protected function buildConditionGroup(string &$query, array &$params, int $index, ConditionGroup $group): void
     {
         if ($index > 0) {
-            $query .= sprintf(' %s ', $group->getChain()->value);
+            $query .= sprintf(' %s ', $group->chain()->value);
         }
 
-        $conditions = $group->getConditions();
+        $conditions = $group->conditions();
 
-        if ($group->getNot()) {
+        if ($group->not()) {
             $query .= 'NOT ';
         }
 

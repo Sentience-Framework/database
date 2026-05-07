@@ -27,7 +27,7 @@ class Join
         return $this->orWhereEquals($join, Query::identifier($on));
     }
 
-    public function getConditions(): array
+    public function conditions(): array
     {
         return $this->where;
     }

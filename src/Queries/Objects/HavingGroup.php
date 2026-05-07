@@ -16,18 +16,18 @@ class HavingGroup implements ConditionGroup
     ) {
     }
 
-    public function getChain(): ChainEnum
+    public function chain(): ChainEnum
     {
         return $this->chain;
     }
 
-    public function getConditions(): array
-    {
-        return $this->having;
-    }
-
-    public function getNot(): bool
+    public function not(): bool
     {
         return $this->not;
+    }
+
+    public function conditions(): array
+    {
+        return $this->having;
     }
 }
