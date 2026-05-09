@@ -75,6 +75,36 @@ trait JoinsTrait
         return $this->innerJoinLateral(Query::subQuery($selectQuery, $alias), $on);
     }
 
+    public function crossJoin(string|array|Alias|Sql|SubQuery $table): static
+    {
+        return $this->addJoin(JoinEnum::CROSS_JOIN, $table, null);
+    }
+
+    public function crossJoinTable(string|array|Sql $table, ?string $alias = null): static
+    {
+        return $this->crossJoin($alias ? Query::alias($table, $alias) : $table);
+    }
+
+    public function crossJoinSubQuery(SelectQuery $selectQuery, string $alias): static
+    {
+        return $this->crossJoin(Query::subQuery($selectQuery, $alias));
+    }
+
+    public function crossJoinLateral(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
+    {
+        return $this->addJoin(JoinEnum::CROSS_JOIN_LATERAL, $table, $on);
+    }
+
+    public function crossJoinLateralTable(string|array|Sql $table, ?callable $on = null, ?string $alias = null): static
+    {
+        return $this->crossJoinLateral($alias ? Query::alias($table, $alias) : $table, $on);
+    }
+
+    public function crossJoinLateralSubQuery(SelectQuery $selectQuery, string $alias, ?callable $on = null): static
+    {
+        return $this->crossJoinLateral(Query::subQuery($selectQuery, $alias), $on);
+    }
+
     public function outerApply(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
     {
         return $this->addJoin(JoinEnum::LEFT_JOIN_LATERAL, $table, $on);

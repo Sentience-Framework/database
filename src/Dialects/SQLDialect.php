@@ -465,7 +465,7 @@ class SQLDialect extends DialectAbstract
                 continue;
             }
 
-            if (in_array($join->join, [JoinEnum::LEFT_JOIN_LATERAL, JoinEnum::INNER_JOIN_LATERAL]) && !$this->lateral()) {
+            if (in_array($join->join, [JoinEnum::LEFT_JOIN_LATERAL, JoinEnum::INNER_JOIN_LATERAL, JoinEnum::CROSS_JOIN_LATERAL]) && !$this->lateral()) {
                 throw new QueryException('LATERAL is not supported');
             }
 
@@ -480,6 +480,8 @@ class SQLDialect extends DialectAbstract
                 JoinEnum::LEFT_JOIN_LATERAL => $this->buildLeftJoin($query, $params, $join->join, $table, $join->conditions()),
                 JoinEnum::INNER_JOIN,
                 JoinEnum::INNER_JOIN_LATERAL => $this->buildInnerJoin($query, $params, $join->join, $table, $join->conditions()),
+                JoinEnum::CROSS_JOIN,
+                JoinEnum::CROSS_JOIN_LATERAL => $this->buildCrossJoin($query, $params, $join->join, $table, $join->conditions()),
                 default => $this->buildJoin($query, $params, $join->join, $table, $join->conditions())
             };
         }
@@ -512,6 +514,11 @@ class SQLDialect extends DialectAbstract
     }
 
     protected function buildInnerJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    {
+        $this->buildJoin($query, $params, $join, $table, $conditions);
+    }
+
+    protected function buildCrossJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
     {
         $this->buildJoin($query, $params, $join, $table, $conditions);
     }
