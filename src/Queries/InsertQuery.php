@@ -48,29 +48,23 @@ class InsertQuery extends Query
         return parent::toSql();
     }
 
-    public function execute(bool $emulatePrepare = false): array|ResultInterface
+    public function execute(bool $emulatePrepare = false): ResultInterface
     {
         if (!$this->onConflict || !$this->emulateOnConflict && $this->dialect->onConflict()) {
-            return $this->insert($this->values, $emulatePrepare);
+            return $this->insert($emulatePrepare);
         }
 
-        $callback = function (bool $emulatePrepare): array|ResultInterface {
-            $results = [];
-
-            foreach ($this->values as $values) {
-                $results[] = $this->upsert($values, $emulatePrepare);
-            }
-
-            return count($results) == 1 ? $results[0] : $results;
-        };
-
         return $this->emulateOnConflictInTransaction
-            ? $this->database->transaction(fn (): array => $callback($emulatePrepare))
-            : $callback($emulatePrepare);
+            ? $this->database->transaction(fn (): ResultInterface => $this->upsert($emulatePrepare))
+            : $this->upsert($emulatePrepare);
     }
 
-    protected function upsert(array $values, bool $emulatePrepare): ResultInterface
+    protected function upsert(bool $emulatePrepare): ResultInterface
     {
+        if (count($this->values) > 1) {
+            throw new QueryException('emulated upsert does not support multiple insert values');
+        }
+
         if (is_string($this->onConflict->conflict)) {
             throw new QueryException('database does not support named constraints');
         }
@@ -78,11 +72,11 @@ class InsertQuery extends Query
         $conflict = [];
 
         foreach ($this->onConflict->conflict as $column) {
-            if (!array_key_exists($column, $values)) {
+            if (!array_key_exists($column, $this->values[0])) {
                 throw new QueryException('insert values does not contain constraint columns');
             }
 
-            $value = $values[$column];
+            $value = $this->values[0][$column];
 
             $conflict[$column] = $value;
         }
@@ -102,7 +96,7 @@ class InsertQuery extends Query
         $count = count($rows);
 
         if ($count == 0) {
-            return $this->insert([$values], $emulatePrepare);
+            return $this->insert($emulatePrepare);
         }
 
         if ($count > 1) {
@@ -110,7 +104,7 @@ class InsertQuery extends Query
         }
 
         return !is_null($this->onConflict->updates)
-            ? $this->update($values, $conflict, $emulatePrepare)
+            ? $this->update($conflict, $emulatePrepare)
             : $this->ignore($result, $rows);
     }
 
@@ -132,7 +126,7 @@ class InsertQuery extends Query
         return $selectQuery->execute($emulatePrepare);
     }
 
-    protected function insert(?array $values, bool $emulatePrepare): ResultInterface
+    protected function insert(bool $emulatePrepare): ResultInterface
     {
         $result = parent::execute($emulatePrepare);
 
@@ -158,12 +152,12 @@ class InsertQuery extends Query
         );
     }
 
-    protected function update(array $values, array $conflict, bool $emulatePrepare): ResultInterface
+    protected function update(array $conflict, bool $emulatePrepare): ResultInterface
     {
         $updateQuery = $this->database->update($this->table);
 
         $updates = !is_null($this->onConflict->updates)
-            ? (count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $values)
+            ? (count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $this->values[0])
             : $conflict;
 
         $updateQuery->updates($updates);
