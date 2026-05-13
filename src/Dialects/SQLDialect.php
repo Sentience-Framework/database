@@ -77,9 +77,7 @@ class SQLDialect extends DialectAbstract
                         }
 
                         if ($column instanceof SubQuery) {
-                            $column = $column->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
-                                return $this->buildSelectQuery($params, $selectQuery);
-                            });
+                            $column = $this->subQueryToAlias($params, $column);
                         }
 
                         return $this->escapeIdentifier($column);
@@ -438,9 +436,7 @@ class SQLDialect extends DialectAbstract
         $query .= ' ';
 
         if ($table instanceof SubQuery) {
-            $table = $table->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
-                return $this->buildSelectQuery($params, $selectQuery);
-            });
+            $table = $this->subQueryToAlias($params, $table);
         }
 
         $query .= $this->escapeIdentifier($table);
@@ -470,9 +466,7 @@ class SQLDialect extends DialectAbstract
             }
 
             $table = $join->table instanceof SubQuery
-                ? $join->table->toAlias(function (SelectQuery $selectQuery) use (&$params): string {
-                    return $this->buildSelectQuery($params, $selectQuery);
-                })
+                ? $this->subQueryToAlias($params, $join->table)
                 : $join->table;
 
             match ($join->join) {
@@ -1125,6 +1119,14 @@ class SQLDialect extends DialectAbstract
         return sprintf(
             'DROP CONSTRAINT %s',
             $this->escapeIdentifier($dropConstraint->constraint)
+        );
+    }
+
+    protected function subQueryToAlias(&$params, SubQuery $subQuery): Alias
+    {
+        return Query::alias(
+            Query::raw($this->buildSelectQuery($params, $subQuery->selectQuery)),
+            $subQuery->alias
         );
     }
 
