@@ -6,13 +6,12 @@ use Sentience\Database\DriverInterface;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
-use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 
 class FirebirdDialect extends SQLDialect
 {
-    public const string DATETIME_FORMAT = 'Y-m-d H:i:s.v';
+    public const string DATETIME_FORMAT = 'Y-m-d H:i:s';
     public const bool BOOL = true;
     public const bool RETURNING = true;
 
@@ -31,7 +30,7 @@ class FirebirdDialect extends SQLDialect
 
     public function createTable(
         bool $ifNotExists,
-        string|array|Alias|Sql $table,
+        string|array|Sql $table,
         array $columns,
         array $primaryKeys,
         array $constraints
@@ -63,7 +62,7 @@ class FirebirdDialect extends SQLDialect
 
     public function dropTable(
         bool $ifExists,
-        string|array|Alias|Sql $table
+        string|array|Sql $table
     ): QueryWithParams {
         $dropTableQuery = parent::dropTable(
             false,

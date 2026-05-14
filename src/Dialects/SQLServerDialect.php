@@ -22,7 +22,7 @@ class SQLServerDialect extends SQLDialect
 
     public function createTable(
         bool $ifNotExists,
-        string|array|Alias|Sql $table,
+        string|array|Sql $table,
         array $columns,
         array $primaryKeys,
         array $constraints
@@ -60,7 +60,7 @@ class SQLServerDialect extends SQLDialect
 
     public function dropTable(
         bool $ifExists,
-        string|array|Alias|Sql $table
+        string|array|Sql $table
     ): QueryWithParams {
         $dropTableQuery = parent::dropTable(
             false,

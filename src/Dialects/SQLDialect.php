@@ -1211,7 +1211,7 @@ class SQLDialect extends DialectAbstract
         }
 
         if (is_float($value)) {
-            preg_replace(
+            return preg_replace(
                 '/(\.[0-9]+?)[0]+$/',
                 '$1',
                 sprintf('%.53f', $value)

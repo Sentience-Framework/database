@@ -138,7 +138,7 @@ class InsertQuery extends Query
             $this->dialect->insert(
                 $this->table,
                 $values,
-                !$this->emulateOnConflict ? $this->onConflict : null,
+                null,
                 !$this->emulateReturning ? $this->returning : null,
                 $this->lastInsertId
             )

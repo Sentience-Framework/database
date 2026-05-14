@@ -42,7 +42,7 @@ class OCIDialect extends SQLDialect
 
     public function dropTable(
         bool $ifExists,
-        string|array|Alias|Sql $table
+        string|array|Sql $table
     ): QueryWithParams {
         $dropTableQuery = parent::dropTable(
             false,
