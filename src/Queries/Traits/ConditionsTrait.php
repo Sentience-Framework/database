@@ -70,6 +70,16 @@ trait ConditionsTrait
         return $this->notLike($conditions, $column, '%' . $this->escapeLikeChars($value, $escapeBackslash) . '%', $caseInsensitive, $chain);
     }
 
+    protected function glob(array &$conditions, string|array $column, string $value, bool $caseInsensitive, ChainEnum $chain): static
+    {
+        return $this->addCondition($conditions, ConditionEnum::GLOB, $column, [$value, $caseInsensitive], $chain);
+    }
+
+    protected function notGlob(array &$conditions, string|array $column, string $value, bool $caseInsensitive, ChainEnum $chain): static
+    {
+        return $this->addCondition($conditions, ConditionEnum::NOT_GLOB, $column, [$value, $caseInsensitive], $chain);
+    }
+
     protected function in(array &$conditions, string|array $column, array|SelectQuery $values, ChainEnum $chain): static
     {
         return $this->addCondition($conditions, ConditionEnum::IN, $column, $values, $chain);

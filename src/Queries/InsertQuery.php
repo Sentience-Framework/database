@@ -51,7 +51,9 @@ class InsertQuery extends Query
     public function execute(bool $emulatePrepare = false): array|ResultInterface
     {
         if (!$this->onConflict || !$this->emulateOnConflict && $this->dialect->onConflict()) {
-            return $this->insert($this->values, $emulatePrepare);
+            return $this->emulateReturning
+                ? $this->insert($this->values, $emulatePrepare)
+                : parent::execute($emulatePrepare);
         }
 
         $callback = function (bool $emulatePrepare): array|ResultInterface {

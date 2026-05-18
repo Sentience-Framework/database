@@ -14,6 +14,8 @@ enum ConditionEnum: string
     case NOT_BETWEEN = 'NOT BETWEEN';
     case LIKE = 'LIKE';
     case NOT_LIKE = 'NOT LIKE';
+    case GLOB = 'GLOB';
+    case NOT_GLOB = 'NOT GLOB';
     case IN = 'IN';
     case NOT_IN = 'NOT IN';
     case REGEX = 'REGEX';

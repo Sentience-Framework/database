@@ -545,6 +545,8 @@ class SQLDialect extends DialectAbstract
             ConditionEnum::NOT_BETWEEN => $this->buildConditionBetween($query, $params, $condition),
             ConditionEnum::LIKE,
             ConditionEnum::NOT_LIKE => $this->buildConditionLike($query, $params, $condition),
+            ConditionEnum::GLOB,
+            ConditionEnum::NOT_GLOB => $this->buildConditionGlob($query, $params, $condition),
             ConditionEnum::IN,
             ConditionEnum::NOT_IN => $this->buildConditionIn($query, $params, $condition),
             ConditionEnum::REGEX,
@@ -653,6 +655,44 @@ class SQLDialect extends DialectAbstract
             $caseInsensitive ? sprintf('lower(%s)', $identifier) : $identifier,
             $condition->condition->value,
             $caseInsensitive ? sprintf('lower(%s)', $questionMark) : $questionMark
+        );
+    }
+
+    protected function buildConditionGlob(string &$query, array &$params, Condition $condition): void
+    {
+        [$value, $caseInsensitive] = $condition->value;
+
+        $likePattern = $this->globToLike($value);
+
+        $likeCondition = new Condition(
+            $condition->condition == ConditionEnum::GLOB ? ConditionEnum::LIKE : ConditionEnum::NOT_LIKE,
+            $condition->identifier,
+            [$likePattern, $caseInsensitive],
+            $condition->chain
+        );
+
+        $this->buildConditionLike($query, $params, $likeCondition);
+    }
+
+    protected function globToLike(string $globPattern): string
+    {
+        $likePattern = strtr(
+            $globPattern,
+            [
+                '*' => '%',
+                '?' => '_'
+            ]
+        );
+
+        return preg_replace_callback(
+            '/\[(.)\]/su',
+            fn (array $match): string => match ($match[1]) {
+                '%' => '\%',
+                '_' => '\_',
+                '\\' => '\\\\',
+                default => $match[1]
+            },
+            $likePattern
         );
     }
 

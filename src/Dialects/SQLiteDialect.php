@@ -101,6 +101,21 @@ class SQLiteDialect extends SQLDialect
         );
     }
 
+    protected function buildConditionGlob(string &$query, array &$params, Condition $condition): void
+    {
+        [$value, $caseInsensitive] = $condition->value;
+
+        $identifier = $this->escapeIdentifier($condition->identifier);
+        $questionMark = $this->buildQuestionMarks($params, $value);
+
+        $query .= sprintf(
+            '%s %s %s',
+            $caseInsensitive ? sprintf('lower(%s)', $identifier) : $identifier,
+            $condition->condition->value,
+            $caseInsensitive ? sprintf('lower(%s)', $questionMark) : $questionMark
+        );
+    }
+
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
     {
         if (!($this->options[static::OPTIONS_USE_REGEXP] ?? false)) {

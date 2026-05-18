@@ -65,6 +65,16 @@ trait WhereTrait
         return $this->notContains($this->where, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::AND);
     }
 
+    public function whereGlob(string|array $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->glob($this->where, $column, $value, $caseInsensitive, ChainEnum::AND);
+    }
+
+    public function whereNotGlob(string|array $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->notGlob($this->where, $column, $value, $caseInsensitive, ChainEnum::AND);
+    }
+
     public function whereIn(string|array $column, array|SelectQuery $values): static
     {
         return $this->in($this->where, $column, $values, ChainEnum::AND);
