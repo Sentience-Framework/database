@@ -676,23 +676,15 @@ class SQLDialect extends DialectAbstract
 
     protected function globToLike(string $globPattern): string
     {
-        $likePattern = strtr(
+        return strtr(
             $globPattern,
             [
+                '\\' => '\\\\',
+                '%' => '\%',
+                '_' => '\_',
                 '*' => '%',
                 '?' => '_'
             ]
-        );
-
-        return preg_replace_callback(
-            '/\[(.)\]/su',
-            fn (array $match): string => match ($match[1]) {
-                '%' => '\%',
-                '_' => '\_',
-                '\\' => '\\\\',
-                default => $match[1]
-            },
-            $likePattern
         );
     }
 

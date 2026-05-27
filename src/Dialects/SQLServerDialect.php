@@ -170,6 +170,8 @@ class SQLServerDialect extends SQLDialect
     protected function buildColumn(Column $column): string
     {
         if ($column->generatedByDefaultAsIdentity) {
+            $column = clone $column;
+
             $column->type .= ' identity(1, 1)';
         }
 
