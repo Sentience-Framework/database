@@ -30,14 +30,14 @@ class QueryWithParams
         $query = $this->pregReplaceCallback(
             static::REGEX_PATTERN,
             function (array $match) use (&$params, &$index): string {
-                [$sql, $questionMark, $namedParm] = $match;
+                [$sql, $questionMark, $namedParam] = $match;
 
-                if ($namedParm) {
-                    if (!array_key_exists($namedParm, $this->params)) {
-                        throw new QueryWithParamsException("named param {$namedParm} does not exist");
+                if ($namedParam) {
+                    if (!array_key_exists($namedParam, $this->params)) {
+                        throw new QueryWithParamsException("named param {$namedParam} does not exist");
                     }
 
-                    $params[] = $this->params[$namedParm];
+                    $params[] = $this->params[$namedParam];
 
                     return '?';
                 }
@@ -81,7 +81,7 @@ class QueryWithParams
         return $this->pregReplaceCallback(
             static::REGEX_PATTERN,
             function (array $match) use ($dialect, $questionMarks, $namedParams, &$index): string {
-                [$sql, $questionMark, $namedParm] = $match;
+                [$sql, $questionMark, $namedParam] = $match;
 
                 if ($questionMark) {
                     if (!array_key_exists($index, $questionMarks)) {
@@ -91,12 +91,12 @@ class QueryWithParams
                     return $dialect->castToQuery($questionMarks[$index++]);
                 }
 
-                if ($namedParm) {
-                    if (!array_key_exists($namedParm, $namedParams)) {
-                        throw new QueryWithParamsException("named param {$namedParm} does not exist");
+                if ($namedParam) {
+                    if (!array_key_exists($namedParam, $namedParams)) {
+                        throw new QueryWithParamsException("named param {$namedParam} does not exist");
                     }
 
-                    return $dialect->castToQuery($namedParams[$namedParm]);
+                    return $dialect->castToQuery($namedParams[$namedParam]);
                 }
 
                 return $sql;
