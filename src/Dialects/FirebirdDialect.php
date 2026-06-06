@@ -11,7 +11,6 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 
 class FirebirdDialect extends SQLDialect
 {
-    public const string DATETIME_FORMAT = 'Y-m-d H:i:s';
     public const bool BOOL = true;
     public const bool RETURNING = true;
 

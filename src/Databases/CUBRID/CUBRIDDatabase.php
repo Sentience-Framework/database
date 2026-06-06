@@ -1,22 +1,22 @@
 <?php
 
-namespace Sentience\Database\Databases\OCI;
+namespace Sentience\Database\Databases\CUBRID;
 
 use Closure;
 use Sentience\Database\Databases\DatabaseAbstract;
 use Sentience\Database\Driver;
 use Sentience\Database\Sockets\NetworkSocket;
 
-class OCIDatabase extends DatabaseAbstract
+class CUBRIDDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::OCI;
+    public const Driver DRIVER = Driver::CUBRID;
 
     public static function network(
         string $name,
         string $username,
         ?string $password,
         string $host = 'localhost',
-        int $port = 1521,
+        int $port = 33000,
         array $queries = [],
         array $options = [],
         ?Closure $debug = null
@@ -38,19 +38,18 @@ class OCIDatabase extends DatabaseAbstract
         return new static($adapter, $dialect);
     }
 
-    public function userTables(): array
+    public function informationSchemaTables(): array
     {
-        return $this->select('user_tables')
-            ->whereNotIn('table_name', ['DUAL', 'USER_HISTORY$'])
+        return $this->select(['information_schema', 'tables'])
+            ->whereEquals('table_type', 'BASE TABLE')
             ->execute()
             ->fetchAssocs();
     }
 
-    public function userTabColumns(string $table): array
+    public function informationSchemaColumns(string $table): array
     {
-        return $this->select('user_tab_columns')
-            ->whereEquals('table_name', $table)
-            ->orderByAsc('column_id')
+        return $this->select(['information_schema', 'columns'])
+            ->whereEquals('TABLE_NAME', $table)
             ->execute()
             ->fetchAssocs();
     }

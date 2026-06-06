@@ -10,6 +10,7 @@ interface AdapterInterface
 {
     public const string OPTIONS_PERSISTENT = 'persistent';
     public const string OPTIONS_PDO_DSN = 'dsn';
+    public const string OPTIONS_INFORMIX_SERVER = 'server';
     public const string OPTIONS_MYSQL_CHARSET = 'charset';
     public const string OPTIONS_MYSQL_COLLATION = 'collation';
     public const string OPTIONS_MYSQL_ENGINE = 'engine';
@@ -26,6 +27,7 @@ interface AdapterInterface
     public const string OPTIONS_SQLITE_ENCODING = 'encoding';
     public const string OPTIONS_SQLITE_JOURNAL_MODE = 'journal_mode';
     public const string OPTIONS_SQLITE_FOREIGN_KEYS = 'foreign_keys';
+    public const string OPTIONS_SQLITE_CREATE_FUNCTIONS = 'create_functions';
     public const string OPTIONS_SQLITE_OPTIMIZE = 'optimize';
     public const string OPTIONS_SQLSRV_ENCRYPT = 'encrypt';
     public const string OPTIONS_SQLSRV_TRUST_SERVER_CERTIFICATE = 'trust_server_certificate';
@@ -42,5 +44,4 @@ interface AdapterInterface
     public function rollbackSavepoint(DialectInterface $dialect, string $name): void;
     public function inTransaction(): bool;
     public function lastInsertId(?string $name = null): null|int|string;
-    public static function extensionsInstalled(): bool;
 }

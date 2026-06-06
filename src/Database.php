@@ -4,9 +4,6 @@ namespace Sentience\Database;
 
 use Closure;
 use PDO;
-use Sentience\Database\Adapters\MySQLiAdapter;
-use Sentience\Database\Adapters\PDOAdapter;
-use Sentience\Database\Adapters\SQLite3Adapter;
 use Sentience\Database\Databases\DatabaseAbstract;
 use Sentience\Database\Sockets\SocketAbstract;
 
@@ -41,7 +38,7 @@ class Database extends DatabaseAbstract
     {
         $drivers = [];
 
-        if (PDOAdapter::extensionsInstalled()) {
+        if (class_exists('PDO')) {
             foreach (PDO::getAvailableDrivers() as $pdoDriver) {
                 $driver = Driver::tryFrom($pdoDriver);
 
@@ -57,7 +54,7 @@ class Database extends DatabaseAbstract
             }
         }
 
-        if (MySQLiAdapter::extensionsInstalled()) {
+        if (class_exists('mysqli')) {
             foreach ([Driver::MYSQL, Driver::MARIADB] as $driver) {
                 if (in_array($driver, $drivers)) {
                     continue;
@@ -67,7 +64,7 @@ class Database extends DatabaseAbstract
             }
         }
 
-        if (SQLite3Adapter::extensionsInstalled()) {
+        if (class_exists('SQLite3')) {
             if (!in_array(Driver::SQLITE, $drivers)) {
                 $drivers[] = Driver::SQLITE;
             }

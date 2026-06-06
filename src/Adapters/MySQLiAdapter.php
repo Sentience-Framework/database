@@ -226,9 +226,4 @@ class MySQLiAdapter extends AdapterAbstract
             $this->mysqli->close();
         }
     }
-
-    public static function extensionsInstalled(): bool
-    {
-        return class_exists('mysqli');
-    }
 }

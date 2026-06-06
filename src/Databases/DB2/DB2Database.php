@@ -1,22 +1,22 @@
 <?php
 
-namespace Sentience\Database\Databases\OCI;
+namespace Sentience\Database\Databases\DB2;
 
 use Closure;
 use Sentience\Database\Databases\DatabaseAbstract;
 use Sentience\Database\Driver;
 use Sentience\Database\Sockets\NetworkSocket;
 
-class OCIDatabase extends DatabaseAbstract
+class DB2Database extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::OCI;
+    public const Driver DRIVER = Driver::DB2;
 
     public static function network(
         string $name,
         string $username,
         ?string $password,
         string $host = 'localhost',
-        int $port = 1521,
+        int $port = 50000,
         array $queries = [],
         array $options = [],
         ?Closure $debug = null
@@ -38,19 +38,31 @@ class OCIDatabase extends DatabaseAbstract
         return new static($adapter, $dialect);
     }
 
-    public function userTables(): array
+    public function sysTables(): array
     {
-        return $this->select('user_tables')
-            ->whereNotIn('table_name', ['DUAL', 'USER_HISTORY$'])
-            ->execute()
-            ->fetchAssocs();
+        $result = $this->select(['syscat', 'tables'])
+            ->columns(['table_name' => 'TABNAME'])
+            ->whereEquals('TYPE', 'T')
+            ->execute();
+
+        $tables = [];
+
+        while ($table = $result->scalar()) {
+            if (!$table) {
+                break;
+            }
+
+            $tables[] = $table;
+        }
+
+        return $tables;
     }
 
-    public function userTabColumns(string $table): array
+    public function sysColumns(string $table): array
     {
-        return $this->select('user_tab_columns')
-            ->whereEquals('table_name', $table)
-            ->orderByAsc('column_id')
+        return $this->select(['syscat', 'columns'])
+            ->whereEquals('TABNAME', $table)
+            ->orderByAsc('COLNO')
             ->execute()
             ->fetchAssocs();
     }

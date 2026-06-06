@@ -7,8 +7,11 @@ use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Adapters\MySQLiAdapter;
 use Sentience\Database\Adapters\PDOAdapter;
 use Sentience\Database\Adapters\SQLite3Adapter;
+use Sentience\Database\Dialects\CUBRIDDialect;
+use Sentience\Database\Dialects\DB2Dialect;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Dialects\FirebirdDialect;
+use Sentience\Database\Dialects\InformixDialect;
 use Sentience\Database\Dialects\MySQLDialect;
 use Sentience\Database\Dialects\OCIDialect;
 use Sentience\Database\Dialects\PgSQLDialect;
@@ -19,7 +22,11 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 enum Driver: string implements DriverInterface
 {
+    case CLICKHOUSE = 'clickhouse';
+    case CUBRID = 'cubrid';
+    case DB2 = 'db2';
     case FIREBIRD = 'firebird';
+    case INFORMIX = 'informix';
     case MARIADB = 'mariadb';
     case MYSQL = 'mysql';
     case OCI = 'oci';
@@ -62,7 +69,10 @@ enum Driver: string implements DriverInterface
     public function dialect(int|string $version, array $options = []): DialectInterface
     {
         return match ($this) {
+            static::CUBRID => new CUBRIDDialect($this, $version, $options),
+            static::DB2 => new DB2Dialect($this, $version, $options),
             static::FIREBIRD => new FirebirdDialect($this, $version, $options),
+            static::INFORMIX => new InformixDialect($this, $version, $options),
             static::MARIADB,
             static::MYSQL => new MySQLDialect($this, $version, $options),
             static::OCI => new OCIDialect($this, $version, $options),
