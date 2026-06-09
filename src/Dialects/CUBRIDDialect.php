@@ -7,6 +7,9 @@ use Sentience\Database\Queries\Enums\TypeEnum;
 
 class CUBRIDDialect extends MySQLDialect
 {
+    public const bool LATERAL = false;
+    public const bool RETURNING = false;
+
     public function __construct(DriverInterface $driver, int|string $version, array $options)
     {
         if (is_int($version)) {
@@ -29,15 +32,5 @@ class CUBRIDDialect extends MySQLDialect
             TypeEnum::DATETIME => 'DATETIME YEAR TO FRACTION(5)',
             default => parent::type($type, $size)
         };
-    }
-
-    public function returning(): bool
-    {
-        return true;
-    }
-
-    public function lateral(): bool
-    {
-        return true;
     }
 }

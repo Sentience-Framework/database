@@ -116,6 +116,16 @@ class PDOAdapter extends AdapterAbstract
             );
         }
 
+        if ($driver == Driver::FIREBIRD) {
+            return sprintf(
+                '%s:dbname=%s/%d:%s',
+                $driver->driver(),
+                $socket->host,
+                $socket->port,
+                $name
+            );
+        }
+
         if ($driver == Driver::INFORMIX) {
             return sprintf(
                 '%s:DATABASE=%s;HOST=%s;SERVER=%s;SERVICE=%d;',
@@ -124,16 +134,6 @@ class PDOAdapter extends AdapterAbstract
                 $socket->host,
                 $options[static::OPTIONS_INFORMIX_SERVER] ?? 'olainformix',
                 $socket->port
-            );
-        }
-
-        if ($driver == Driver::FIREBIRD) {
-            return sprintf(
-                '%s:dbname=%s/%d:%s',
-                $driver->driver(),
-                $socket->host,
-                $socket->port,
-                $name
             );
         }
 

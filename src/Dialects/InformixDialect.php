@@ -54,14 +54,4 @@ class InformixDialect extends SQLDialect
             default => parent::type($type, $size)
         };
     }
-
-    public function returning(): bool
-    {
-        return true;
-    }
-
-    public function lateral(): bool
-    {
-        return true;
-    }
 }

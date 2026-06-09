@@ -68,14 +68,4 @@ class DB2Dialect extends SQLDialect
     {
         return $this->version >= 970;
     }
-
-    public function onConflict(): bool
-    {
-        return $this->version >= 970;
-    }
-
-    public function returning(): bool
-    {
-        return true;
-    }
 }

@@ -82,7 +82,7 @@ class SQLiteDialect extends SQLDialect
         if (str_contains($globPattern, '\\')) {
             $globPattern = preg_replace_callback(
                 '/\\\\(.)/su',
-                fn (array $match): string => (string) match ($match[1]) {
+                fn (array $match): string => match ($match[1]) {
                     '%' => '[%]',
                     '_' => '[_]',
                     '\\' => '[\\]',
