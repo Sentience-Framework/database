@@ -43,7 +43,7 @@ class InformixDatabase extends DatabaseAbstract
     public function sysTables(): array
     {
         $result = $this->select('systables')
-            ->columns(['table_name' => 'tabname'])
+            ->columns(['tabname'])
             ->whereEquals('tabtype', 'T')
             ->execute();
 
@@ -63,7 +63,7 @@ class InformixDatabase extends DatabaseAbstract
     public function sysColumns(string $table): array
     {
         return $this->select('systables')
-            ->columns(['syscolumns', Query::raw('*')])
+            ->columns([['syscolumns', Query::raw('*')]])
             ->innerJoin(
                 'syscolumns',
                 fn (Join $join) => $join->on(

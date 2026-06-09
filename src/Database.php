@@ -55,7 +55,7 @@ class Database extends DatabaseAbstract
         }
 
         if (class_exists('mysqli')) {
-            foreach ([Driver::MYSQL, Driver::MARIADB] as $driver) {
+            foreach ([Driver::MARIADB, Driver::MYSQL] as $driver) {
                 if (in_array($driver, $drivers)) {
                     continue;
                 }

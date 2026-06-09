@@ -41,7 +41,7 @@ class DB2Database extends DatabaseAbstract
     public function sysTables(): array
     {
         $result = $this->select(['syscat', 'tables'])
-            ->columns(['table_name' => 'TABNAME'])
+            ->columns(['TABNAME'])
             ->whereEquals('TYPE', 'T')
             ->execute();
 

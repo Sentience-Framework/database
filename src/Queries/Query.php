@@ -12,7 +12,6 @@ use Sentience\Database\Queries\Objects\CurrentTimestamp;
 use Sentience\Database\Queries\Objects\Expression;
 use Sentience\Database\Queries\Objects\ExpressionF;
 use Sentience\Database\Queries\Objects\Identifier;
-use Sentience\Database\Queries\Objects\Param;
 use Sentience\Database\Queries\Objects\Raw;
 use Sentience\Database\Queries\Objects\SubQuery;
 
@@ -71,11 +70,6 @@ abstract class Query implements QueryInterface
     public static function identifier(string|array $identifier): Identifier
     {
         return new Identifier($identifier);
-    }
-
-    public static function param(null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value): Param
-    {
-        return new Param($value);
     }
 
     public static function raw(string $sql): Raw
