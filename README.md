@@ -22,7 +22,6 @@ composer require sentience/database
 ```
 
 ### Fully supported database dialects
-- Firebird (PDO)
 - MariaDB (PDO / Mysqli)
 - MySQL (PDO / Mysqli)
 - Postgres (PDO)
@@ -30,9 +29,13 @@ composer require sentience/database
 - SQL Server (PDO)
 
 ### Partially supported database dialects
+- CUBRID (PDO)
+- DB2 (PDO)
+- Firebird (PDO)
+- Informix (PDO)
 - Oracle OCI (PDO)
 
-The goal of this database abstraction was to provide an interface that is universally supported across all the implemented database (with currently the only exception being table constraint altering in SQLite). This is achieved by adhering to the SQL standard as much as possible, with a few exception outside the standard such as RETURNING and REGEXP_LIKE. For databases that don't natively implement ON CONFLICT or RETURNING clauses, Sentience offers alternatives that emulate the feature.
+The goal of this database abstraction was to provide an interface that is universally supported across all the implemented database (with currently the only exception being table constraint altering in SQLite). This is achieved by adhering to the SQL standard as much as possible, with a few exception outside the standard such as RETURNING and regexp_like. For databases that don't natively implement ON CONFLICT or RETURNING clauses, Sentience offers alternatives that emulate the feature.
 
 ## Sentience database features include:
 
@@ -45,10 +48,16 @@ The goal of this database abstraction was to provide an interface that is univer
 - ALTER TABLE
 - DROP TABLE
 
+### Joins
+- LEFT JOIN / INNER JOIN / CROSS JOIN
+- Lateral joins (LEFT JOIN LATERAL, INNER JOIN LATERAL, CROSS JOIN LATERAL - SQL Server uses OUTER APPLY / CROSS APPLY)
+- Table and SubQuery join variants for each join type
+
 ### Where conditions
 - Equals (=) / Not equals (<>)
 - IS NULL / IS NOT NULL
 - LIKE / NOT LIKE case sensitive (default) and insensitive (SQLITE uses LIKE converted to GLOB)
+- GLOB / NOT GLOB (SQLite native, emulated as LIKE conversion for other databases)
 - Starts with / Ends with (using LIKE)
 - Contains / Not contains (using LIKE)
 - IN / NOT IN
@@ -56,11 +65,15 @@ The goal of this database abstraction was to provide an interface that is univer
 - Greater than (>) / Greater than or equals (>=)
 - BETWEEN / NOT BETWEEN
 - Empty / Not empty (Mimicking PHP's empty function)
-- Regex / Not regex (SQLite also supported using regexp_like and REGEXP)
+- Regex / Not regex (SQLite also supported using regexp_like and REGEXP, PostgreSQL uses tilde operators with use_tilde_regex option)
 - EXISTS / NOT EXISTS (sub query)
-- Group
+- Group / Not group
 - Operator
 - Raw
+- printf-style formatting (wheref, orWheref, havingf, orHavingf with %s, %d, %b, %f modifiers)
+
+### HAVING conditions
+- All where condition variants are available as having* and orHaving* methods
 
 ### Alter table definitions
 - Add column / Drop column
@@ -76,9 +89,11 @@ Ever used a database, and suddenly you realize that you're missing a functionali
 When a database doesn't support a feature, Sentience does its best to emulate this feature. Such examples are:
 
 - MySQL gets support for returning (with ->lastInsertId('') set)
-- SQLite gets support for regular expressions using REGEXP_LIKE (Using REGEXP in raw queries is also supported)
-- Firebird, OCI, and SQLServer, get ON CONFLICT resolution support
-- Firebird, OCI, and SQLServer, get IF EXISTS and IF NOT EXISTS support
+- SQLite gets support for regular expressions using regexp_like (Using REGEXP in raw queries is also supported)
+- Firebird, OCI, DB2, and SQLServer, get ON CONFLICT resolution support
+- Firebird, OCI, DB2, and SQLServer, get IF EXISTS and IF NOT EXISTS support
+- PostgreSQL gets DISTINCT ON via ->distinct(['column'])
+- PostgreSQL 15+ uses regexp_like() for regex matching (use_tilde_regex option enables ~ operator)
 
 Sentience wasn't made to be a drop-in replacement for Eloquent or Doctrine, rather, it attempts to borrow doctrines and best practices from Golang (mainly inspired by the simplicity of [Bun ORM](https://bun.uptrace.dev/)), but with the extra abstractions for where conditions, conflict resolutions, and joins.
 
@@ -93,7 +108,10 @@ use Sentience\Database\Driver;
 $driver = Driver::from('pgsql');
 
 // Available drivers:
+// - 'cubrid'
+// - 'db2'
 // - 'firebird'
+// - 'informix'
 // - 'mariadb'
 // - 'mysql'
 // - 'oci'
@@ -112,7 +130,7 @@ $database = Database::connect(
     $name,
     $socket, // NetworkSocket, UnixSocket, or null for SQLite
     $queries, // A list of queries to execute when initializing the session
-    $options, // An associative array of extra options (more on that in #4),
+    $options, // An associative array of extra options (more on that in #5),
     $debug, // A callback that takes (string $query, float $startTime, ?string $error) as arguments
     $usePDOAdapter, // Use PDO for MariaDB/MySQL/SQLite connections instead of their native implementation
 );
@@ -177,6 +195,7 @@ $database->select(Query::alias(['public', 'table_1'], 'table1'))
             ['on_table', 'on_column']
         )->whereBetween(['innerjoin_table', 'join_column'], 0, 9999)
     )
+    ->crossJoin('crossjoin_table')
     ->innerJoinLateral(
         'innerjoin_table_lateral',
         fn (Join $join): Join => $join->on(
@@ -209,6 +228,15 @@ $database->select(Query::alias(['public', 'table_1'], 'table1'))
     ->whereRegex('column6', 'file|read|write|open', 'i')
     ->whereNotRegex('column6', 'error')
     ->whereContains('column7', 'draft')
+    ->whereGlob('glob_column', '*.txt')
+    ->whereOperator('column8', '<>', 5)
+    ->wheref('column9 = %s AND count > %d', ['test', 10])
+    ->whereExists($database->select('sub_table')
+        ->columns(['id'])
+        ->whereEquals('status', 'active'))
+    ->whereNotExists($database->select('excluded_table')
+        ->columns(['id'])
+        ->whereEquals('deleted', true))
     ->where('created_at < ?', [Query::now()])
     ->groupBy([
         ['table', 'column'],
@@ -216,6 +244,8 @@ $database->select(Query::alias(['public', 'table_1'], 'table1'))
         Query::raw('rawColumn')
     ])
     ->having('COUNT(*) > :count', [':count' => 10])
+    ->havingf('SUM(amount) > %d', [1000])
+    ->havingEquals('status_count', 5)
     ->orderByAsc('column4')
     ->orderByDesc('column5')
     ->orderByAsc(Query::raw('column6'))
@@ -237,8 +267,10 @@ $database->insert('table_1')
         'column3' => false,
         'column4' => Query::raw('column1 + 1')
     ])
-    ->onConflictUpdate(['id'], ['column_updated' => Query::now()]) // ON DUPLICATE KEY UPDATE / ON CONFLICT DO UPDATE
-    ->onConflictIgnore(['id']) // INSERT IGNORE / ON CONFLICT DO NOTHING
+    ->onConflictDoNothing(['id']) // INSERT IGNORE / ON CONFLICT DO NOTHING
+    ->onConflictDoUpdate(['id'], ['column_updated' => Query::now()]) // ON DUPLICATE KEY UPDATE / ON CONFLICT DO UPDATE
+    ->insertIgnore(['id']) // Alias for onConflictDoNothing
+    ->onDuplicateKeyUpdate(['id'], ['column_updated' => Query::now()]) // Alias for onConflictDoUpdate
     ->returning(['id'])
     ->lastInsertId('id') // Only required when using MariaDB (< 10.5), MySQL, and databases that don't support returning
     ->execute();
@@ -311,6 +343,8 @@ $database->createTable('table_1')
 $database->alterTable('table_1')
     ->addColumn('column3', 'INT')
     ->addColumn('columnDateTimeFunc', 'DATETIME', true, Query::raw('now()'))
+    ->addAutoIncrement('auto_col') // Convenience method for adding auto-increment column
+    ->addIdentity('identity_col') // Convenience method for adding identity column
     ->alterColumn('column3', 'TEXT AUTO_INCREMENT')
     ->renameColumn('column3', 'column4')
     ->dropColumn('column4')
@@ -467,6 +501,27 @@ class CaseExpression extends Expression
 }
 ```
 
+### Printf-style formatting (ExpressionF)
+
+`Query::expressionf()` provides printf-style formatting for conditions, joins, and other SQL fragments. It supports type-safe modifiers that cast values to the appropriate SQL types:
+
+| Modifier | Type | Example |
+|----------|------|---------|
+| `%b`, `%B` | Boolean | `Query::expressionf('active = %b', true)` |
+| `%c`, `%d`, `%o`, `%u`, `%x`, `%X` | Integer | `Query::expressionf('%d items', 5)` |
+| `%e`, `%E`, `%f`, `%F`, `%g`, `%G`, `%h`, `%H` | Float (with optional precision: `.3f`) | `Query::expressionf('%.2f price', 19.99)` |
+| `%s` | String | `Query::expressionf('name = %s', 'test')` |
+
+Subqueries and Sql objects are also supported as values - they are rendered inline with their own params merged in:
+
+```php
+$database->select('table_1')
+    ->wheref('status = %s AND count > %d', ['active', 10])
+    ->orWheref('category IN (SELECT id FROM categories WHERE parent_id = %d)', [5])
+    ->havingf('SUM(amount) >= %.2f', [1000.00])
+    ->execute();
+```
+
 # 5 Adapter options
 
 The `AdapterInterface` class holds the options as public constants.
@@ -474,6 +529,7 @@ The `AdapterInterface` class holds the options as public constants.
 ```php
 public const string OPTIONS_PERSISTENT = 'persistent'; // bool
 public const string OPTIONS_PDO_DSN = 'dsn'; // string
+public const string OPTIONS_INFORMIX_SERVER = 'server'; // string
 public const string OPTIONS_MYSQL_CHARSET = 'charset'; // string
 public const string OPTIONS_MYSQL_COLLATION = 'collation'; // null|string
 public const string OPTIONS_MYSQL_ENGINE = 'engine'; // string
@@ -490,6 +546,7 @@ public const string OPTIONS_SQLITE_BUSY_TIMEOUT = 'busy_timeout'; // int in mili
 public const string OPTIONS_SQLITE_ENCODING = 'encoding'; // string
 public const string OPTIONS_SQLITE_JOURNAL_MODE = 'journal_mode'; // string (https://sqlite.org/pragma.html#pragma_journal_mode)
 public const string OPTIONS_SQLITE_FOREIGN_KEYS = 'foreign_keys'; // bool
+public const string OPTIONS_SQLITE_CREATE_FUNCTIONS = 'create_functions'; // array of closures
 public const string OPTIONS_SQLITE_OPTIMIZE = 'optimize'; // bool
 public const string OPTIONS_SQLSRV_ENCRYPT = 'encrypt'; // bool
 public const string OPTIONS_SQLSRV_TRUST_SERVER_CERTIFICATE = 'trust_server_certificate'; // bool
@@ -497,22 +554,7 @@ public const string OPTIONS_SQLSRV_TRUST_SERVER_CERTIFICATE = 'trust_server_cert
 
 Most options work on a "if they're in the options array, they're applied".
 
-# 6 Native upserts and emulated upserts (including RETURNING emulation)
-
-MariaDB, MySQL, Postgres, and SQLite support some form of conflict resolution inside INSERT queries. MariaDB and MySQL support INSERT IGNORE and ON DUPLICATE KEY UPDATE, Postgres and SQLite support ON CONFLICT DO NOTHING and ON CONFLICT DO UPDATE.
-
-For databases that do not support conflict resolution natively, Sentience emulates this process.
-
-1. Perform select using on conflict columns as where conditions.
-2. Count == 0 --> perform insert.
-3. Count >= 2 --> throw exception because the constraint is not unique.
-4. Perform update using on conflict columns as where conditions.
-
-For databases that do not support returning (MariaDB < 10.5, MySQL) another select is performed using the on conflict constraint or the last insert id, to retrieve the inserted or updated record.
-
-If the dialect does not explicitly state that conflict resolution and returning are supported, it will use the fallback.
-
-# 7 Cast comparisons
+# 6 Cast comparisons
 
 In weaker typed databases, like MySQL / MariaDB and SQLite, the type system automatically casts the column and input value to something it can compare easily (usually VARCHAR).
 
@@ -522,7 +564,7 @@ In weaker typed databases, like MySQL / MariaDB and SQLite, the type system auto
 WHERE cast("column" AS BIGINT) = cast(12345678 AS BIGINT)
 ```
 
-# 8 Integration in your project
+# 7 Integration in your project
 
 This database abstraction was created for the Sentience V3 framework, but will continue to evolve as its own package.
 
@@ -538,7 +580,7 @@ From there, add options, initialization queries, and anything else your project 
 
 If you wish to explore how this database is implemented, have a look at the parent project: [Sentience V3](https://github.com/Sentience-Framework/sentience-v3)
 
-# 9 Database specific implementations
+# 8 Database specific implementations
 
 Sentience offers specific classes for each database implementation. They are located in the `src/Databases` folders. They contain extra functionality that differs too much per database to include in the regular query classes. Things like schema dumping.
 
@@ -546,17 +588,49 @@ These functionalities were not implemented in the abstract database class becaus
 
 Since these functionalities are likely only used when you know which specific database you're using, they were bundled with their database specific implementations.
 
-# 11 Miscellaneous information about Sentience database
+| Database | Tables Method | Columns Method |
+|----------|--------------|----------------|
+| MySQL / MariaDB | `showTables()` | `describeTable($table)` |
+| PostgreSQL | `informationSchemaTables()` | `informationSchemaColumns($table)` |
+| SQLite | `sqliteMasterTables()` | `pragmaTableInfo($table)` |
+| SQL Server | `informationSchemaTables()` | `spColumns($table)` |
+| Oracle OCI | `userTables()` | `userTabColumns($table)` |
+| Firebird | `rdbRelationsTables()` | `rdbRelationFields($table)` |
+| DB2 | `sysTables()` | `sysColumns($table)` |
+| Informix | `sysTables()` | `sysColumns($table)` |
+| CUBRID | `informationSchemaTables()` | `informationSchemaColumns($table)` |
+
+# 9 Native upserts and emulated upserts (including RETURNING emulation)
+
+MariaDB, MySQL, Postgres, SQLite, DB2, Firebird, Informix, and CUBRID support some form of conflict resolution inside INSERT queries. MariaDB and MySQL support INSERT IGNORE and ON DUPLICATE KEY UPDATE, Postgres and SQLite support ON CONFLICT DO NOTHING and ON CONFLICT DO UPDATE.
+
+For databases that do not support conflict resolution natively, Sentience emulates this process.
+
+1. Perform select using on conflict columns as where conditions.
+2. Count == 0 --> perform insert.
+3. Count >= 2 --> throw exception because the constraint is not unique.
+4. Perform update using on conflict columns as where conditions.
+
+For databases that do not support returning (MariaDB < 10.5, MySQL, SQL Server, Oracle OCI) another select is performed using the on conflict constraint or the last insert id, to retrieve the inserted or updated record.
+
+If the dialect does not explicitly state that conflict resolution and returning are supported, it will use the fallback.
+
+# 10 Miscellaneous information about Sentience database
 
 1. Both named and unnamed parameters are supported for query building. The `QueryWithParams` automatically converts named params to placeholders.
 2. Mysqli does not officially support named params, so the `QueryWithParams` object automatically handles that for Mysqli.
 3. PHP's SQLite3 Result objects have a bug that re-executes the query when calling `->fetchArray()`. PDO does not have this bug, so it is recommended to use the PDOAdapter for SQLite.
 4. Emulated prepares are disabled by default, and can only be enabled on a query by query basis to prevent security issues.
 5. Escaping columns with namespace works using arrays. `['public', 'users', 'email']` translates to `"public"."users"."email"`, or ``public`.`users`.`email`` for MySQL dialects.
-6. Query::alias() can be used to create aliasses for your tables or columns, without having to resort to using raw statements.
+6. Query::alias() can be used to create aliases for your tables or columns, without having to resort to using raw statements.
 7. Query::raw() offers a way to use raw unparameterized SQL in your queries.
 8. Query::now() spawns a new DateTime object.
 9. Empty IN or NOT IN lists compile to 1 = 0 or 1 = 1.
-10. Oracle OCI is implemented according to the available documentation online. Unlike the other databases which were tested in real world scenarios with Docker containers, Oracle OCI has not been tested.
-11. Postgres is best supported, followed closely by MySQL (only for missing specific conflict handling)
-12. When calling `->leftJoin()` or `->innerJoin()` with only a table, without a callback as the second argument, it joins `ON TRUE` (or `ON 1` for dialects that don't support native booleans)
+10. Postgres is best supported, followed closely by MySQL (only for missing specific conflict handling).
+11. When calling `->leftJoin()` or `->innerJoin()` with only a table, without a callback as the second argument, it joins `ON TRUE` (or `ON 1` for dialects that don't support native booleans).
+12. PostgreSQL supports DISTINCT ON via `->distinct(['column'])`.
+13. Lateral joins are supported on PostgreSQL 9.3+, MySQL/MariaDB 8.0.14+, Firebird 3.0+, and DB2 9.7+. SQL Server maps lateral joins to OUTER APPLY / CROSS APPLY.
+14. CUBRID extends the MySQL dialect, inheriting its conflict resolution behavior.
+15. `Database::drivers()` returns an array of available drivers based on installed PHP extensions (PDO drivers, mysqli, SQLite3).
+16. Dialect options: `use_regexp` (MySQL/SQLite - use native REGEXP vs regexp_like()), `use_tilde_regex` (PostgreSQL - use ~ operator vs regexp_like()), `use_serials` (PostgreSQL - use SERIAL types instead of GENERATED BY DEFAULT AS IDENTITY), `use_doublequotes` (SQL Server - use "identifier" instead of [identifier]).
+17. Informix supports the `server` adapter option for specifying the Informix server name.

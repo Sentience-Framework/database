@@ -22,7 +22,6 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 enum Driver: string implements DriverInterface
 {
-    case CLICKHOUSE = 'clickhouse';
     case CUBRID = 'cubrid';
     case DB2 = 'db2';
     case FIREBIRD = 'firebird';
