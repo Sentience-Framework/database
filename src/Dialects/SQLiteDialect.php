@@ -23,7 +23,6 @@ class SQLiteDialect extends SQLDialect
 {
     public const string OPTIONS_USE_REGEXP = 'use_regexp';
 
-    public const string DATETIME_FORMAT = 'Y-m-d H:i:s';
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 
     public function createTable(
