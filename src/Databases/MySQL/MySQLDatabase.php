@@ -10,7 +10,7 @@ use Sentience\Database\Sockets\UnixSocket;
 
 class MySQLDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::MYSQL;
+    public const Driver DRIVER = Driver::MySQL;
 
     public static function network(
         string $name,

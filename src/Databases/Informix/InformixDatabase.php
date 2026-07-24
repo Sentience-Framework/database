@@ -11,7 +11,7 @@ use Sentience\Database\Sockets\NetworkSocket;
 
 class InformixDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::INFORMIX;
+    public const Driver DRIVER = Driver::Informix;
 
     public static function network(
         string $name,

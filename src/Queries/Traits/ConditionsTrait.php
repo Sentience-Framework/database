@@ -22,32 +22,32 @@ trait ConditionsTrait
 {
     protected function equals(array &$conditions, string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $cast, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::EQUALS, $column, [$value, $cast], $chain);
+        return $this->addCondition($conditions, ConditionEnum::Equals, $column, [$value, $cast], $chain);
     }
 
     protected function notEquals(array &$conditions, string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $cast, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::NOT_EQUALS, $column, [$value, $cast], $chain);
+        return $this->addCondition($conditions, ConditionEnum::NotEquals, $column, [$value, $cast], $chain);
     }
 
     protected function isNull(array &$conditions, string|array $column, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::EQUALS, $column, null, $chain);
+        return $this->addCondition($conditions, ConditionEnum::Equals, $column, null, $chain);
     }
 
     protected function isNotNull(array &$conditions, string|array $column, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::NOT_EQUALS, $column, null, $chain);
+        return $this->addCondition($conditions, ConditionEnum::NotEquals, $column, null, $chain);
     }
 
     protected function like(array &$conditions, string|array $column, string $value, bool $caseInsensitive, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::LIKE, $column, [$value, $caseInsensitive], $chain);
+        return $this->addCondition($conditions, ConditionEnum::Like, $column, [$value, $caseInsensitive], $chain);
     }
 
     protected function notLike(array &$conditions, string|array $column, string $value, bool $caseInsensitive, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::NOT_LIKE, $column, [$value, $caseInsensitive], $chain);
+        return $this->addCondition($conditions, ConditionEnum::NotLike, $column, [$value, $caseInsensitive], $chain);
     }
 
     protected function startsWith(array &$conditions, string|array $column, string $value, bool $caseInsensitive, bool $escapeBackslash, ChainEnum $chain): static
@@ -72,52 +72,52 @@ trait ConditionsTrait
 
     protected function glob(array &$conditions, string|array $column, string $value, bool $caseInsensitive, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::GLOB, $column, [$value, $caseInsensitive], $chain);
+        return $this->addCondition($conditions, ConditionEnum::Glob, $column, [$value, $caseInsensitive], $chain);
     }
 
     protected function notGlob(array &$conditions, string|array $column, string $value, bool $caseInsensitive, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::NOT_GLOB, $column, [$value, $caseInsensitive], $chain);
+        return $this->addCondition($conditions, ConditionEnum::NotGlob, $column, [$value, $caseInsensitive], $chain);
     }
 
     protected function in(array &$conditions, string|array $column, array|SelectQuery $values, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::IN, $column, $values, $chain);
+        return $this->addCondition($conditions, ConditionEnum::In, $column, $values, $chain);
     }
 
     protected function notIn(array &$conditions, string|array $column, array|SelectQuery $values, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::NOT_IN, $column, $values, $chain);
+        return $this->addCondition($conditions, ConditionEnum::NotIn, $column, $values, $chain);
     }
 
     protected function lessThan(array &$conditions, string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::LESS_THAN, $column, $value, $chain);
+        return $this->addCondition($conditions, ConditionEnum::LessThan, $column, $value, $chain);
     }
 
     protected function lessThanOrEquals(array &$conditions, string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::LESS_THAN_OR_EQUALS, $column, $value, $chain);
+        return $this->addCondition($conditions, ConditionEnum::LessThanOrEquals, $column, $value, $chain);
     }
 
     protected function greaterThan(array &$conditions, string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::GREATER_THAN, $column, $value, $chain);
+        return $this->addCondition($conditions, ConditionEnum::GreaterThan, $column, $value, $chain);
     }
 
     protected function greaterThanOrEquals(array &$conditions, string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::GREATER_THAN_OR_EQUALS, $column, $value, $chain);
+        return $this->addCondition($conditions, ConditionEnum::GreaterThanOrEquals, $column, $value, $chain);
     }
 
     protected function between(array &$conditions, string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::BETWEEN, $column, [$min, $max], $chain);
+        return $this->addCondition($conditions, ConditionEnum::Between, $column, [$min, $max], $chain);
     }
 
     protected function notBetween(array &$conditions, string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::NOT_BETWEEN, $column, [$min, $max], $chain);
+        return $this->addCondition($conditions, ConditionEnum::NotBetween, $column, [$min, $max], $chain);
     }
 
     protected function empty(array &$conditions, string|array $column, ChainEnum $chain): static
@@ -150,22 +150,22 @@ trait ConditionsTrait
 
     protected function regex(array &$conditions, string|array $column, string $pattern, string $flags, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::REGEX, $column, [$pattern, $flags], $chain);
+        return $this->addCondition($conditions, ConditionEnum::Regex, $column, [$pattern, $flags], $chain);
     }
 
     protected function notRegex(array &$conditions, string|array $column, string $pattern, string $flags, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::NOT_REGEX, $column, [$pattern, $flags], $chain);
+        return $this->addCondition($conditions, ConditionEnum::NotRegex, $column, [$pattern, $flags], $chain);
     }
 
     protected function exists(array &$conditions, SelectQuery $selectQuery, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::EXISTS, null, $selectQuery, $chain);
+        return $this->addCondition($conditions, ConditionEnum::Exists, null, $selectQuery, $chain);
     }
 
     protected function notExists(array &$conditions, SelectQuery $selectQuery, ChainEnum $chain): static
     {
-        return $this->addCondition($conditions, ConditionEnum::NOT_EXISTS, null, $selectQuery, $chain);
+        return $this->addCondition($conditions, ConditionEnum::NotExists, null, $selectQuery, $chain);
     }
 
     protected function group(array &$conditions, callable $callback, bool $not, string $conditionGroup, ChainEnum $chain): static
@@ -253,7 +253,7 @@ trait ConditionsTrait
     protected function addExpressionf(array &$conditions, string $format, array $values, ChainEnum $chain): static
     {
         $conditions[] = new Condition(
-            ConditionEnum::RAW,
+            ConditionEnum::Raw,
             null,
             Query::expressionf($format, ...$values),
             $chain

@@ -111,11 +111,11 @@ class OCIDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::BOOL => 'NUMBER(1)',
-            TypeEnum::INT => $size > 32 ? 'NUMBER(19)' : 'NUMBER(10)',
-            TypeEnum::FLOAT => $size > 32 ? 'NUMBER(30, 15)' : 'NUMBER(15, 7)',
-            TypeEnum::STRING => $size > 4000 ? 'CLOB' : sprintf('VARCHAR2(%d)', $size ?? 255),
-            TypeEnum::DATETIME => 'TIMESTAMP'
+            TypeEnum::Bool => 'NUMBER(1)',
+            TypeEnum::Int => $size > 32 ? 'NUMBER(19)' : 'NUMBER(10)',
+            TypeEnum::Float => $size > 32 ? 'NUMBER(30, 15)' : 'NUMBER(15, 7)',
+            TypeEnum::String => $size > 4000 ? 'CLOB' : sprintf('VARCHAR2(%d)', $size ?? 255),
+            TypeEnum::DateTime => 'TIMESTAMP'
         };
     }
 }

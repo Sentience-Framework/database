@@ -21,7 +21,7 @@ class RawCondition extends QueryWithParams
     public function toCondition(): Condition
     {
         return new Condition(
-            ConditionEnum::RAW,
+            ConditionEnum::Raw,
             null,
             Query::expression($this->query, $this->params),
             $this->chain

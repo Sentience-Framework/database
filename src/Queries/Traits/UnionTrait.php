@@ -12,14 +12,14 @@ trait UnionTrait
 
     public function union(SelectQuery $selectQuery): static
     {
-        $this->unions[] = new Union(UnionEnum::UNION, $selectQuery);
+        $this->unions[] = new Union(UnionEnum::Union, $selectQuery);
 
         return $this;
     }
 
     public function unionAll(SelectQuery $selectQuery): static
     {
-        $this->unions[] = new Union(UnionEnum::UNION_ALL, $selectQuery);
+        $this->unions[] = new Union(UnionEnum::UnionAll, $selectQuery);
 
         return $this;
     }

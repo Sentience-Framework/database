@@ -8,7 +8,7 @@ use Sentience\Database\Driver;
 
 class SQLiteDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::SQLITE;
+    public const Driver DRIVER = Driver::SQLite;
 
     public static function file(
         string $file,

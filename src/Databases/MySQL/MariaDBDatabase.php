@@ -6,5 +6,5 @@ use Sentience\Database\Driver;
 
 class MariaDBDatabase extends MySQLDatabase
 {
-    public const Driver DRIVER = Driver::MARIADB;
+    public const Driver DRIVER = Driver::MariaDB;
 }

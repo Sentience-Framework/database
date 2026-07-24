@@ -461,7 +461,7 @@ class SQLDialect extends DialectAbstract
                 continue;
             }
 
-            if (in_array($join->join, [JoinEnum::LEFT_JOIN_LATERAL, JoinEnum::INNER_JOIN_LATERAL, JoinEnum::CROSS_JOIN_LATERAL]) && !$this->lateral()) {
+            if (in_array($join->join, [JoinEnum::LeftJoinLateral, JoinEnum::InnerJoinLateral, JoinEnum::CrossJoinLateral]) && !$this->lateral()) {
                 throw new QueryException('LATERAL is not supported');
             }
 
@@ -470,12 +470,12 @@ class SQLDialect extends DialectAbstract
                 : $join->table;
 
             match ($join->join) {
-                JoinEnum::LEFT_JOIN,
-                JoinEnum::LEFT_JOIN_LATERAL => $this->buildLeftJoin($query, $params, $join->join, $table, $join->conditions()),
-                JoinEnum::INNER_JOIN,
-                JoinEnum::INNER_JOIN_LATERAL => $this->buildInnerJoin($query, $params, $join->join, $table, $join->conditions()),
-                JoinEnum::CROSS_JOIN,
-                JoinEnum::CROSS_JOIN_LATERAL => $this->buildCrossJoin($query, $params, $join->join, $table, $join->conditions()),
+                JoinEnum::LeftJoin,
+                JoinEnum::LeftJoinLateral => $this->buildLeftJoin($query, $params, $join->join, $table, $join->conditions()),
+                JoinEnum::InnerJoin,
+                JoinEnum::InnerJoinLateral => $this->buildInnerJoin($query, $params, $join->join, $table, $join->conditions()),
+                JoinEnum::CrossJoin,
+                JoinEnum::CrossJoinLateral => $this->buildCrossJoin($query, $params, $join->join, $table, $join->conditions()),
                 default => $this->buildJoin($query, $params, $join->join, $table, $join->conditions())
             };
         }
@@ -539,21 +539,21 @@ class SQLDialect extends DialectAbstract
         }
 
         match ($condition->condition) {
-            ConditionEnum::EQUALS,
-            ConditionEnum::NOT_EQUALS => $this->buildConditionEquals($query, $params, $condition),
-            ConditionEnum::BETWEEN,
-            ConditionEnum::NOT_BETWEEN => $this->buildConditionBetween($query, $params, $condition),
-            ConditionEnum::LIKE,
-            ConditionEnum::NOT_LIKE => $this->buildConditionLike($query, $params, $condition),
-            ConditionEnum::GLOB,
-            ConditionEnum::NOT_GLOB => $this->buildConditionGlob($query, $params, $condition),
-            ConditionEnum::IN,
-            ConditionEnum::NOT_IN => $this->buildConditionIn($query, $params, $condition),
-            ConditionEnum::REGEX,
-            ConditionEnum::NOT_REGEX => $this->buildConditionRegex($query, $params, $condition),
-            ConditionEnum::EXISTS,
-            ConditionEnum::NOT_EXISTS => $this->buildConditionExists($query, $params, $condition),
-            ConditionEnum::RAW => $this->buildConditionRaw($query, $params, $condition),
+            ConditionEnum::Equals,
+            ConditionEnum::NotEquals => $this->buildConditionEquals($query, $params, $condition),
+            ConditionEnum::Between,
+            ConditionEnum::NotBetween => $this->buildConditionBetween($query, $params, $condition),
+            ConditionEnum::Like,
+            ConditionEnum::NotLike => $this->buildConditionLike($query, $params, $condition),
+            ConditionEnum::Glob,
+            ConditionEnum::NotGlob => $this->buildConditionGlob($query, $params, $condition),
+            ConditionEnum::In,
+            ConditionEnum::NotIn => $this->buildConditionIn($query, $params, $condition),
+            ConditionEnum::Regex,
+            ConditionEnum::NotRegex => $this->buildConditionRegex($query, $params, $condition),
+            ConditionEnum::Exists,
+            ConditionEnum::NotExists => $this->buildConditionExists($query, $params, $condition),
+            ConditionEnum::Raw => $this->buildConditionRaw($query, $params, $condition),
             default => $this->buildConditionOperator($query, $params, $condition->identifier, $condition->condition, $condition->value)
         };
     }
@@ -580,7 +580,7 @@ class SQLDialect extends DialectAbstract
             $query .= sprintf(
                 '%s %s',
                 $this->escapeIdentifier($condition->identifier),
-                $condition->condition == ConditionEnum::EQUALS ? 'IS NULL' : 'IS NOT NULL'
+                $condition->condition == ConditionEnum::Equals ? 'IS NULL' : 'IS NOT NULL'
             );
 
             return;
@@ -599,11 +599,11 @@ class SQLDialect extends DialectAbstract
         $type = get_debug_type($value);
 
         $castType = static::CAST_TYPES[$type] ?? match ($type) {
-            'bool' => $this->type(TypeEnum::BOOL),
-            'int' => $this->type(TypeEnum::INT, 64),
-            'float' => $this->type(TypeEnum::FLOAT, 64),
-            'string' => $this->type(TypeEnum::STRING, PHP_INT_MAX),
-            default => is_subclass_of($value, DateTimeInterface::class) ? $this->type(TypeEnum::DATETIME, 6) : null
+            'bool' => $this->type(TypeEnum::Bool),
+            'int' => $this->type(TypeEnum::Int, 64),
+            'float' => $this->type(TypeEnum::Float, 64),
+            'string' => $this->type(TypeEnum::String, PHP_INT_MAX),
+            default => is_subclass_of($value, DateTimeInterface::class) ? $this->type(TypeEnum::DateTime, 6) : null
         };
 
         if (!$castType) {
@@ -665,7 +665,7 @@ class SQLDialect extends DialectAbstract
         $likePattern = $this->globToLike($value);
 
         $likeCondition = new Condition(
-            $condition->condition == ConditionEnum::GLOB ? ConditionEnum::LIKE : ConditionEnum::NOT_LIKE,
+            $condition->condition == ConditionEnum::Glob ? ConditionEnum::Like : ConditionEnum::NotLike,
             $condition->identifier,
             [$likePattern, $caseInsensitive],
             $condition->chain
@@ -691,7 +691,7 @@ class SQLDialect extends DialectAbstract
     protected function buildConditionIn(string &$query, array &$params, Condition $condition): void
     {
         if (!($condition->value instanceof SelectQuery) && count($condition->value) == 0) {
-            $query .= $condition->condition == ConditionEnum::IN ? '1 = 0' : '1 = 1';
+            $query .= $condition->condition == ConditionEnum::In ? '1 = 0' : '1 = 1';
 
             return;
         }
@@ -701,7 +701,7 @@ class SQLDialect extends DialectAbstract
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
     {
-        if ($condition->condition == ConditionEnum::NOT_REGEX) {
+        if ($condition->condition == ConditionEnum::NotRegex) {
             $query .= 'NOT ';
         }
 
@@ -720,7 +720,7 @@ class SQLDialect extends DialectAbstract
         $query .= sprintf(
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
-            $condition->condition == ConditionEnum::REGEX ? $equals : $notEquals,
+            $condition->condition == ConditionEnum::Regex ? $equals : $notEquals,
             $this->buildQuestionMarks(
                 $params,
                 !empty($flags)
@@ -1300,11 +1300,11 @@ class SQLDialect extends DialectAbstract
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::BOOL => $this->bool() ? 'BOOLEAN' : 'INTEGER',
-            TypeEnum::INT => $size > 32 ? 'BIGINT' : 'INTEGER',
-            TypeEnum::FLOAT => $size > 32 ? 'DECIMAL(30, 15)' : 'DECIMAL(15, 7)',
-            TypeEnum::STRING => $size > 255 ? 'TEXT' : sprintf('VARCHAR(%d)', $size ?? 255),
-            TypeEnum::DATETIME => 'DATETIME'
+            TypeEnum::Bool => $this->bool() ? 'BOOLEAN' : 'INTEGER',
+            TypeEnum::Int => $size > 32 ? 'BIGINT' : 'INTEGER',
+            TypeEnum::Float => $size > 32 ? 'DECIMAL(30, 15)' : 'DECIMAL(15, 7)',
+            TypeEnum::String => $size > 255 ? 'TEXT' : sprintf('VARCHAR(%d)', $size ?? 255),
+            TypeEnum::DateTime => 'DATETIME'
         };
     }
 

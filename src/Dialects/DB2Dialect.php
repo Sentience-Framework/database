@@ -55,11 +55,11 @@ class DB2Dialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::BOOL => 'SMALLINT',
-            TypeEnum::INT => $size > 32 ? 'BIGINT' : 'INTEGER',
-            TypeEnum::FLOAT => $size > 32 ? 'DOUBLE' : 'DECIMAL(15, 7)',
-            TypeEnum::STRING => $size > 255 ? 'CLOB(1M)' : sprintf('VARCHAR(%d)', $size ?? 255),
-            TypeEnum::DATETIME => 'TIMESTAMP',
+            TypeEnum::Bool => 'SMALLINT',
+            TypeEnum::Int => $size > 32 ? 'BIGINT' : 'INTEGER',
+            TypeEnum::Float => $size > 32 ? 'DOUBLE' : 'DECIMAL(15, 7)',
+            TypeEnum::String => $size > 255 ? 'CLOB(1M)' : sprintf('VARCHAR(%d)', $size ?? 255),
+            TypeEnum::DateTime => 'TIMESTAMP',
             default => parent::type($type, $size)
         };
     }

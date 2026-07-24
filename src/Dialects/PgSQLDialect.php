@@ -35,9 +35,9 @@ class PgSQLDialect extends SQLDialect
         $query .= sprintf(
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
-            $condition->condition == ConditionEnum::LIKE
-            ? ($caseInsensitive ? 'ILIKE' : ConditionEnum::LIKE->value)
-            : ($caseInsensitive ? 'NOT ILIKE' : ConditionEnum::NOT_LIKE->value),
+            $condition->condition == ConditionEnum::Like
+            ? ($caseInsensitive ? 'ILIKE' : ConditionEnum::Like->value)
+            : ($caseInsensitive ? 'NOT ILIKE' : ConditionEnum::NotLike->value),
             $this->buildQuestionMarks($params, $value)
         );
     }
@@ -103,8 +103,8 @@ class PgSQLDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::FLOAT => $size > 32 ? 'DOUBLE PRECISION' : 'REAL',
-            TypeEnum::DATETIME => 'TIMESTAMP',
+            TypeEnum::Float => $size > 32 ? 'DOUBLE PRECISION' : 'REAL',
+            TypeEnum::DateTime => 'TIMESTAMP',
             default => parent::type($type, $size)
         };
     }

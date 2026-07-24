@@ -26,10 +26,10 @@ class CUBRIDDialect extends MySQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::BOOL => 'TINYINT(1)',
-            TypeEnum::FLOAT => $size > 32 ? 'DOUBLE PRECISION' : 'FLOAT',
-            TypeEnum::STRING => $size > 255 ? 'LONG VARCHAR' : sprintf('VARCHAR(%d)', $size ?? 255),
-            TypeEnum::DATETIME => 'DATETIME YEAR TO FRACTION(5)',
+            TypeEnum::Bool => 'TINYINT(1)',
+            TypeEnum::Float => $size > 32 ? 'DOUBLE PRECISION' : 'FLOAT',
+            TypeEnum::String => $size > 255 ? 'LONG VARCHAR' : sprintf('VARCHAR(%d)', $size ?? 255),
+            TypeEnum::DateTime => 'DATETIME YEAR TO FRACTION(5)',
             default => parent::type($type, $size)
         };
     }

@@ -49,13 +49,13 @@ class Database extends DatabaseAbstract
                 $drivers[] = $driver;
             }
 
-            if (in_array(Driver::MYSQL, $drivers)) {
-                $drivers[] = Driver::MARIADB;
+            if (in_array(Driver::MySQL, $drivers)) {
+                $drivers[] = Driver::MariaDB;
             }
         }
 
         if (class_exists('mysqli')) {
-            foreach ([Driver::MARIADB, Driver::MYSQL] as $driver) {
+            foreach ([Driver::MariaDB, Driver::MySQL] as $driver) {
                 if (in_array($driver, $drivers)) {
                     continue;
                 }
@@ -65,8 +65,8 @@ class Database extends DatabaseAbstract
         }
 
         if (class_exists('SQLite3')) {
-            if (!in_array(Driver::SQLITE, $drivers)) {
-                $drivers[] = Driver::SQLITE;
+            if (!in_array(Driver::SQLite, $drivers)) {
+                $drivers[] = Driver::SQLite;
             }
         }
 

@@ -4,6 +4,6 @@ namespace Sentience\Database\Queries\Enums;
 
 enum OrderByDirectionEnum: string
 {
-    case ASC = 'ASC';
-    case DESC = 'DESC';
+    case Asc = 'ASC';
+    case Desc = 'DESC';
 }

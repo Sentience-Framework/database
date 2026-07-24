@@ -9,7 +9,7 @@ use Sentience\Database\Sockets\NetworkSocket;
 
 class SQLServerDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::SQLSRV;
+    public const Driver DRIVER = Driver::SQLSrv;
 
     public static function network(
         string $name,

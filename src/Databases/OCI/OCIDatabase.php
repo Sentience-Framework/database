@@ -9,7 +9,7 @@ use Sentience\Database\Sockets\NetworkSocket;
 
 class OCIDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::OCI;
+    public const Driver DRIVER = Driver::Oci;
 
     public static function network(
         string $name,

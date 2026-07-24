@@ -12,14 +12,14 @@ trait OrderByTrait
 
     public function orderByAsc(string|array|Sql $column): static
     {
-        $this->addOrderBy($column, OrderByDirectionEnum::ASC);
+        $this->addOrderBy($column, OrderByDirectionEnum::Asc);
 
         return $this;
     }
 
     public function orderByDesc(string|array|Sql $column): static
     {
-        $this->addOrderBy($column, OrderByDirectionEnum::DESC);
+        $this->addOrderBy($column, OrderByDirectionEnum::Desc);
 
         return $this;
     }

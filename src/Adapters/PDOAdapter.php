@@ -53,15 +53,15 @@ class PDOAdapter extends AdapterAbstract
 
         $this->configurePDO($driver, $options);
 
-        if (in_array($driver, [Driver::MARIADB, Driver::MYSQL])) {
+        if (in_array($driver, [Driver::MariaDB, Driver::MySQL])) {
             $this->configurePDOForMySQL($options);
         }
 
-        if ($driver == Driver::PGSQL) {
+        if ($driver == Driver::PgSQL) {
             $this->configurePDOForPgSQL($options);
         }
 
-        if ($driver == Driver::SQLITE) {
+        if ($driver == Driver::SQLite) {
             $this->configurePDOForSQLite($options);
         }
 
@@ -80,7 +80,7 @@ class PDOAdapter extends AdapterAbstract
             return (string) $options[static::OPTIONS_PDO_DSN];
         }
 
-        if ($driver == Driver::SQLITE) {
+        if ($driver == Driver::SQLite) {
             return sprintf(
                 '%s:%s',
                 $driver->driver(),
@@ -92,11 +92,11 @@ class PDOAdapter extends AdapterAbstract
             throw new DriverException('this driver requires a socket');
         }
 
-        if ($socket instanceof UnixSocket && !in_array($driver, [Driver::MARIADB, Driver::MYSQL, Driver::PGSQL])) {
+        if ($socket instanceof UnixSocket && !in_array($driver, [Driver::MariaDB, Driver::MySQL, Driver::PgSQL])) {
             throw new DriverException('this driver requires a network socket');
         }
 
-        if ($driver == Driver::CUBRID) {
+        if ($driver == Driver::Cubrid) {
             return sprintf(
                 '%s:dbname=%s;host=%s;port=%d',
                 $driver->driver(),
@@ -116,7 +116,7 @@ class PDOAdapter extends AdapterAbstract
             );
         }
 
-        if ($driver == Driver::FIREBIRD) {
+        if ($driver == Driver::Firebird) {
             return sprintf(
                 '%s:dbname=%s/%d:%s',
                 $driver->driver(),
@@ -126,7 +126,7 @@ class PDOAdapter extends AdapterAbstract
             );
         }
 
-        if ($driver == Driver::INFORMIX) {
+        if ($driver == Driver::Informix) {
             return sprintf(
                 '%s:DATABASE=%s;HOST=%s;SERVER=%s;SERVICE=%d;',
                 $driver->driver(),
@@ -137,7 +137,7 @@ class PDOAdapter extends AdapterAbstract
             );
         }
 
-        if ($driver == Driver::OCI) {
+        if ($driver == Driver::Oci) {
             return sprintf(
                 '%s:dbname=//%s:%d/%s',
                 $driver->driver(),
@@ -147,7 +147,7 @@ class PDOAdapter extends AdapterAbstract
             );
         }
 
-        if ($driver == Driver::SQLSRV) {
+        if ($driver == Driver::SQLSrv) {
             return sprintf(
                 '%s:Server=%s,%d;Database=%s;Encrypt=%s;TrustServerCertificate=%s',
                 $driver->driver(),
@@ -161,7 +161,7 @@ class PDOAdapter extends AdapterAbstract
 
         $build = fn (array $dsn): string => sprintf(
             '%s:%s',
-            $driver == Driver::MARIADB ? Driver::MYSQL->driver() : $driver->driver(),
+            $driver == Driver::MariaDB ? Driver::MySQL->driver() : $driver->driver(),
             implode(
                 ';',
                 array_map(
@@ -178,7 +178,7 @@ class PDOAdapter extends AdapterAbstract
 
         $dsn = ['dbname' => $name];
 
-        if (in_array($driver, [Driver::MARIADB, Driver::MYSQL])) {
+        if (in_array($driver, [Driver::MariaDB, Driver::MySQL])) {
             $dsn = array_merge(
                 $dsn,
                 $socket instanceof NetworkSocket
@@ -227,7 +227,7 @@ class PDOAdapter extends AdapterAbstract
         $this->pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         $this->pdo->setAttribute(PDO::ATTR_STRINGIFY_FETCHES, false);
 
-        if (!in_array($driver, [Driver::SQLSRV])) {
+        if (!in_array($driver, [Driver::SQLSrv])) {
             $this->pdo->setAttribute(PDO::ATTR_PERSISTENT, (bool) ($options[static::OPTIONS_PERSISTENT] ?? false));
         }
     }
@@ -491,7 +491,7 @@ class PDOAdapter extends AdapterAbstract
 
     public function __destruct()
     {
-        if ($this->driver == Driver::SQLITE) {
+        if ($this->driver == Driver::SQLite) {
             $this->sqliteOptimize($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false);
         }
     }

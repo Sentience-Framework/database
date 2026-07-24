@@ -10,7 +10,7 @@ use Sentience\Database\Sockets\NetworkSocket;
 
 class FirebirdDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::FIREBIRD;
+    public const Driver DRIVER = Driver::Firebird;
 
     public static function network(
         string $file,

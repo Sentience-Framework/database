@@ -4,10 +4,10 @@ namespace Sentience\Database\Queries\Enums;
 
 enum JoinEnum: string
 {
-    case LEFT_JOIN = 'LEFT JOIN';
-    case LEFT_JOIN_LATERAL = 'LEFT JOIN LATERAL';
-    case INNER_JOIN = 'INNER JOIN';
-    case INNER_JOIN_LATERAL = 'INNER JOIN LATERAL';
-    case CROSS_JOIN = 'CROSS JOIN';
-    case CROSS_JOIN_LATERAL = 'CROSS JOIN LATERAL';
+    case LeftJoin = 'LEFT JOIN';
+    case LeftJoinLateral = 'LEFT JOIN LATERAL';
+    case InnerJoin = 'INNER JOIN';
+    case InnerJoinLateral = 'INNER JOIN LATERAL';
+    case CrossJoin = 'CROSS JOIN';
+    case CrossJoinLateral = 'CROSS JOIN LATERAL';
 }

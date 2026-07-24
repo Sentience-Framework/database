@@ -86,17 +86,17 @@ class SQLServerDialect extends SQLDialect
 
     protected function buildLeftJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
     {
-        $this->buildJoin($query, $params, $join == JoinEnum::LEFT_JOIN_LATERAL ? 'OUTER APPLY' : $join, $table, $conditions);
+        $this->buildJoin($query, $params, $join == JoinEnum::LeftJoinLateral ? 'OUTER APPLY' : $join, $table, $conditions);
     }
 
     protected function buildInnerJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
     {
-        $this->buildJoin($query, $params, $join == JoinEnum::INNER_JOIN_LATERAL ? 'CROSS APPLY' : $join, $table, $conditions);
+        $this->buildJoin($query, $params, $join == JoinEnum::InnerJoinLateral ? 'CROSS APPLY' : $join, $table, $conditions);
     }
 
     protected function buildCrossJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
     {
-        $this->buildJoin($query, $params, $join == JoinEnum::CROSS_JOIN_LATERAL ? 'CROSS APPLY' : $join, $table, $conditions);
+        $this->buildJoin($query, $params, $join == JoinEnum::CrossJoinLateral ? 'CROSS APPLY' : $join, $table, $conditions);
     }
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
@@ -195,9 +195,9 @@ class SQLServerDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::BOOL => 'SMALLINT',
-            TypeEnum::FLOAT => $size > 32 ? 'FLOAT(8)' : 'FLOAT(4)',
-            TypeEnum::DATETIME => $size > 3 ? sprintf('DATETIME2', $size) : 'DATETIME',
+            TypeEnum::Bool => 'SMALLINT',
+            TypeEnum::Float => $size > 32 ? 'FLOAT(8)' : 'FLOAT(4)',
+            TypeEnum::DateTime => $size > 3 ? sprintf('DATETIME2', $size) : 'DATETIME',
             default => parent::type($type, $size)
         };
     }

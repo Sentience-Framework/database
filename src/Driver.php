@@ -22,16 +22,16 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 enum Driver: string implements DriverInterface
 {
-    case CUBRID = 'cubrid';
+    case Cubrid = 'cubrid';
     case DB2 = 'db2';
-    case FIREBIRD = 'firebird';
-    case INFORMIX = 'informix';
-    case MARIADB = 'mariadb';
-    case MYSQL = 'mysql';
-    case OCI = 'oci';
-    case PGSQL = 'pgsql';
-    case SQLITE = 'sqlite';
-    case SQLSRV = 'sqlsrv';
+    case Firebird = 'firebird';
+    case Informix = 'informix';
+    case MariaDB = 'mariadb';
+    case MySQL = 'mysql';
+    case Oci = 'oci';
+    case PgSQL = 'pgsql';
+    case SQLite = 'sqlite';
+    case SQLSrv = 'sqlsrv';
 
     public function driver(): string
     {
@@ -48,9 +48,9 @@ enum Driver: string implements DriverInterface
     ): AdapterInterface {
         $adapter = !$usePDOAdapter
             ? match ($this) {
-                static::MARIADB,
-                static::MYSQL => MySQLiAdapter::class,
-                static::SQLITE => SQLite3Adapter::class,
+                static::MariaDB,
+                static::MySQL => MySQLiAdapter::class,
+                static::SQLite => SQLite3Adapter::class,
                 default => PDOAdapter::class
             }
         : PDOAdapter::class;
@@ -68,16 +68,16 @@ enum Driver: string implements DriverInterface
     public function dialect(int|string $version, array $options = []): DialectInterface
     {
         return match ($this) {
-            static::CUBRID => new CUBRIDDialect($this, $version, $options),
+            static::Cubrid => new CUBRIDDialect($this, $version, $options),
             static::DB2 => new DB2Dialect($this, $version, $options),
-            static::FIREBIRD => new FirebirdDialect($this, $version, $options),
-            static::INFORMIX => new InformixDialect($this, $version, $options),
-            static::MARIADB,
-            static::MYSQL => new MySQLDialect($this, $version, $options),
-            static::OCI => new OCIDialect($this, $version, $options),
-            static::PGSQL => new PgSQLDialect($this, $version, $options),
-            static::SQLITE => new SQLiteDialect($this, $version, $options),
-            static::SQLSRV => new SQLServerDialect($this, $version, $options),
+            static::Firebird => new FirebirdDialect($this, $version, $options),
+            static::Informix => new InformixDialect($this, $version, $options),
+            static::MariaDB,
+            static::MySQL => new MySQLDialect($this, $version, $options),
+            static::Oci => new OCIDialect($this, $version, $options),
+            static::PgSQL => new PgSQLDialect($this, $version, $options),
+            static::SQLite => new SQLiteDialect($this, $version, $options),
+            static::SQLSrv => new SQLServerDialect($this, $version, $options),
             default => new SQLDialect($this, $version, $options)
         };
     }

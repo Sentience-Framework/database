@@ -10,7 +10,7 @@ use Sentience\Database\Sockets\UnixSocket;
 
 class PgSQLDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::PGSQL;
+    public const Driver DRIVER = Driver::PgSQL;
 
     public static function network(
         string $name,

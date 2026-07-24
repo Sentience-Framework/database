@@ -83,16 +83,16 @@ class MySQLDialect extends SQLDialect
         $query .= sprintf(
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
-            $condition->condition == ConditionEnum::LIKE
-            ? ($caseInsensitive ? ConditionEnum::LIKE->value : 'LIKE BINARY')
-            : ($caseInsensitive ? ConditionEnum::NOT_LIKE->value : 'NOT LIKE BINARY'),
+            $condition->condition == ConditionEnum::Like
+            ? ($caseInsensitive ? ConditionEnum::Like->value : 'LIKE BINARY')
+            : ($caseInsensitive ? ConditionEnum::NotLike->value : 'NOT LIKE BINARY'),
             $this->buildQuestionMarks($params, $value)
         );
     }
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
     {
-        if ($this->driver == Driver::MYSQL && $this->version >= 80000 && !($this->options[static::OPTIONS_USE_REGEXP] ?? false)) {
+        if ($this->driver == Driver::MySQL && $this->version >= 80000 && !($this->options[static::OPTIONS_USE_REGEXP] ?? false)) {
             parent::buildConditionRegex($query, $params, $condition);
 
             return;
@@ -226,27 +226,27 @@ class MySQLDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::BOOL => 'TINYINT',
-            TypeEnum::FLOAT => $size > 32 ? 'DOUBLE' : 'FLOAT',
-            TypeEnum::STRING => match (true) {
+            TypeEnum::Bool => 'TINYINT',
+            TypeEnum::Float => $size > 32 ? 'DOUBLE' : 'FLOAT',
+            TypeEnum::String => match (true) {
                 $size > 16777215 => 'LONGTEXT',
                 $size > 65535 => 'MEDIUMTEXT',
                 $size > 255 => 'TEXT',
                 default => sprintf('VARCHAR(%d)', $size ?? 255)
             },
-            TypeEnum::DATETIME => $size > 0 ? sprintf('DATETIME(%d)', $size) : 'DATETIME',
+            TypeEnum::DateTime => $size > 0 ? sprintf('DATETIME(%d)', $size) : 'DATETIME',
             default => parent::type($type, $size)
         };
     }
 
     public function lateral(): bool
     {
-        return $this->driver == Driver::MYSQL && $this->version >= 80014;
+        return $this->driver == Driver::MySQL && $this->version >= 80014;
     }
 
     public function onConflict(): bool
     {
-        if ($this->driver == Driver::MARIADB) {
+        if ($this->driver == Driver::MariaDB) {
             return true;
         }
 
@@ -255,7 +255,7 @@ class MySQLDialect extends SQLDialect
 
     public function returning(): bool
     {
-        if ($this->driver != Driver::MARIADB) {
+        if ($this->driver != Driver::MariaDB) {
             return false;
         }
 

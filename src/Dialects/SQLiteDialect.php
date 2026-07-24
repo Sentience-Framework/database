@@ -59,9 +59,9 @@ class SQLiteDialect extends SQLDialect
         $query .= sprintf(
             '%s %s %s',
             $this->escapeIdentifier($condition->identifier),
-            $condition->condition == ConditionEnum::LIKE
-            ? ($caseInsensitive ? ConditionEnum::LIKE->value : 'GLOB')
-            : ($caseInsensitive ? ConditionEnum::NOT_LIKE->value : 'NOT GLOB'),
+            $condition->condition == ConditionEnum::Like
+            ? ($caseInsensitive ? ConditionEnum::Like->value : 'GLOB')
+            : ($caseInsensitive ? ConditionEnum::NotLike->value : 'NOT GLOB'),
             $this->buildQuestionMarks($params, $caseInsensitive ? $value : $this->likeToGlob($value))
         );
     }
@@ -208,8 +208,8 @@ class SQLiteDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::BOOL => 'BOOLEAN',
-            TypeEnum::FLOAT => 'REAL',
+            TypeEnum::Bool => 'BOOLEAN',
+            TypeEnum::Float => 'REAL',
             default => parent::type($type, $size)
         };
     }
