@@ -22,13 +22,13 @@ use Sentience\Database\Sockets\SocketAbstract;
 
 enum Driver: string implements DriverInterface
 {
-    case Cubrid = 'cubrid';
+    case CUBRID = 'cubrid';
     case DB2 = 'db2';
     case Firebird = 'firebird';
     case Informix = 'informix';
     case MariaDB = 'mariadb';
     case MySQL = 'mysql';
-    case Oci = 'oci';
+    case OCI = 'oci';
     case PgSQL = 'pgsql';
     case SQLite = 'sqlite';
     case SQLSrv = 'sqlsrv';
@@ -68,13 +68,13 @@ enum Driver: string implements DriverInterface
     public function dialect(int|string $version, array $options = []): DialectInterface
     {
         return match ($this) {
-            static::Cubrid => new CUBRIDDialect($this, $version, $options),
+            static::CUBRID => new CUBRIDDialect($this, $version, $options),
             static::DB2 => new DB2Dialect($this, $version, $options),
             static::Firebird => new FirebirdDialect($this, $version, $options),
             static::Informix => new InformixDialect($this, $version, $options),
             static::MariaDB,
             static::MySQL => new MySQLDialect($this, $version, $options),
-            static::Oci => new OCIDialect($this, $version, $options),
+            static::OCI => new OCIDialect($this, $version, $options),
             static::PgSQL => new PgSQLDialect($this, $version, $options),
             static::SQLite => new SQLiteDialect($this, $version, $options),
             static::SQLSrv => new SQLServerDialect($this, $version, $options),

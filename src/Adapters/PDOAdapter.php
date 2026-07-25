@@ -96,7 +96,7 @@ class PDOAdapter extends AdapterAbstract
             throw new DriverException('this driver requires a network socket');
         }
 
-        if ($driver == Driver::Cubrid) {
+        if ($driver == Driver::CUBRID) {
             return sprintf(
                 '%s:dbname=%s;host=%s;port=%d',
                 $driver->driver(),
@@ -137,7 +137,7 @@ class PDOAdapter extends AdapterAbstract
             );
         }
 
-        if ($driver == Driver::Oci) {
+        if ($driver == Driver::OCI) {
             return sprintf(
                 '%s:dbname=//%s:%d/%s',
                 $driver->driver(),

@@ -9,7 +9,7 @@ use Sentience\Database\Sockets\NetworkSocket;
 
 class CUBRIDDatabase extends DatabaseAbstract
 {
-    public const Driver DRIVER = Driver::Cubrid;
+    public const Driver DRIVER = Driver::CUBRID;
 
     public static function network(
         string $name,
