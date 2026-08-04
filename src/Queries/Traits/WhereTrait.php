@@ -262,12 +262,12 @@ trait WhereTrait
 
     public function orWhereEmpty(string|array $column): static
     {
-        return $this->empty($this->where, $column, ChainEnum::And);
+        return $this->empty($this->where, $column, ChainEnum::Or);
     }
 
     public function orWhereNotEmpty(string|array $column): static
     {
-        return $this->notEmpty($this->where, $column, ChainEnum::And);
+        return $this->notEmpty($this->where, $column, ChainEnum::Or);
     }
 
     public function orWhereRegex(string|array $column, string $pattern, string $flags = ''): static

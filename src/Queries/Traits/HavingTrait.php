@@ -67,12 +67,12 @@ trait HavingTrait
 
     public function havingGlob(string|array $column, string $value, bool $caseInsensitive = false): static
     {
-        return $this->glob($this->where, $column, $value, $caseInsensitive, ChainEnum::And);
+        return $this->glob($this->having, $column, $value, $caseInsensitive, ChainEnum::And);
     }
 
     public function havingNotGlob(string|array $column, string $value, bool $caseInsensitive = false): static
     {
-        return $this->notGlob($this->where, $column, $value, $caseInsensitive, ChainEnum::And);
+        return $this->notGlob($this->having, $column, $value, $caseInsensitive, ChainEnum::And);
     }
 
     public function havingIn(string|array $column, array|SelectQuery $values): static
@@ -162,7 +162,7 @@ trait HavingTrait
 
     public function havingf(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
     {
-        return $this->addExpressionf($this->where, $format, $values, ChainEnum::Or);
+        return $this->addExpressionf($this->having, $format, $values, ChainEnum::Or);
     }
 
     public function having(string $sql, array $values = []): static
@@ -262,12 +262,12 @@ trait HavingTrait
 
     public function orHavingEmpty(string|array $column): static
     {
-        return $this->empty($this->having, $column, ChainEnum::And);
+        return $this->empty($this->having, $column, ChainEnum::Or);
     }
 
     public function orHavingNotEmpty(string|array $column): static
     {
-        return $this->notEmpty($this->having, $column, ChainEnum::And);
+        return $this->notEmpty($this->having, $column, ChainEnum::Or);
     }
 
     public function orHavingRegex(string|array $column, string $pattern, string $flags = ''): static
@@ -307,7 +307,7 @@ trait HavingTrait
 
     public function orHavingf(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
     {
-        return $this->addExpressionf($this->where, $format, $values, ChainEnum::Or);
+        return $this->addExpressionf($this->having, $format, $values, ChainEnum::Or);
     }
 
     public function orHaving(string $sql, array $values = []): static
