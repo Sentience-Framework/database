@@ -13,13 +13,14 @@ use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\DropColumn;
 use Sentience\Database\Queries\Objects\DropConstraint;
 use Sentience\Database\Queries\Objects\RenameColumn;
+use Sentience\Database\Queries\Objects\Type;
 use Sentience\Database\Queries\Query;
 
 trait AltersTrait
 {
     protected array $alters = [];
 
-    public function addColumn(string $name, string $type, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Sql $default = null, bool $generatedByDefaultAsIdentity = false): static
+    public function addColumn(string $name, string|Type $type, bool $notNull = false, null|bool|int|float|string|DateTimeInterface|Sql $default = null, bool $generatedByDefaultAsIdentity = false): static
     {
         $this->alters[] = new AddColumn($name, $type, $notNull, $default, $generatedByDefaultAsIdentity);
 
@@ -98,22 +99,22 @@ trait AltersTrait
 
     public function addBool(string $name, bool $notNull = false, null|bool|Sql $default = null): static
     {
-        return $this->addColumn($name, $this->dialect->type(TypeEnum::Bool), $notNull, $default);
+        return $this->addColumn($name, new Type(TypeEnum::Bool), $notNull, $default);
     }
 
     public function addInt(string $name, int $bits = 64, bool $notNull = false, null|int|Sql $default = null, bool $generatedByDefaultAsIdentity = false): static
     {
-        return $this->addColumn($name, $this->dialect->type(TypeEnum::Int, $bits), $notNull, $default, $generatedByDefaultAsIdentity);
+        return $this->addColumn($name, new Type(TypeEnum::Int, $bits), $notNull, $default, $generatedByDefaultAsIdentity);
     }
 
     public function addFloat(string $name, int $bits = 64, bool $notNull = false, null|int|float|Sql $default = null): static
     {
-        return $this->addColumn($name, $this->dialect->type(TypeEnum::Float, $bits), $notNull, $default);
+        return $this->addColumn($name, new Type(TypeEnum::Float, $bits), $notNull, $default);
     }
 
     public function addString(string $name, int $size = 255, bool $notNull = false, null|string|Sql $default = null): static
     {
-        return $this->addColumn($name, $this->dialect->type(TypeEnum::String, $size), $notNull, $default);
+        return $this->addColumn($name, new Type(TypeEnum::String, $size), $notNull, $default);
     }
 
     public function addText(string $name, bool $notNull = false, null|string|Sql $default = null): static
@@ -123,6 +124,6 @@ trait AltersTrait
 
     public function addDateTime(string $name, int $size = 6, bool $notNull = false, null|DateTimeInterface|Sql $default = null): static
     {
-        return $this->addColumn($name, $this->dialect->type(TypeEnum::DateTime, $size), $notNull, $default);
+        return $this->addColumn($name, new Type(TypeEnum::DateTime, $size), $notNull, $default);
     }
 }

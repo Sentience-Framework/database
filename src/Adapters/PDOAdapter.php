@@ -265,25 +265,31 @@ class PDOAdapter extends AdapterAbstract
                 $createFunctions = $options[static::OPTIONS_SQLITE_CREATE_FUNCTIONS] ?? [];
 
                 if (!array_key_exists(static::REGEXP_FUNCTION, $createFunctions)) {
-                    [$this->pdo, $method](
-                        static::REGEXP_FUNCTION,
-                        fn (string $value, string $pattern): bool => $this->regexpFunction(
-                            $value,
-                            $pattern
-                        ),
-                        2
-                    );
+                    try {
+                        [$this->pdo, $method](
+                            static::REGEXP_FUNCTION,
+                            fn (string $value, string $pattern): bool => $this->regexpFunction(
+                                $value,
+                                $pattern
+                            ),
+                            2
+                        );
+                    } catch (Throwable $exception) {
+                    }
                 }
 
                 if (!array_key_exists(static::REGEXP_LIKE_FUNCTION, $createFunctions)) {
-                    [$this->pdo, $method](
-                        static::REGEXP_LIKE_FUNCTION,
-                        fn (string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction(
-                            $value,
-                            $pattern,
-                            $flags
-                        )
-                    );
+                    try {
+                        [$this->pdo, $method](
+                            static::REGEXP_LIKE_FUNCTION,
+                            fn (string $value, string $pattern, string $flags = ''): bool => $this->regexpLikeFunction(
+                                $value,
+                                $pattern,
+                                $flags
+                            )
+                        );
+                    } catch (Throwable $exception) {
+                    }
                 }
 
                 foreach ($createFunctions as $function => $callback) {

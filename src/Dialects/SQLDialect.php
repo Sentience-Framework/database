@@ -28,6 +28,7 @@ use Sentience\Database\Queries\Objects\OrderBy;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\RenameColumn;
 use Sentience\Database\Queries\Objects\SubQuery;
+use Sentience\Database\Queries\Objects\Type;
 use Sentience\Database\Queries\Objects\UniqueConstraint;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
@@ -1009,7 +1010,7 @@ class SQLDialect extends DialectAbstract
         $sql = sprintf(
             '%s %s',
             $this->escapeIdentifier($column->name),
-            $column->type
+            $column->type instanceof Type ? $this->type($column->type->type, $column->type->size) : $column->type
         );
 
         if ($column->generatedByDefaultAsIdentity && $this->generatedByDefaultAsIdentity()) {
