@@ -280,7 +280,7 @@ $database->insert('table_1')
 
 ```php
 $database->update('table_1')
-    ->values([
+    ->set([
         'column1' => Query::now(),
         'column2' => true,
         'column3' => false,

@@ -37,7 +37,7 @@ interface DialectInterface
 
     public function update(
         string|array|Sql $table,
-        array $updates,
+        array $set,
         array $where,
         ?array $returning
     ): QueryWithParams;
