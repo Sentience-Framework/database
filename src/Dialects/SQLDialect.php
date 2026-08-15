@@ -173,11 +173,11 @@ class SQLDialect extends DialectAbstract
 
     public function update(
         string|array|Sql $table,
-        array $updates,
+        array $set,
         array $where,
         ?array $returning
     ): QueryWithParams {
-        if (count($updates) == 0) {
+        if (count($set) == 0) {
             throw new QueryException('no updates specified');
         }
 
@@ -199,8 +199,8 @@ class SQLDialect extends DialectAbstract
                         : $this->buildQuestionMarks($params, $value)
                     );
                 },
-                $updates,
-                array_keys($updates)
+                $set,
+                array_keys($set)
             )
         );
 

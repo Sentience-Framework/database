@@ -27,7 +27,7 @@ class QueryFactory
 
     public function update(array $updates): UpdateQuery
     {
-        return $this->database->update($this->table)->updates($updates);
+        return $this->database->update($this->table)->set($updates);
     }
 
     public function delete(): DeleteQuery

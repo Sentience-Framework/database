@@ -174,7 +174,7 @@ class InsertQuery extends Query
             ? (count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $values)
             : $conflict;
 
-        $updateQuery->updates($updates);
+        $updateQuery->set($updates);
 
         foreach ($conflict as $column => $value) {
             $updateQuery->whereEquals($column, $value);
