@@ -1,0 +1,13 @@
+{
+    "name": "sentience/database",
+    "description": "The database connector for the Sentience framework",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Sentience\\Database\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^8.3"
+    }
+}
