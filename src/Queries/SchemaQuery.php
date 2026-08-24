@@ -1,0 +1,35 @@
+<?php
+
+namespace Sentience\Database\Queries;
+
+use Sentience\Database\DatabaseInterface;
+use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Queries\Interfaces\Sql;
+
+abstract class SchemaQuery extends TableQuery
+{
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table)
+    {
+        parent::__construct($database, $dialect, $table);
+    }
+
+    public function execute(bool $emulatePrepare = false): mixed
+    {
+        return parent::execute(true);
+    }
+
+    protected function tableExists(): bool
+    {
+        $end = function (string|array|Sql $table) use (&$end): string {
+            if (is_array($table)) {
+                return $end(end($table));
+            }
+
+            return $table instanceof Sql ? $table->rawSql($this->dialect) : $table;
+        };
+
+        $table = $end($this->table);
+
+        return in_array($table, $this->database->informationSchemaTables());
+    }
+}
