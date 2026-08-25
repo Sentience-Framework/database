@@ -6,26 +6,24 @@ use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Traits\ReturningTrait;
-use Sentience\Database\Queries\Traits\WhereTrait;
+use Sentience\Database\Queries\Traits\IfExistsTrait;
 use Sentience\Database\Results\ResultInterface;
 
-class DeleteQuery extends TableQuery
+class DropIndexQuery extends TableQuery
 {
-    use ReturningTrait;
-    use WhereTrait;
+    use IfExistsTrait;
 
-    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table)
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table, protected string $name)
     {
         parent::__construct($database, $dialect, $table);
     }
 
     public function toQueryWithParams(): QueryWithParams
     {
-        return $this->dialect->delete(
-            $this->table,
-            $this->where,
-            $this->returning
+        return $this->dialect->dropIndex(
+            $this->ifExists,
+            $this->name,
+            $this->table
         );
     }
 
@@ -37,12 +35,5 @@ class DeleteQuery extends TableQuery
     public function execute(bool $emulatePrepare = false): ResultInterface
     {
         return parent::execute($emulatePrepare);
-    }
-
-    public function from(string|array|Sql $table): static
-    {
-        $this->table = $table;
-
-        return $this;
     }
 }

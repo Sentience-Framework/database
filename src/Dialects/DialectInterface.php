@@ -66,6 +66,20 @@ interface DialectInterface
         string|array|Sql $table
     ): QueryWithParams;
 
+    public function createIndex(
+        bool $unique,
+        bool $ifNotExists,
+        string $name,
+        string|array|Sql $table,
+        array $columns
+    ): QueryWithParams;
+
+    public function dropIndex(
+        bool $ifExists,
+        string $name,
+        string|array|Sql $table
+    ): QueryWithParams;
+
     public function beginTransaction(
         ?string $name
     ): QueryWithParams;

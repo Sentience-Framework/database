@@ -11,7 +11,7 @@ use Sentience\Database\Queries\Traits\SetTrait;
 use Sentience\Database\Queries\Traits\WhereTrait;
 use Sentience\Database\Results\ResultInterface;
 
-class UpdateQuery extends Query
+class UpdateQuery extends TableQuery
 {
     use ReturningTrait;
     use SetTrait;

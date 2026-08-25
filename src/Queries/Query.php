@@ -19,8 +19,7 @@ abstract class Query implements QueryInterface
 {
     public function __construct(
         protected DatabaseInterface $database,
-        protected DialectInterface $dialect,
-        protected string|array|Alias|Sql|SubQuery $table
+        protected DialectInterface $dialect
     ) {
     }
 

@@ -20,7 +20,7 @@ use Sentience\Database\Queries\Traits\UnionTrait;
 use Sentience\Database\Queries\Traits\WhereTrait;
 use Sentience\Database\Results\ResultInterface;
 
-class SelectQuery extends Query
+class SelectQuery extends TableQuery
 {
     use ColumnsTrait;
     use DistinctTrait;

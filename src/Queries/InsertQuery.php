@@ -16,7 +16,7 @@ use Sentience\Database\Queries\Traits\ValuesTrait;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
 
-class InsertQuery extends Query
+class InsertQuery extends TableQuery
 {
     use LastInsertIdTrait;
     use OnConflictTrait;

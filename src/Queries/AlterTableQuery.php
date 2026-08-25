@@ -9,7 +9,7 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Traits\AltersTrait;
 use Sentience\Database\Results\ResultInterface;
 
-class AlterTableQuery extends Query
+class AlterTableQuery extends TableQuery
 {
     use AltersTrait;
 

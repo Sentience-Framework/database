@@ -9,7 +9,7 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Traits\IfExistsTrait;
 use Sentience\Database\Results\ResultInterface;
 
-class DropTableQuery extends Query
+class DropTableQuery extends TableQuery
 {
     use IfExistsTrait;
 

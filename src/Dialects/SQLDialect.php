@@ -332,6 +332,73 @@ class SQLDialect extends DialectAbstract
         return new QueryWithParams($query, $params);
     }
 
+    public function createIndex(
+        bool $unique,
+        bool $ifNotExists,
+        string $name,
+        string|array|Sql $table,
+        array $columns
+    ): QueryWithParams {
+        if (count($columns) == 0) {
+            throw new QueryException('no columns specified');
+        }
+
+        $query = 'CREATE';
+        $params = [];
+
+        if ($unique) {
+            $query .= ' UNIQUE';
+        }
+
+        $query .= ' INDEX';
+
+        if ($ifNotExists) {
+            $query .= ' IF NOT EXISTS';
+        }
+
+        $query .= ' ';
+        $query .= $this->escapeIdentifier($name);
+
+        $query .= ' ON';
+
+        $this->buildTable($query, $params, $table);
+
+        $query .= sprintf(
+            ' (%s)',
+            implode(
+                ', ',
+                array_map(
+                    fn (string $column): string => $this->escapeIdentifier($column),
+                    $columns
+                )
+            )
+        );
+
+        return new QueryWithParams($query, $params);
+    }
+
+    public function dropIndex(
+        bool $ifExists,
+        string $name,
+        string|array|Sql $table
+    ): QueryWithParams {
+        $query = 'DROP INDEX';
+        $params = [];
+
+        if ($ifExists) {
+            $query .= ' IF EXISTS';
+        }
+
+        $query .= ' ';
+        $query .= $this->escapeIdentifier($name);
+
+        $query .= ' ON';
+
+        $this->buildTable($query, $params, $table);
+
+        return new QueryWithParams($query, $params);
+    }
+
     public function beginTransaction(
         ?string $name
     ): QueryWithParams {

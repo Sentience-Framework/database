@@ -15,7 +15,7 @@ use Sentience\Database\Queries\Traits\IfNotExistsTrait;
 use Sentience\Database\Queries\Traits\PrimaryKeysTrait;
 use Sentience\Database\Results\ResultInterface;
 
-class CreateTableQuery extends Query
+class CreateTableQuery extends TableQuery
 {
     use ConstraintsTrait;
     use IfNotExistsTrait;
