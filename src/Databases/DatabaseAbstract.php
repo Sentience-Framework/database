@@ -189,7 +189,7 @@ abstract class DatabaseAbstract implements DatabaseInterface
 
     public function createIndex(string|array|Sql $table, string $name): CreateIndexQuery
     {
-        return new CreateIndexQuery($this, $this->dialect, $name, $table);
+        return new CreateIndexQuery($this, $this->dialect, $table, $name);
     }
 
     public function dropIndex(string|array|Sql $table, string $name): DropIndexQuery
