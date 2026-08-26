@@ -142,6 +142,16 @@ class Table
         return $this->database->dropTable($this->table);
     }
 
+    public function createIndex(string $name): CreateIndexQuery
+    {
+        return $this->database->createIndex($this->table, $name);
+    }
+
+    public function dropIndex(string $name): DropIndexQuery
+    {
+        return $this->database->dropIndex($this->table, $name);
+    }
+
     public function dropIfExists(): DropTableQuery
     {
         return $this->drop()->ifExists();

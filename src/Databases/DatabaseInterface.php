@@ -3,8 +3,10 @@
 namespace Sentience\Database\Databases;
 
 use Sentience\Database\Queries\AlterTableQuery;
+use Sentience\Database\Queries\CreateIndexQuery;
 use Sentience\Database\Queries\CreateTableQuery;
 use Sentience\Database\Queries\DeleteQuery;
+use Sentience\Database\Queries\DropIndexQuery;
 use Sentience\Database\Queries\DropTableQuery;
 use Sentience\Database\Queries\InsertQuery;
 use Sentience\Database\Queries\Interfaces\Sql;
@@ -37,5 +39,7 @@ interface DatabaseInterface
     public function createTable(string|array|Sql $table): CreateTableQuery;
     public function alterTable(string|array|Sql $table): AlterTableQuery;
     public function dropTable(string|array|Sql $table): DropTableQuery;
+    public function createIndex(string|array|Sql $table, string $name): CreateIndexQuery;
+    public function dropIndex(string|array|Sql $table, string $name): DropIndexQuery;
     public function table(string|array|Sql $table): Table;
 }
