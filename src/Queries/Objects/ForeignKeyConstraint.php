@@ -2,6 +2,8 @@
 
 namespace Sentience\Database\Queries\Objects;
 
+use Sentience\Database\Queries\Enums\ReferentialActionEnum;
+
 class ForeignKeyConstraint
 {
     public function __construct(
@@ -9,7 +11,8 @@ class ForeignKeyConstraint
         public string $referenceTable,
         public string $referenceColumn,
         public ?string $name,
-        public array $referentialActions
+        public null|string|ReferentialActionEnum $onUpdate,
+        public null|string|ReferentialActionEnum $onDelete
     ) {
     }
 }

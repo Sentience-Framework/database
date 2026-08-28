@@ -3,6 +3,7 @@
 namespace Sentience\Database\Queries\Traits;
 
 use DateTimeInterface;
+use Sentience\Database\Queries\Enums\ReferentialActionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\AddColumn;
@@ -62,9 +63,9 @@ trait AltersTrait
         return $this;
     }
 
-    public function addForeignKeyConstraint(string $column, string $referenceTable, string $referenceColumn, ?string $name = null, array $referentialActions = []): static
+    public function addForeignKeyConstraint(string $column, string $referenceTable, string $referenceColumn, ?string $name = null, null|string|ReferentialActionEnum $onUpdate = null, null|string|ReferentialActionEnum $onDelete = null): static
     {
-        $this->alters[] = new AddForeignKeyConstraint($column, $referenceTable, $referenceColumn, $name, $referentialActions);
+        $this->alters[] = new AddForeignKeyConstraint($column, $referenceTable, $referenceColumn, $name, $onUpdate, $onDelete);
 
         return $this;
     }

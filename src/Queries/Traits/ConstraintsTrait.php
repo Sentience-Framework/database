@@ -2,6 +2,7 @@
 
 namespace Sentience\Database\Queries\Traits;
 
+use Sentience\Database\Queries\Enums\ReferentialActionEnum;
 use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\UniqueConstraint;
 use Sentience\Database\Queries\Query;
@@ -17,9 +18,9 @@ trait ConstraintsTrait
         return $this;
     }
 
-    public function foreignKeyConstraint(string $column, string $referenceTable, string $referenceColumn, ?string $name = null, array $referentialActions = []): static
+    public function foreignKeyConstraint(string $column, string $referenceTable, string $referenceColumn, ?string $name = null, null|string|ReferentialActionEnum $onUpdate = null, null|string|ReferentialActionEnum $onDelete = null): static
     {
-        $this->constraints[] = new ForeignKeyConstraint($column, $referenceTable, $referenceColumn, $name, $referentialActions);
+        $this->constraints[] = new ForeignKeyConstraint($column, $referenceTable, $referenceColumn, $name, $onUpdate, $onDelete);
 
         return $this;
     }

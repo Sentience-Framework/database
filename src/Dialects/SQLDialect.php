@@ -1140,11 +1140,18 @@ class SQLDialect extends DialectAbstract
             );
         }
 
-        foreach ($foreignKeyConstraint->referentialActions as $referentialAction) {
-            $sql .= ' ';
-            $sql .= (string) is_subclass_of($referentialAction, BackedEnum::class)
-                ? $referentialAction->value
-                : $referentialAction;
+        if ($foreignKeyConstraint->onUpdate) {
+            $sql .= ' ON UPDATE ';
+            $sql .= (string) is_subclass_of($foreignKeyConstraint->onUpdate, BackedEnum::class)
+                ? $foreignKeyConstraint->onUpdate->value
+                : $foreignKeyConstraint->onUpdate;
+        }
+
+        if ($foreignKeyConstraint->onDelete) {
+            $sql .= ' ON DELETE ';
+            $sql .= (string) is_subclass_of($foreignKeyConstraint->onDelete, BackedEnum::class)
+                ? $foreignKeyConstraint->onDelete->value
+                : $foreignKeyConstraint->onDelete;
         }
 
         return $sql;
