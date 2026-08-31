@@ -76,13 +76,6 @@ class ExpressionF implements Sql
         $offset = 0;
 
         foreach ($matches[0] as $index => $match) {
-            [$matchString, $matchOffset] = $match;
-
-            $beforeMatch = substr($this->format, $offset, $matchOffset - $offset);
-
-            $this->sql .= $beforeMatch;
-            $this->rawSql .= $beforeMatch;
-
             if (!array_key_exists($index, $this->values)) {
                 throw new ArgumentCountError(
                     sprintf(
@@ -92,6 +85,13 @@ class ExpressionF implements Sql
                     )
                 );
             }
+
+            [$matchString, $matchOffset] = $match;
+
+            $beforeMatch = substr($this->format, $offset, $matchOffset - $offset);
+
+            $this->sql .= $beforeMatch;
+            $this->rawSql .= $beforeMatch;
 
             $value = $this->values[$index];
 
