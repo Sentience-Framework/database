@@ -36,7 +36,9 @@ class FirebirdDatabase extends DatabaseAbstract
 
         $dialect = $driver->dialect($version, $options);
 
-        return new static($adapter, $dialect);
+        $schema = $driver->schema();
+
+        return new static($adapter, $dialect, $schema);
     }
 
     public function lastInsertId(?string $name = null): null|int|string

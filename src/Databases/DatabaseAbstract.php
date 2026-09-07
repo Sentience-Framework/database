@@ -21,6 +21,7 @@ use Sentience\Database\Queries\SelectQuery;
 use Sentience\Database\Queries\Table;
 use Sentience\Database\Queries\UpdateQuery;
 use Sentience\Database\Results\ResultInterface;
+use Sentience\Database\Schemas\SchemaInterface;
 
 abstract class DatabaseAbstract implements DatabaseInterface
 {
@@ -28,7 +29,8 @@ abstract class DatabaseAbstract implements DatabaseInterface
 
     public function __construct(
         protected AdapterInterface $adapter,
-        protected DialectInterface $dialect
+        protected DialectInterface $dialect,
+        protected SchemaInterface $schema
     ) {
     }
 
@@ -200,5 +202,35 @@ abstract class DatabaseAbstract implements DatabaseInterface
     public function table(string|array|Sql $table): Table
     {
         return new Table($this, $this->dialect, $table);
+    }
+
+    public function informationSchemaTables(): array
+    {
+        return $this->schema->tables($this, $this->dialect);
+    }
+
+    public function informationSchemaColumns(string $table): array
+    {
+        return $this->schema->columns($this, $this->dialect, $table);
+    }
+
+    public function informationSchemaPrimaryKeys(string $table): array
+    {
+        return $this->schema->primaryKeys($this, $this->dialect, $table);
+    }
+
+    public function informationSchemaUniqueConstraints(string $table): array
+    {
+        return $this->schema->uniqueConstraints($this, $this->dialect, $table);
+    }
+
+    public function informationSchemaForeignKeyConstraints(string $table): array
+    {
+        return $this->schema->foreignKeyConstraints($this, $this->dialect, $table);
+    }
+
+    public function informationSchemaIndexes(string $table): array
+    {
+        return $this->schema->indexes($this, $this->dialect, $table);
     }
 }

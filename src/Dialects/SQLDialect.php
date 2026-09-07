@@ -392,10 +392,6 @@ class SQLDialect extends DialectAbstract
         $query .= ' ';
         $query .= $this->escapeIdentifier($name);
 
-        $query .= ' ON';
-
-        $this->buildTable($query, $params, $table);
-
         return new QueryWithParams($query, $params);
     }
 
@@ -626,7 +622,7 @@ class SQLDialect extends DialectAbstract
         };
     }
 
-    protected function buildConditionOperator(string &$query, array &$params, string|array $identifier, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): void
+    protected function buildConditionOperator(string &$query, array &$params, string|array|Sql $identifier, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): void
     {
         $query .= sprintf(
             '%s %s %s',

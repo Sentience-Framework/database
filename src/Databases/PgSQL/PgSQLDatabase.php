@@ -36,7 +36,9 @@ class PgSQLDatabase extends DatabaseAbstract
 
         $dialect = $driver->dialect($version, $options);
 
-        return new static($adapter, $dialect);
+        $schema = $driver->schema();
+
+        return new static($adapter, $dialect, $schema);
     }
 
     public static function unixSocket(
@@ -63,22 +65,8 @@ class PgSQLDatabase extends DatabaseAbstract
 
         $dialect = $driver->dialect($version, $options);
 
-        return new static($adapter, $dialect);
-    }
+        $schema = $driver->schema();
 
-    public function informationSchemaTables(): array
-    {
-        return $this->select(['information_schema', 'tables'])
-            ->whereNotIn('table_schema', ['pg_catalog', 'information_schema'])
-            ->execute()
-            ->fetchAssocs();
-    }
-
-    public function informationSchemaColumns(string $table): array
-    {
-        return $this->select(['information_schema', 'columns'])
-            ->whereEquals('table_name', $table)
-            ->execute()
-            ->fetchAssocs();
+        return new static($adapter, $dialect, $schema);
     }
 }

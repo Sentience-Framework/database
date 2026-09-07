@@ -35,24 +35,8 @@ class SQLServerDatabase extends DatabaseAbstract
 
         $dialect = $driver->dialect($version, $options);
 
-        return new static($adapter, $dialect);
-    }
+        $schema = $driver->schema();
 
-    public function informationSchemaTables(): array
-    {
-        return $this->select(['information_schema', 'tables'])
-            ->whereEquals('table_type', 'BASE TABLE')
-            ->execute()
-            ->fetchAssocs();
-    }
-
-    public function spColumns(string $table): array
-    {
-        $query = sprintf(
-            'SP_COLUMNS %s',
-            $this->dialect->escapeIdentifier($table)
-        );
-
-        return $this->query($query)->fetchAssocs();
+        return new static($adapter, $dialect, $schema);
     }
 }

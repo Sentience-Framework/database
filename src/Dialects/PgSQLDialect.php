@@ -65,7 +65,7 @@ class PgSQLDialect extends SQLDialect
             return parent::buildColumn($column);
         }
 
-        if (!$this->generatedByDefaultAsIdentity() || $this->options[static::OPTIONS_USE_SERIALS] ?? false) {
+        if (!$this->generatedByDefaultAsIdentity() || ($this->options[static::OPTIONS_USE_SERIALS] ?? false)) {
             $type = $column->type instanceof Type ? $this->type($column->type->type, $column->type->size) : $column->type;
             $typeIsUppercase = (bool) preg_match('/[A-Z]/', $column->type);
 

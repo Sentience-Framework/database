@@ -5,6 +5,7 @@ namespace Sentience\Database;
 use Closure;
 use Sentience\Database\Adapters\AdapterInterface;
 use Sentience\Database\Dialects\DialectInterface;
+use Sentience\Database\Schemas\SchemaInterface;
 use Sentience\Database\Sockets\SocketAbstract;
 
 interface DriverInterface
@@ -21,4 +22,5 @@ interface DriverInterface
     ): AdapterInterface;
 
     public function dialect(int|string $version, array $options = []): DialectInterface;
+    public function schema(): SchemaInterface;
 }

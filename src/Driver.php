@@ -18,6 +18,17 @@ use Sentience\Database\Dialects\PgSQLDialect;
 use Sentience\Database\Dialects\SQLDialect;
 use Sentience\Database\Dialects\SQLiteDialect;
 use Sentience\Database\Dialects\SQLServerDialect;
+use Sentience\Database\Schemas\CUBRIDSchema;
+use Sentience\Database\Schemas\DB2Schema;
+use Sentience\Database\Schemas\FirebirdSchema;
+use Sentience\Database\Schemas\InformixSchema;
+use Sentience\Database\Schemas\MySQLSchema;
+use Sentience\Database\Schemas\OCISchema;
+use Sentience\Database\Schemas\PgSQLSchema;
+use Sentience\Database\Schemas\SchemaInterface;
+use Sentience\Database\Schemas\SQLiteSchema;
+use Sentience\Database\Schemas\SQLSchema;
+use Sentience\Database\Schemas\SQLServerSchema;
 use Sentience\Database\Sockets\SocketAbstract;
 
 enum Driver: string implements DriverInterface
@@ -79,6 +90,23 @@ enum Driver: string implements DriverInterface
             static::SQLite => new SQLiteDialect($this, $version, $options),
             static::SQLSrv => new SQLServerDialect($this, $version, $options),
             default => new SQLDialect($this, $version, $options)
+        };
+    }
+
+    public function schema(): SchemaInterface
+    {
+        return match ($this) {
+            static::CUBRID => new CUBRIDSchema(),
+            static::DB2 => new DB2Schema(),
+            static::Firebird => new FirebirdSchema(),
+            static::Informix => new InformixSchema(),
+            static::MariaDB,
+            static::MySQL => new MySQLSchema(),
+            static::OCI => new OCISchema(),
+            static::PgSQL => new PgSQLSchema(),
+            static::SQLite => new SQLiteSchema(),
+            static::SQLSrv => new SQLServerSchema(),
+            default => new SQLSchema()
         };
     }
 }

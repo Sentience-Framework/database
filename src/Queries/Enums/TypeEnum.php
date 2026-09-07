@@ -2,11 +2,13 @@
 
 namespace Sentience\Database\Queries\Enums;
 
-enum TypeEnum
+use DateTime;
+
+enum TypeEnum: string
 {
-    case Bool;
-    case Int;
-    case Float;
-    case String;
-    case DateTime;
+    case Bool = 'bool';
+    case Int = 'int';
+    case Float = 'float';
+    case String = 'string';
+    case DateTime = DateTime::class;
 }

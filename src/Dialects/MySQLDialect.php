@@ -70,6 +70,27 @@ class MySQLDialect extends SQLDialect
         );
     }
 
+    public function dropIndex(
+        bool $ifExists,
+        string $name,
+        string|array|Sql $table
+    ): QueryWithParams {
+        $queryWithParams = parent::dropIndex(
+            $ifExists,
+            $name,
+            $table
+        );
+
+        $query = $queryWithParams->query;
+        $params = $queryWithParams->params;
+
+        $query .= ' ON';
+
+        $this->buildTable($query, $params, $table);
+
+        return new QueryWithParams($query, $params);
+    }
+
     protected function buildConditionLike(string &$query, array &$params, Condition $condition): void
     {
         if ($this->version < 40000) {

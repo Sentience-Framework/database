@@ -12,7 +12,7 @@ class Condition
 {
     public function __construct(
         public string|BackedEnum $condition,
-        public null|string|array $identifier,
+        public null|string|array|Sql $identifier,
         public null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value,
         public ChainEnum $chain
     ) {

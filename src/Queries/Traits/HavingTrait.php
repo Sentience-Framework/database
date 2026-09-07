@@ -15,122 +15,122 @@ trait HavingTrait
 
     protected array $having = [];
 
-    public function havingEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $cast = false): static
+    public function havingEquals(string|array|Sql $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $cast = false): static
     {
         return $this->equals($this->having, $column, $value, $cast, ChainEnum::And);
     }
 
-    public function havingNotEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $cast = false): static
+    public function havingNotEquals(string|array|Sql $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $cast = false): static
     {
         return $this->notEquals($this->having, $column, $value, $cast, ChainEnum::And);
     }
 
-    public function havingIsNull(string|array $column): static
+    public function havingIsNull(string|array|Sql $column): static
     {
         return $this->isNull($this->having, $column, ChainEnum::And);
     }
 
-    public function havingIsNotNull(string|array $column): static
+    public function havingIsNotNull(string|array|Sql $column): static
     {
         return $this->isNotNull($this->having, $column, ChainEnum::And);
     }
 
-    public function havingLike(string|array $column, string $value, bool $caseInsensitive = false): static
+    public function havingLike(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
     {
         return $this->like($this->having, $column, $value, $caseInsensitive, ChainEnum::And);
     }
 
-    public function havingNotLike(string|array $column, string $value, bool $caseInsensitive = false): static
+    public function havingNotLike(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
     {
         return $this->notLike($this->having, $column, $value, $caseInsensitive, ChainEnum::And);
     }
 
-    public function havingStartsWith(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
+    public function havingStartsWith(string|array|Sql $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
         return $this->startsWith($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::And);
     }
 
-    public function havingEndsWith(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
+    public function havingEndsWith(string|array|Sql $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
         return $this->endsWith($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::And);
     }
 
-    public function havingContains(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
+    public function havingContains(string|array|Sql $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
         return $this->contains($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::And);
     }
 
-    public function havingNotContains(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
+    public function havingNotContains(string|array|Sql $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
         return $this->notContains($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::And);
     }
 
-    public function havingGlob(string|array $column, string $value, bool $caseInsensitive = false): static
+    public function havingGlob(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
     {
         return $this->glob($this->having, $column, $value, $caseInsensitive, ChainEnum::And);
     }
 
-    public function havingNotGlob(string|array $column, string $value, bool $caseInsensitive = false): static
+    public function havingNotGlob(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
     {
         return $this->notGlob($this->having, $column, $value, $caseInsensitive, ChainEnum::And);
     }
 
-    public function havingIn(string|array $column, array|SelectQuery $values): static
+    public function havingIn(string|array|Sql $column, array|SelectQuery $values): static
     {
         return $this->in($this->having, $column, $values, ChainEnum::And);
     }
 
-    public function havingNotIn(string|array $column, array|SelectQuery $values): static
+    public function havingNotIn(string|array|Sql $column, array|SelectQuery $values): static
     {
         return $this->notIn($this->having, $column, $values, ChainEnum::And);
     }
 
-    public function havingLessThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function havingLessThan(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->lessThan($this->having, $column, $value, ChainEnum::And);
     }
 
-    public function havingLessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function havingLessThanOrEquals(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->lessThanOrEquals($this->having, $column, $value, ChainEnum::And);
     }
 
-    public function havingGreaterThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function havingGreaterThan(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->greaterThan($this->having, $column, $value, ChainEnum::And);
     }
 
-    public function havingGreaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function havingGreaterThanOrEquals(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->greaterThanOrEquals($this->having, $column, $value, ChainEnum::And);
     }
 
-    public function havingBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
+    public function havingBetween(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
     {
         return $this->between($this->having, $column, $min, $max, ChainEnum::And);
     }
 
-    public function havingNotBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
+    public function havingNotBetween(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
     {
         return $this->notBetween($this->having, $column, $min, $max, ChainEnum::And);
     }
 
-    public function havingEmpty(string|array $column): static
+    public function havingEmpty(string|array|Sql $column): static
     {
         return $this->empty($this->having, $column, ChainEnum::And);
     }
 
-    public function havingNotEmpty(string|array $column): static
+    public function havingNotEmpty(string|array|Sql $column): static
     {
         return $this->notEmpty($this->having, $column, ChainEnum::And);
     }
 
-    public function havingRegex(string|array $column, string $pattern, string $flags = ''): static
+    public function havingRegex(string|array|Sql $column, string $pattern, string $flags = ''): static
     {
         return $this->regex($this->having, $column, $pattern, $flags, ChainEnum::And);
     }
 
-    public function havingNotRegex(string|array $column, string $pattern, string $flags = ''): static
+    public function havingNotRegex(string|array|Sql $column, string $pattern, string $flags = ''): static
     {
         return $this->notRegex($this->having, $column, $pattern, $flags, ChainEnum::And);
     }
@@ -155,7 +155,7 @@ trait HavingTrait
         return $this->group($this->having, $callback, true, HavingGroup::class, ChainEnum::And);
     }
 
-    public function havingOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static
+    public function havingOperator(string|array|Sql $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->operator($this->having, $column, $operator, $value, ChainEnum::And);
     }
@@ -170,112 +170,112 @@ trait HavingTrait
         return $this->addRawCondition($this->having, $sql, $values, ChainEnum::And);
     }
 
-    public function orHavingEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $cast = false): static
+    public function orHavingEquals(string|array|Sql $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $cast = false): static
     {
         return $this->equals($this->having, $column, $value, $cast, ChainEnum::Or);
     }
 
-    public function orHavingNotEquals(string|array $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $cast = false): static
+    public function orHavingNotEquals(string|array|Sql $column, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, bool $cast = false): static
     {
         return $this->notEquals($this->having, $column, $value, $cast, ChainEnum::Or);
     }
 
-    public function orHavingIsNull(string|array $column): static
+    public function orHavingIsNull(string|array|Sql $column): static
     {
         return $this->isNull($this->having, $column, ChainEnum::Or);
     }
 
-    public function orHavingIsNotNull(string|array $column): static
+    public function orHavingIsNotNull(string|array|Sql $column): static
     {
         return $this->isNotNull($this->having, $column, ChainEnum::Or);
     }
 
-    public function orHavingLike(string|array $column, string $value, bool $caseInsensitive = false): static
+    public function orHavingLike(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
     {
         return $this->like($this->having, $column, $value, $caseInsensitive, ChainEnum::Or);
     }
 
-    public function orHavingNotLike(string|array $column, string $value, bool $caseInsensitive = false): static
+    public function orHavingNotLike(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
     {
         return $this->notLike($this->having, $column, $value, $caseInsensitive, ChainEnum::Or);
     }
 
-    public function orHavingStartsWith(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
+    public function orHavingStartsWith(string|array|Sql $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
         return $this->startsWith($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::Or);
     }
 
-    public function orHavingEndsWith(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
+    public function orHavingEndsWith(string|array|Sql $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
         return $this->endsWith($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::Or);
     }
 
-    public function orHavingContains(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
+    public function orHavingContains(string|array|Sql $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
         return $this->contains($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::Or);
     }
 
-    public function orHavingNotContains(string|array $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
+    public function orHavingNotContains(string|array|Sql $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
         return $this->notContains($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::Or);
     }
 
-    public function orHavingIn(string|array $column, array|SelectQuery $values): static
+    public function orHavingIn(string|array|Sql $column, array|SelectQuery $values): static
     {
         return $this->in($this->having, $column, $values, ChainEnum::Or);
     }
 
-    public function orHavingNotIn(string|array $column, array|SelectQuery $values): static
+    public function orHavingNotIn(string|array|Sql $column, array|SelectQuery $values): static
     {
         return $this->notIn($this->having, $column, $values, ChainEnum::Or);
     }
 
-    public function orHavingLessThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function orHavingLessThan(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->lessThan($this->having, $column, $value, ChainEnum::Or);
     }
 
-    public function orHavingLessThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function orHavingLessThanOrEquals(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->lessThanOrEquals($this->having, $column, $value, ChainEnum::Or);
     }
 
-    public function orHavingGreaterThan(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function orHavingGreaterThan(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->greaterThan($this->having, $column, $value, ChainEnum::Or);
     }
 
-    public function orHavingGreaterThanOrEquals(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
+    public function orHavingGreaterThanOrEquals(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->greaterThanOrEquals($this->having, $column, $value, ChainEnum::Or);
     }
 
-    public function orHavingBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
+    public function orHavingBetween(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
     {
         return $this->between($this->having, $column, $min, $max, ChainEnum::Or);
     }
 
-    public function orHavingNotBetween(string|array $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
+    public function orHavingNotBetween(string|array|Sql $column, int|float|string|DateTimeInterface|SelectQuery|Sql $min, int|float|string|DateTimeInterface|SelectQuery|Sql $max): static
     {
         return $this->notBetween($this->having, $column, $min, $max, ChainEnum::Or);
     }
 
-    public function orHavingEmpty(string|array $column): static
+    public function orHavingEmpty(string|array|Sql $column): static
     {
         return $this->empty($this->having, $column, ChainEnum::Or);
     }
 
-    public function orHavingNotEmpty(string|array $column): static
+    public function orHavingNotEmpty(string|array|Sql $column): static
     {
         return $this->notEmpty($this->having, $column, ChainEnum::Or);
     }
 
-    public function orHavingRegex(string|array $column, string $pattern, string $flags = ''): static
+    public function orHavingRegex(string|array|Sql $column, string $pattern, string $flags = ''): static
     {
         return $this->regex($this->having, $column, $pattern, $flags, ChainEnum::Or);
     }
 
-    public function orHavingNotRegex(string|array $column, string $pattern, string $flags = ''): static
+    public function orHavingNotRegex(string|array|Sql $column, string $pattern, string $flags = ''): static
     {
         return $this->notRegex($this->having, $column, $pattern, $flags, ChainEnum::Or);
     }
@@ -300,7 +300,7 @@ trait HavingTrait
         return $this->group($this->having, $callback, true, HavingGroup::class, ChainEnum::Or);
     }
 
-    public function orHavingOperator(string|array $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static
+    public function orHavingOperator(string|array|Sql $column, string|BackedEnum $operator, null|bool|int|float|string|array|DateTimeInterface|SelectQuery|Sql $value): static
     {
         return $this->operator($this->having, $column, $operator, $value, ChainEnum::Or);
     }

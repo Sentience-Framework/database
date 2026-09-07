@@ -32,7 +32,9 @@ class SQLiteDatabase extends DatabaseAbstract
 
         $dialect = $driver->dialect($version, $options);
 
-        return new static($adapter, $dialect);
+        $schema = $driver->schema();
+
+        return new static($adapter, $dialect, $schema);
     }
 
     public static function memory(
@@ -48,23 +50,5 @@ class SQLiteDatabase extends DatabaseAbstract
             $debug,
             $usePDOAdapter
         );
-    }
-
-    public function sqliteMasterTables(): array
-    {
-        return $this->select('sqlite_master')
-            ->whereEquals('type', 'table')
-            ->execute()
-            ->fetchAssocs();
-    }
-
-    public function pragmaTableInfo(string $table): array
-    {
-        $query = sprintf(
-            'PRAGMA table_info(%s)',
-            $this->dialect->escapeIdentifier($table)
-        );
-
-        return $this->query($query)->fetchAssocs();
     }
 }
