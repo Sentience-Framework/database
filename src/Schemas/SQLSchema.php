@@ -5,9 +5,11 @@ namespace Sentience\Database\Schemas;
 use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Enums\ReferentialActionEnum;
+use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\Index;
+use Sentience\Database\Queries\Objects\Type;
 use Sentience\Database\Queries\Objects\UniqueConstraint;
 use Sentience\Database\Queries\Objects\WhereGroup;
 use Sentience\Database\Queries\Query;
@@ -197,24 +199,40 @@ class SQLSchema extends SchemaAbstract
     public function indexes(DatabaseInterface $database, DialectInterface $dialect, string $table): array
     {
         $uniqueConstraints = $this->uniqueConstraints($database, $dialect, $table);
-        $foreignKeyConstraints = $this->foreignKeyConstraints($database, $dialect, $table);
 
-        $indexes = [];
-
-        foreach ($uniqueConstraints as $uniqueConstraint) {
-            $indexes[] = new Index($uniqueConstraint->name, $uniqueConstraint->columns, true);
-        }
-
-        foreach ($foreignKeyConstraints as $foreignKeyConstraint) {
-            $indexes[] = new Index($foreignKeyConstraint->name, [$foreignKeyConstraint->column], false);
-        }
-
-        return $indexes;
+        return array_map(
+            fn (UniqueConstraint $uniqueConstraint): Index => new Index(
+                $uniqueConstraint->name,
+                $uniqueConstraint->columns,
+                true
+            ),
+            $uniqueConstraints
+        );
     }
 
     protected function databaseSchema(WhereGroup $whereGroup): WhereGroup
     {
         return $whereGroup;
+    }
+
+    protected function type(string $type, ?int $size): string|Type
+    {
+        return match ($type) {
+            'BOOLEAN',
+            'BOOL' => new Type(TypeEnum::Bool),
+            'INTEGER',
+            'INT' => new Type(TypeEnum::Int, 32),
+            'BIGINT' => new Type(TypeEnum::Int, 64),
+            'REAL',
+            'FLOAT',
+            'DOUBLE',
+            'DECIMAL' => new Type(TypeEnum::Float, 64),
+            'VARCHAR',
+            'TEXT' => new Type(TypeEnum::String, $size ?? PHP_INT_MAX),
+            'DATETIME',
+            'TIMESTAMP' => new Type(TypeEnum::DateTime, $size ?? 0),
+            default => !is_null($size) ? sprintf('%s(%d)', $type, $size) : $size
+        };
     }
 
     protected function isIdentity(array $column): bool

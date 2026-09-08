@@ -302,12 +302,7 @@ class OCISchema extends SchemaAbstract
 
     protected function type(string $type, ?int $size): string|Type
     {
-        preg_match('/^([\w\s]+?)(?:\((\d+)(?:,\s*\d+)?\))?$/', $type, $match);
-
-        $name = $match[1] ?? $type;
-        $precision = !empty($match[2]) ? (int) $match[2] : null;
-
-        return match ($name) {
+        return match ($type) {
             'BINARY_FLOAT' => new Type(TypeEnum::Float, 32),
             'BINARY_DOUBLE' => new Type(TypeEnum::Float, 64),
             'CHAR',
@@ -317,8 +312,8 @@ class OCISchema extends SchemaAbstract
             'CLOB',
             'NCLOB' => new Type(TypeEnum::String, $size ?? PHP_INT_MAX),
             'DATE' => new Type(TypeEnum::DateTime, 0),
-            'TIMESTAMP' => new Type(TypeEnum::DateTime, $precision ?? 0),
-            default => parent::type($name, $size)
+            'TIMESTAMP' => new Type(TypeEnum::DateTime, $size ?? 0),
+            default => parent::type($type, $size)
         };
     }
 }

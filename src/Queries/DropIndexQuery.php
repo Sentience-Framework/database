@@ -2,21 +2,14 @@
 
 namespace Sentience\Database\Queries;
 
-use Sentience\Database\Databases\DatabaseInterface;
-use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Traits\IfExistsTrait;
+use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
 
-class DropIndexQuery extends TableQuery
+class DropIndexQuery extends IndexQuery
 {
     use IfExistsTrait;
-
-    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table, protected string $name)
-    {
-        parent::__construct($database, $dialect, $table);
-    }
 
     public function toQueryWithParams(): QueryWithParams
     {
@@ -27,13 +20,16 @@ class DropIndexQuery extends TableQuery
         );
     }
 
-    public function toSql(): string
-    {
-        return parent::toSql();
-    }
-
     public function execute(bool $emulatePrepare = false): ResultInterface
     {
+        if (!$this->ifExists || $this->dialect->indexExists()) {
+            return parent::execute($emulatePrepare);
+        }
+
+        if ($this->indexExists()) {
+            return new Result([], []);
+        }
+
         return parent::execute($emulatePrepare);
     }
 }

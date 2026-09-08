@@ -24,6 +24,7 @@ class SQLiteDialect extends SQLDialect
     public const string OPTIONS_USE_REGEXP = 'use_regexp';
 
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
+    public const bool INDEX_EXISTS = true;
 
     public function createTable(
         bool $ifNotExists,
@@ -212,6 +213,11 @@ class SQLiteDialect extends SQLDialect
             TypeEnum::Float => 'REAL',
             default => parent::type($type, $size)
         };
+    }
+
+    public function indexExists(): bool
+    {
+        return $this->version >= 30300;
     }
 
     public function onConflict(): bool

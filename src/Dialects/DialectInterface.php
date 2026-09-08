@@ -116,6 +116,7 @@ interface DialectInterface
     public function bool(): bool;
     public function distinctOn(): bool;
     public function generatedByDefaultAsIdentity(): bool;
+    public function indexExists(): bool;
     public function lateral(): bool;
     public function onConflict(): bool;
     public function returning(): bool;

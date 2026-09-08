@@ -43,7 +43,9 @@ class SQLDialect extends DialectAbstract
     public const array ESCAPE_CHARS = ["\0" => ''];
     public const bool BOOL = false;
     public const bool DISTINCT_ON = false;
+    public const bool DROP_INDEX_ON_TABLE = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
+    public const bool INDEX_EXISTS = false;
     public const bool LATERAL = false;
     public const bool ON_CONFLICT = false;
     public const bool RETURNING = false;
@@ -385,12 +387,18 @@ class SQLDialect extends DialectAbstract
         $query = 'DROP INDEX';
         $params = [];
 
-        if ($ifExists) {
+        if ($ifExists && $this->indexExists()) {
             $query .= ' IF EXISTS';
         }
 
         $query .= ' ';
         $query .= $this->escapeIdentifier($name);
+
+        if (static::DROP_INDEX_ON_TABLE) {
+            $query .= ' ON';
+
+            $this->buildTable($query, $params, $table);
+        }
 
         return new QueryWithParams($query, $params);
     }
@@ -1392,6 +1400,11 @@ class SQLDialect extends DialectAbstract
     public function generatedByDefaultAsIdentity(): bool
     {
         return static::GENERATED_BY_DEFAULT_AS_IDENTITY;
+    }
+
+    public function indexExists(): bool
+    {
+        return static::INDEX_EXISTS;
     }
 
     public function lateral(): bool
