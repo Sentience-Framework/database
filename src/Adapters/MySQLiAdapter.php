@@ -7,7 +7,7 @@ use mysqli;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\DriverInterface;
-use Sentience\Database\Exceptions\DriverException;
+use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\MySQLiResult;
 use Sentience\Database\Sockets\NetworkSocket;
@@ -31,7 +31,7 @@ class MySQLiAdapter extends AdapterAbstract
         ?Closure $debug
     ) {
         if (!$socket) {
-            throw new DriverException('this driver requires a socket');
+            throw new AdapterException('this driver requires a socket');
         }
 
         parent::__construct(

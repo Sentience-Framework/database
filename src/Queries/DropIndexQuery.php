@@ -26,7 +26,7 @@ class DropIndexQuery extends IndexQuery
             return parent::execute($emulatePrepare);
         }
 
-        if ($this->indexExists()) {
+        if (!$this->indexExists()) {
             return new Result([], []);
         }
 

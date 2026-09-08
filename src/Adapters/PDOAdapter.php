@@ -9,7 +9,7 @@ use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\DriverInterface;
-use Sentience\Database\Exceptions\DriverException;
+use Sentience\Database\Exceptions\AdapterException;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Results\PDOResult;
 use Sentience\Database\Sockets\NetworkSocket;
@@ -89,11 +89,11 @@ class PDOAdapter extends AdapterAbstract
         }
 
         if (!$socket) {
-            throw new DriverException('this driver requires a socket');
+            throw new AdapterException('this driver requires a socket');
         }
 
         if ($socket instanceof UnixSocket && !in_array($driver, [Driver::MariaDB, Driver::MySQL, Driver::PgSQL])) {
-            throw new DriverException('this driver requires a network socket');
+            throw new AdapterException('this driver requires a network socket');
         }
 
         if ($driver == Driver::CUBRID) {
