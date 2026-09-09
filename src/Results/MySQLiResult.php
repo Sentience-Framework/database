@@ -53,9 +53,9 @@ class MySQLiResult extends ResultAbstract
 
         foreach ($fields as $field) {
             $name = $field->name;
-            $nativeType = static::COLUMN_TYPES[$field->type] ?? null;
+            $type = static::COLUMN_TYPES[$field->type] ?? null;
 
-            $columns[$name] = $nativeType;
+            $columns[$name] = $type;
         }
 
         return $columns;

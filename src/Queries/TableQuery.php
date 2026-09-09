@@ -10,11 +10,8 @@ use Sentience\Database\Queries\Objects\SubQuery;
 
 abstract class TableQuery extends Query
 {
-    public function __construct(
-        DatabaseInterface $database,
-        DialectInterface $dialect,
-        protected string|array|Alias|Sql|SubQuery $table
-    ) {
+    public function __construct(DatabaseInterface $database, DialectInterface $dialect, protected string|array|Alias|Sql|SubQuery $table)
+    {
         parent::__construct($database, $dialect);
     }
 }

@@ -22,9 +22,9 @@ class SQLite3Result extends ResultAbstract
 
         for ($i = 0; $i < $this->sqlite3Result->numColumns(); $i++) {
             $name = $this->sqlite3Result->columnName($i);
-            $nativeType = static::COLUMN_TYPES[$this->sqlite3Result->columnType($i)] ?? static::COLUMN_TYPES[SQLITE3_NULL];
+            $type = static::COLUMN_TYPES[$this->sqlite3Result->columnType($i)] ?? static::COLUMN_TYPES[SQLITE3_NULL];
 
-            $columns[$name] = $nativeType;
+            $columns[$name] = $type;
         }
 
         return $columns;

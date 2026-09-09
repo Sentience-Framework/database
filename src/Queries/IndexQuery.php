@@ -37,7 +37,7 @@ abstract class IndexQuery extends TableQuery
             $indexes = $this->database->informationSchemaIndexes($table);
 
             foreach ($indexes as $index) {
-                if ($index->name != $this->name) {
+                if ($this->name != $index->name) {
                     continue;
                 }
 
