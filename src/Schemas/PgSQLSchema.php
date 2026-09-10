@@ -17,12 +17,33 @@ class PgSQLSchema extends SQLSchema
     {
         $indexes = $database->select(['pg_catalog', 'pg_index'])
             ->columns([
-                'index_name' => $database->select(['pg_catalog', 'pg_class'])
-                    ->columns([['pg_catalog', 'pg_class', 'relname']])
-                    ->where('pg_catalog.pg_class.oid = pg_catalog.pg_index.indexrelid'),
-                'column_name' => ['pg_catalog', 'pg_attribute', 'attname'],
-                'unique' => ['pg_catalog', 'pg_index', 'indisunique']
+                'relanem' => ['index_class', 'relname'],
+                'attname' => ['pg_catalog', 'pg_attribute', 'attname'],
+                'indisunique' => ['pg_catalog', 'pg_index', 'indisunique']
             ])
+            ->innerJoinTable(
+                ['pg_catalog', 'pg_class'],
+                fn (Join $join): Join => $join->on(
+                    ['index_class', 'oid'],
+                    ['pg_catalog', 'pg_index', 'indexrelid']
+                ),
+                'index_class'
+            )
+            ->innerJoinTable(
+                ['pg_catalog', 'pg_class'],
+                fn (Join $join): Join => $join->on(
+                    ['table_class', 'oid'],
+                    ['pg_catalog', 'pg_index', 'indrelid']
+                ),
+                'table_class'
+            )
+            ->innerJoin(
+                ['pg_catalog', 'pg_namespace'],
+                fn (Join $join): Join => $join->on(
+                    ['pg_catalog', 'pg_namespace', 'oid'],
+                    ['table_class', 'relnamespace']
+                )
+            )
             ->innerJoin(
                 ['pg_catalog', 'pg_attribute'],
                 fn (Join $join): Join => $join
@@ -32,44 +53,17 @@ class PgSQLSchema extends SQLSchema
                     )
                     ->whereEquals(
                         ['pg_catalog', 'pg_attribute', 'attnum'],
-                        Query::raw('ANY(pg_catalog.pg_index.indkey)')
+                        Query::raw('ANY (pg_catalog.pg_index.indkey)')
                     )
             )
+            ->whereEquals(['table_class', 'relname'], $table)
             ->whereEquals(
-                Query::expressionf(
-                    '(%s)',
-                    $database->select(['pg_catalog', 'pg_class'])
-                        ->columns([['pg_catalog', 'pg_class', 'relname']])
-                        ->where(
-                            'pg_catalog.pg_class.oid = pg_catalog.pg_index.indrelid'
-                        )
-                ),
-                $table
-            )
-            ->whereEquals(
-                Query::expressionf(
-                    '(%s)',
-                    $database->select(['pg_catalog', 'pg_namespace'])
-                        ->columns([['pg_catalog', 'pg_namespace', 'nspname']])
-                        ->whereEquals(
-                            ['pg_catalog', 'pg_namespace', 'oid'],
-                            $database->select(['pg_catalog', 'pg_class'])
-                                ->columns([['pg_catalog', 'pg_class', 'relnamespace']])
-                                ->where('pg_catalog.pg_class.oid = pg_catalog.pg_index.indrelid')
-                        )
-                ),
+                ['pg_catalog', 'pg_namespace', 'nspname'],
                 Query::raw('current_schema()')
             )
             ->whereEquals(['pg_catalog', 'pg_index', 'indisprimary'], false)
-            ->orderByAsc(
-                Query::expressionf(
-                    '(%s)',
-                    $database->select(['pg_catalog', 'pg_class'])
-                        ->columns([['pg_catalog', 'pg_class', 'relname']])
-                        ->where('pg_catalog.pg_class.oid = pg_catalog.pg_index.indexrelid')
-                )
-            )
-            ->orderByAsc(Query::raw('array_position(pg_catalog.pg_index.indkey::int2[], pg_catalog.pg_attribute.attnum)'))
+            ->orderByAsc(['index_class', 'relname'])
+            ->orderByAsc(Query::raw('array_position(pg_catalog.pg_index.indkey::int8[], pg_catalog.pg_attribute.attnum)'))
             ->execute()
             ->fetchAssocs();
 
@@ -78,20 +72,20 @@ class PgSQLSchema extends SQLSchema
         $indexUnique = [];
 
         foreach ($indexes as $index) {
-            $indexName = $index['index_name'];
-            $columnName = $index['column_name'];
-            $unique = (bool) $index['unique'];
+            $relanem = $index['relanem'];
+            $attname = $index['attname'];
+            $indisunique = (bool) $index['indisunique'];
 
-            if (!in_array($indexName, $indexNames)) {
-                $indexNames[] = $indexName;
+            if (!in_array($relanem, $indexNames)) {
+                $indexNames[] = $relanem;
             }
 
-            if (!array_key_exists($indexName, $indexColumns)) {
-                $indexColumns[$indexName] = [];
+            if (!array_key_exists($relanem, $indexColumns)) {
+                $indexColumns[$relanem] = [];
             }
 
-            $indexColumns[$indexName][] = $columnName;
-            $indexUnique[$indexName] = $unique;
+            $indexColumns[$relanem][] = $attname;
+            $indexUnique[$relanem] = $indisunique;
         }
 
         return array_map(
