@@ -121,4 +121,5 @@ interface DialectInterface
     public function onConflict(): bool;
     public function returning(): bool;
     public function savepoints(): bool;
+    public function tableExists(): bool;
 }

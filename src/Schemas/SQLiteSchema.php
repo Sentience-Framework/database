@@ -98,27 +98,61 @@ class SQLiteSchema extends SchemaAbstract
 
     public function foreignKeyConstraints(DatabaseInterface $database, DialectInterface $dialect, string $table): array
     {
-        $foreignKeys = $database->query("PRAGMA foreign_key_list({$dialect->escapeIdentifier($table)})")->fetchAssocs();
+        $rows = $database->query("PRAGMA foreign_key_list({$dialect->escapeIdentifier($table)})")->fetchAssocs();
 
-        return array_map(
-            function (array $foreignKey): ForeignKeyConstraint {
-                $column = $foreignKey['from'];
-                $referenceTable = $foreignKey['table'];
-                $referenceColumn = $foreignKey['to'];
-                $onUpdate = $foreignKey['on_update'];
-                $onDelete = $foreignKey['on_delete'];
+        $foreignKeyIds = [];
+        $foreignKeyColumns = [];
+        $foreignKeyTables = [];
+        $foreignKeyReferenceColumns = [];
+        $foreignKeyOnUpdate = [];
+        $foreignKeyOnDelete = [];
 
-                return new ForeignKeyConstraint(
-                    $column,
-                    $referenceTable,
-                    $referenceColumn,
-                    null,
-                    ReferentialActionEnum::tryFrom($onUpdate) ?? $onUpdate,
-                    ReferentialActionEnum::tryFrom($onDelete) ?? $onDelete
-                );
-            },
-            $foreignKeys
-        );
+        foreach ($rows as $row) {
+            $id = (int) $row['id'];
+            $seq = (int) $row['seq'];
+
+            if (!in_array($id, $foreignKeyIds)) {
+                $foreignKeyIds[] = $id;
+            }
+
+            if (!array_key_exists($id, $foreignKeyColumns)) {
+                $foreignKeyColumns[$id] = [];
+            }
+
+            if (!array_key_exists($id, $foreignKeyReferenceColumns)) {
+                $foreignKeyReferenceColumns[$id] = [];
+            }
+
+            $foreignKeyColumns[$id][$seq] = $row['from'];
+            $foreignKeyTables[$id] = $row['table'];
+            $foreignKeyReferenceColumns[$id][$seq] = $row['to'];
+            $foreignKeyOnUpdate[$id] = $row['on_update'];
+            $foreignKeyOnDelete[$id] = $row['on_delete'];
+        }
+
+        $foreignKeyConstraints = [];
+
+        foreach ($foreignKeyIds as $foreignKeyId) {
+            $columns = $foreignKeyColumns[$foreignKeyId];
+            $referenceTable = $foreignKeyTables[$foreignKeyId];
+            $referenceColumns = $foreignKeyReferenceColumns[$foreignKeyId];
+            $onUpdate = $foreignKeyOnUpdate[$foreignKeyId];
+            $onDelete = $foreignKeyOnDelete[$foreignKeyId];
+
+            ksort($columns);
+            ksort($referenceColumns);
+
+            $foreignKeyConstraints[] = new ForeignKeyConstraint(
+                array_values($columns),
+                $referenceTable,
+                $referenceColumns,
+                null,
+                ReferentialActionEnum::tryFrom($onUpdate) ?? $onUpdate,
+                ReferentialActionEnum::tryFrom($onDelete) ?? $onDelete
+            );
+        }
+
+        return $foreignKeyConstraints;
     }
 
     public function indexes(DatabaseInterface $database, DialectInterface $dialect, string $table): array

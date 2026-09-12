@@ -63,9 +63,9 @@ trait AltersTrait
         return $this;
     }
 
-    public function addForeignKeyConstraint(string $column, string $referenceTable, string $referenceColumn, ?string $name = null, null|string|ReferentialActionEnum $onUpdate = null, null|string|ReferentialActionEnum $onDelete = null): static
+    public function addForeignKeyConstraint(string|array $columns, string $referenceTable, string|array $referenceColumns, ?string $name = null, null|string|ReferentialActionEnum $onUpdate = null, null|string|ReferentialActionEnum $onDelete = null): static
     {
-        $this->alters[] = new AddForeignKeyConstraint($column, $referenceTable, $referenceColumn, $name, $onUpdate, $onDelete);
+        $this->alters[] = new AddForeignKeyConstraint((array) $columns, $referenceTable, (array) $referenceColumns, $name, $onUpdate, $onDelete);
 
         return $this;
     }

@@ -7,7 +7,7 @@ use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Results\ResultInterface;
 
-abstract class IndexQuery extends TableQuery
+abstract class IndexQuery extends SchemaQuery
 {
     public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table, protected string $name)
     {
@@ -22,11 +22,6 @@ abstract class IndexQuery extends TableQuery
     public function execute(bool $emulatePrepare = false): ResultInterface
     {
         return parent::execute($emulatePrepare);
-    }
-
-    public function explain(bool $emulatePrepare = false): array
-    {
-        return [];
     }
 
     protected function indexExists(): bool

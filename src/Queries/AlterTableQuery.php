@@ -9,7 +9,7 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Traits\AltersTrait;
 use Sentience\Database\Results\ResultInterface;
 
-class AlterTableQuery extends TableQuery
+class AlterTableQuery extends SchemaQuery
 {
     use AltersTrait;
 
@@ -47,10 +47,5 @@ class AlterTableQuery extends TableQuery
             ),
             $queriesWithParams
         );
-    }
-
-    public function explain(bool $emulatePrepare = false): array
-    {
-        return [];
     }
 }

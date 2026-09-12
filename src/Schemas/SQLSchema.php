@@ -127,38 +127,58 @@ class SQLSchema extends SchemaAbstract
 
     public function foreignKeyConstraints(DatabaseInterface $database, DialectInterface $dialect, string $table): array
     {
-        $constraints = array_map(
-            fn (array $constraint) => array_change_key_case($constraint, CASE_LOWER),
-            $database->select(Query::raw('information_schema.referential_constraints'))
-                ->columns([
-                    'constraint_name' => Query::raw('constraint_name'),
-                    'update_rule' => Query::raw('update_rule'),
-                    'delete_rule' => Query::raw('delete_rule'),
-                    Query::raw('information_schema.referential_constraints.*')
-                ])
-                ->whereIn(
-                    Query::raw('constraint_name'),
-                    $database->select(Query::raw('information_schema.table_constraints'))
-                        ->columns(['constraint_name' => Query::raw('constraint_name')])
-                        ->whereGroup(fn (WhereGroup $whereGroup): WhereGroup => $this->databaseSchema($whereGroup))
-                        ->whereEquals(Query::raw('table_name'), $table)
-                        ->whereContains(Query::raw('constraint_type'), 'FOREIGN KEY', true)
-                )
-                ->execute()
-                ->fetchAssocs()
-        );
+        $constraints = $database->select(Query::raw('information_schema.referential_constraints'))
+            ->columns([
+                'constraint_name' => Query::raw('constraint_name'),
+                'unique_constraint_name' => Query::raw('unique_constraint_name'),
+                'update_rule' => Query::raw('update_rule'),
+                'delete_rule' => Query::raw('delete_rule')
+            ])
+            ->whereIn(
+                Query::raw('constraint_name'),
+                $database->select(Query::raw('information_schema.table_constraints'))
+                    ->columns(['constraint_name' => Query::raw('constraint_name')])
+                    ->whereGroup(fn (WhereGroup $whereGroup): WhereGroup => $this->databaseSchema($whereGroup))
+                    ->whereEquals(Query::raw('table_name'), $table)
+                    ->whereContains(Query::raw('constraint_type'), 'FOREIGN KEY', true)
+            )
+            ->whereIsNotNull(Query::raw('unique_constraint_name'))
+            ->execute()
+            ->fetchAssocs();
+
+        if (empty($constraints)) {
+            return [];
+        }
 
         $columns = $database->select(Query::raw('information_schema.key_column_usage'))
             ->columns([
                 'constraint_name' => Query::raw('constraint_name'),
-                'table_name' => Query::raw('table_name'),
-                'column_name' => Query::raw('column_name')
+                'column_name' => Query::raw('column_name'),
+                'position_in_unique_constraint' => Query::raw('position_in_unique_constraint')
             ])
+            ->whereGroup(fn (WhereGroup $whereGroup): WhereGroup => $this->databaseSchema($whereGroup))
+            ->whereEquals(Query::raw('table_name'), $table)
             ->whereIn(
                 Query::raw('constraint_name'),
                 array_column($constraints, 'constraint_name')
             )
+            ->whereIsNotNull(Query::raw('position_in_unique_constraint'))
             ->orderByAsc(Query::raw('ordinal_position'))
+            ->execute()
+            ->fetchAssocs();
+
+        $referenceColumns = $database->select(Query::raw('information_schema.key_column_usage'))
+            ->columns([
+                'constraint_name' => Query::raw('constraint_name'),
+                'table_name' => Query::raw('table_name'),
+                'column_name' => Query::raw('column_name'),
+                'ordinal_position' => Query::raw('ordinal_position')
+            ])
+            ->whereGroup(fn (WhereGroup $whereGroup): WhereGroup => $this->databaseSchema($whereGroup))
+            ->whereIn(
+                Query::raw('constraint_name'),
+                array_column($constraints, 'unique_constraint_name')
+            )
             ->execute()
             ->fetchAssocs();
 
@@ -166,31 +186,52 @@ class SQLSchema extends SchemaAbstract
 
         foreach ($columns as $column) {
             $constraintName = $column['constraint_name'];
-            $tableName = $column['table_name'];
-            $columnName = $column['column_name'];
 
-            $constraintColumns[$constraintName][$tableName][] = $columnName;
+            $constraintColumns[$constraintName][] = $column;
+        }
+
+        $uniqueConstraintColumns = [];
+
+        foreach ($referenceColumns as $referenceColumn) {
+            $constraintName = $referenceColumn['constraint_name'];
+            $tableName = $referenceColumn['table_name'];
+            $columnName = $referenceColumn['column_name'];
+            $ordinalPosition = (int) $referenceColumn['ordinal_position'];
+
+            $uniqueConstraintColumns[$constraintName][$tableName][$ordinalPosition] = $columnName;
         }
 
         $foreignKeyConstraints = [];
 
         foreach ($constraints as $constraint) {
             $constraintName = $constraint['constraint_name'];
-            $references = $constraintColumns[$constraintName];
-            $referenceTable = array_key_first($references);
+            $uniqueConstraintName = $constraint['unique_constraint_name'];
             $updateRule = $constraint['update_rule'];
             $deleteRule = $constraint['delete_rule'];
 
-            foreach ($constraintColumns[$constraintName][$table] ?? [] as $index => $column) {
-                $foreignKeyConstraints[] = new ForeignKeyConstraint(
-                    $column,
-                    $referenceTable,
-                    $references[$referenceTable][$index],
-                    $constraintName,
-                    ReferentialActionEnum::tryFrom(strtoupper($updateRule)) ?? $updateRule,
-                    ReferentialActionEnum::tryFrom(strtoupper($deleteRule)) ?? $deleteRule
-                );
+            $references = $uniqueConstraintColumns[$uniqueConstraintName];
+            $referenceTable = array_key_first($references);
+            $referenceTableColumns = $references[$referenceTable];
+
+            $foreignKeyColumns = [];
+            $foreignKeyReferenceColumns = [];
+
+            foreach ($constraintColumns[$constraintName] as $column) {
+                $columnName = $column['column_name'];
+                $positionInUniqueConstraint = (int) $column['position_in_unique_constraint'];
+
+                $foreignKeyColumns[] = $columnName;
+                $foreignKeyReferenceColumns[] = $referenceTableColumns[$positionInUniqueConstraint];
             }
+
+            $foreignKeyConstraints[] = new ForeignKeyConstraint(
+                $foreignKeyColumns,
+                $referenceTable,
+                $foreignKeyReferenceColumns,
+                $constraintName,
+                ReferentialActionEnum::tryFrom(strtoupper($updateRule)) ?? $updateRule,
+                ReferentialActionEnum::tryFrom(strtoupper($deleteRule)) ?? $deleteRule
+            );
         }
 
         return $foreignKeyConstraints;
@@ -218,10 +259,8 @@ class SQLSchema extends SchemaAbstract
     protected function type(string $type, ?int $size): string|Type
     {
         return match ($type) {
-            'BOOLEAN',
-            'BOOL' => new Type(TypeEnum::Bool),
-            'INTEGER',
-            'INT' => new Type(TypeEnum::Int, 32),
+            'BOOLEAN' => new Type(TypeEnum::Bool),
+            'INTEGER' => new Type(TypeEnum::Int, 32),
             'BIGINT' => new Type(TypeEnum::Int, 64),
             'REAL',
             'FLOAT',

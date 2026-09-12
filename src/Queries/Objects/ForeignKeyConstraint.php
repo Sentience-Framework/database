@@ -7,9 +7,9 @@ use Sentience\Database\Queries\Enums\ReferentialActionEnum;
 class ForeignKeyConstraint
 {
     public function __construct(
-        public string $column,
+        public array $columns,
         public string $referenceTable,
-        public string $referenceColumn,
+        public array $referenceColumns,
         public ?string $name,
         public null|string|ReferentialActionEnum $onUpdate,
         public null|string|ReferentialActionEnum $onDelete

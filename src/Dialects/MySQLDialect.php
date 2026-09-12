@@ -42,6 +42,7 @@ class MySQLDialect extends SQLDialect
     ];
     public const bool DROP_INDEX_ON_TABLE = true;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
+    public const bool TABLE_EXISTS = true;
 
     public function createTable(
         bool $ifNotExists,
