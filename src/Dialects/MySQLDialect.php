@@ -263,4 +263,9 @@ class MySQLDialect extends SQLDialect
 
         return $this->version >= 100500;
     }
+
+    public function tableExists(): bool
+    {
+        return $this->version >= 32300;
+    }
 }
