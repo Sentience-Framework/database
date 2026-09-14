@@ -104,8 +104,8 @@ class SQLiteSchema extends SchemaAbstract
         $foreignKeyColumns = [];
         $foreignKeyTables = [];
         $foreignKeyReferenceColumns = [];
-        $foreignKeyOnUpdate = [];
-        $foreignKeyOnDelete = [];
+        $foreignKeyOnUpdates = [];
+        $foreignKeyOnDeletes = [];
 
         foreach ($rows as $row) {
             $id = (int) $row['id'];
@@ -126,8 +126,8 @@ class SQLiteSchema extends SchemaAbstract
             $foreignKeyColumns[$id][$seq] = $row['from'];
             $foreignKeyTables[$id] = $row['table'];
             $foreignKeyReferenceColumns[$id][$seq] = $row['to'];
-            $foreignKeyOnUpdate[$id] = $row['on_update'];
-            $foreignKeyOnDelete[$id] = $row['on_delete'];
+            $foreignKeyOnUpdates[$id] = $row['on_update'];
+            $foreignKeyOnDeletes[$id] = $row['on_delete'];
         }
 
         $foreignKeyConstraints = [];
@@ -136,8 +136,8 @@ class SQLiteSchema extends SchemaAbstract
             $columns = $foreignKeyColumns[$foreignKeyId];
             $referenceTable = $foreignKeyTables[$foreignKeyId];
             $referenceColumns = $foreignKeyReferenceColumns[$foreignKeyId];
-            $onUpdate = $foreignKeyOnUpdate[$foreignKeyId];
-            $onDelete = $foreignKeyOnDelete[$foreignKeyId];
+            $onUpdate = $foreignKeyOnUpdates[$foreignKeyId];
+            $onDelete = $foreignKeyOnDeletes[$foreignKeyId];
 
             ksort($columns);
             ksort($referenceColumns);

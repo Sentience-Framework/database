@@ -50,10 +50,8 @@ class InsertQuery extends TableQuery
 
     public function execute(bool $emulatePrepare = false): array|ResultInterface
     {
-        if (!$this->onConflict || !$this->emulateOnConflict && $this->dialect->onConflict()) {
-            return $this->emulateReturning
-                ? $this->insert($this->values, $emulatePrepare)
-                : parent::execute($emulatePrepare);
+        if (!$this->onConflict || (!$this->emulateOnConflict && $this->dialect->onConflict())) {
+            return $this->insert($this->values, $emulatePrepare);
         }
 
         $callback = function (bool $emulatePrepare): array|ResultInterface {
@@ -146,7 +144,7 @@ class InsertQuery extends TableQuery
             )
         );
 
-        if (!$this->lastInsertId || is_null($this->returning) || !$this->emulateReturning && $this->dialect->returning()) {
+        if (!$this->lastInsertId || is_null($this->returning) || (!$this->emulateReturning && $this->dialect->returning())) {
             return $result;
         }
 
@@ -188,7 +186,7 @@ class InsertQuery extends TableQuery
 
         $result = $updateQuery->execute($emulatePrepare);
 
-        if (is_null($this->returning) || !$this->emulateReturning && $this->dialect->returning()) {
+        if (is_null($this->returning) || (!$this->emulateReturning && $this->dialect->returning())) {
             return $result;
         }
 

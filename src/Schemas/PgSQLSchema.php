@@ -69,7 +69,7 @@ class PgSQLSchema extends SQLSchema
 
         $indexNames = [];
         $indexColumns = [];
-        $indexUnique = [];
+        $indexUniques = [];
 
         foreach ($indexes as $index) {
             $relanem = $index['relanem'];
@@ -85,14 +85,14 @@ class PgSQLSchema extends SQLSchema
             }
 
             $indexColumns[$relanem][] = $attname;
-            $indexUnique[$relanem] = $indisunique;
+            $indexUniques[$relanem] = $indisunique;
         }
 
         return array_map(
             fn (string $name): Index => new Index(
                 $name,
                 $indexColumns[$name],
-                $indexUnique[$name]
+                $indexUniques[$name]
             ),
             $indexNames
         );

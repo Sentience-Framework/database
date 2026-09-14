@@ -24,7 +24,7 @@ class MySQLSchema extends SQLSchema
 
         $indexNames = [];
         $indexColumns = [];
-        $indexUnique = [];
+        $indexUniques = [];
 
         foreach ($indexes as $index) {
             $indexName = $index['INDEX_NAME'];
@@ -40,14 +40,14 @@ class MySQLSchema extends SQLSchema
             }
 
             $indexColumns[$indexName][] = $columnName;
-            $indexUnique[$indexName] = !$nonUnique;
+            $indexUniques[$indexName] = !$nonUnique;
         }
 
         return array_map(
             fn (string $name): Index => new Index(
                 $name,
                 $indexColumns[$name],
-                $indexUnique[$name]
+                $indexUniques[$name]
             ),
             $indexNames
         );
