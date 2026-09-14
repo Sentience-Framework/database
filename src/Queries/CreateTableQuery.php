@@ -3,14 +3,13 @@
 namespace Sentience\Database\Queries;
 
 use DateTimeInterface;
-use Sentience\Database\Databases\DatabaseInterface;
-use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\Type;
 use Sentience\Database\Queries\Traits\ConstraintsTrait;
+use Sentience\Database\Queries\Traits\EmulateIfNotExistsTrait;
 use Sentience\Database\Queries\Traits\IfNotExistsTrait;
 use Sentience\Database\Queries\Traits\PrimaryKeysTrait;
 use Sentience\Database\Results\Result;
@@ -19,20 +18,16 @@ use Sentience\Database\Results\ResultInterface;
 class CreateTableQuery extends SchemaQuery
 {
     use ConstraintsTrait;
+    use EmulateIfNotExistsTrait;
     use IfNotExistsTrait;
     use PrimaryKeysTrait;
 
     protected array $columns = [];
 
-    public function __construct(DatabaseInterface $database, DialectInterface $dialect, string|array|Sql $table)
-    {
-        parent::__construct($database, $dialect, $table);
-    }
-
     public function toQueryWithParams(): QueryWithParams
     {
         return $this->dialect->createTable(
-            $this->ifNotExists,
+            !$this->emulateIfNotExists ? $this->ifNotExists : false,
             $this->table,
             $this->columns,
             $this->primaryKeys,
@@ -47,7 +42,7 @@ class CreateTableQuery extends SchemaQuery
 
     public function execute(bool $emulatePrepare = false): ResultInterface
     {
-        if (!$this->ifNotExists || $this->dialect->tableExists()) {
+        if (!$this->ifNotExists || (!$this->emulateIfNotExists && $this->dialect->tableExists())) {
             return parent::execute($emulatePrepare);
         }
 

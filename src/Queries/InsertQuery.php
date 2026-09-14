@@ -50,7 +50,11 @@ class InsertQuery extends TableQuery
 
     public function execute(bool $emulatePrepare = false): array|ResultInterface
     {
-        if (!$this->onConflict || (!$this->emulateOnConflict && $this->dialect->onConflict())) {
+        if (!$this->onConflict && is_null($this->returning)) {
+            return parent::execute($emulatePrepare);
+        }
+
+        if (!$this->emulateOnConflict && $this->dialect->onConflict()) {
             return $this->insert($this->values, $emulatePrepare);
         }
 
@@ -65,7 +69,7 @@ class InsertQuery extends TableQuery
         };
 
         return $this->emulateOnConflictInTransaction
-            ? $this->database->transaction(fn (): array => $callback($emulatePrepare))
+            ? $this->database->transaction(fn (): array|ResultInterface => $callback($emulatePrepare))
             : $callback($emulatePrepare);
     }
 
@@ -134,15 +138,15 @@ class InsertQuery extends TableQuery
 
     protected function insert(array $values, bool $emulatePrepare): ResultInterface
     {
-        $result = $this->database->queryWithParams(
-            $this->dialect->insert(
-                $this->table,
-                $values,
-                null,
-                !$this->emulateReturning ? $this->returning : null,
-                $this->lastInsertId
-            )
+        $queryWithParams = $this->dialect->insert(
+            $this->table,
+            $values,
+            !$this->emulateOnConflict ? $this->onConflict : null,
+            !$this->emulateReturning ? $this->returning : null,
+            $this->lastInsertId
         );
+
+        $result = $this->database->queryWithParams($queryWithParams);
 
         if (!$this->lastInsertId || is_null($this->returning) || (!$this->emulateReturning && $this->dialect->returning())) {
             return $result;

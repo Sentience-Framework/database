@@ -83,16 +83,16 @@ class SQLiteSchema extends SchemaAbstract
 
     public function uniqueConstraints(DatabaseInterface $database, DialectInterface $dialect, string $table): array
     {
-        $uniqueIndexes = array_filter(
-            $this->indexes($database, $dialect, $table),
-            fn (Index $index) => $index->unique
+        $uniqueIndexes = array_values(
+            array_filter(
+                $this->indexes($database, $dialect, $table),
+                fn (Index $index) => $index->unique
+            )
         );
 
-        return array_values(
-            array_map(
-                fn (Index $index) => new UniqueConstraint($index->columns, $index->name),
-                $uniqueIndexes
-            )
+        return array_map(
+            fn (Index $index) => new UniqueConstraint($index->columns, $index->name),
+            $uniqueIndexes
         );
     }
 

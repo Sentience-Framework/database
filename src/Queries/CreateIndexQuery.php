@@ -4,6 +4,7 @@ namespace Sentience\Database\Queries;
 
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Traits\ColumnsTrait;
+use Sentience\Database\Queries\Traits\EmulateIfNotExistsTrait;
 use Sentience\Database\Queries\Traits\IfNotExistsTrait;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
@@ -11,6 +12,7 @@ use Sentience\Database\Results\ResultInterface;
 class CreateIndexQuery extends IndexQuery
 {
     use ColumnsTrait;
+    use EmulateIfNotExistsTrait;
     use IfNotExistsTrait;
 
     protected bool $unique = false;
@@ -19,7 +21,7 @@ class CreateIndexQuery extends IndexQuery
     {
         return $this->dialect->createIndex(
             $this->unique,
-            $this->ifNotExists,
+            !$this->emulateIfNotExists ? $this->ifNotExists : false,
             $this->name,
             $this->table,
             $this->columns
@@ -28,7 +30,7 @@ class CreateIndexQuery extends IndexQuery
 
     public function execute(bool $emulatePrepare = false): ResultInterface
     {
-        if (!$this->ifNotExists || $this->dialect->indexExists()) {
+        if (!$this->ifNotExists || (!$this->emulateIfNotExists && $this->dialect->indexExists())) {
             return parent::execute($emulatePrepare);
         }
 
