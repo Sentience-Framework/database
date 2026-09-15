@@ -199,11 +199,6 @@ abstract class DatabaseAbstract implements DatabaseInterface
         return new DropIndexQuery($this, $this->dialect, $table, $name);
     }
 
-    public function table(string|array|Sql $table): Table
-    {
-        return new Table($this, $this->dialect, $table);
-    }
-
     public function informationSchemaTables(): array
     {
         return $this->schema->tables($this, $this->dialect);
@@ -232,5 +227,10 @@ abstract class DatabaseAbstract implements DatabaseInterface
     public function informationSchemaIndexes(string $table): array
     {
         return $this->schema->indexes($this, $this->dialect, $table);
+    }
+
+    public function table(string|array|Sql $table): Table
+    {
+        return new Table($this, $this->dialect, $this->schema, $table);
     }
 }
