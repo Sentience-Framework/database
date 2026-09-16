@@ -1058,14 +1058,14 @@ class SQLDialect extends DialectAbstract
         return '?';
     }
 
-    protected function buildSelectQuery(array &$params, SelectQuery $selectQuery): string
+    protected function buildSelectQuery(array &$params, SelectQuery $selectQuery, bool $parentheses = true): string
     {
         $queryWithParams = $selectQuery->toQueryWithParams();
 
         array_push($params, ...$queryWithParams->params);
 
         return sprintf(
-            '(%s)',
+            $parentheses ? '(%s)' : '%s',
             $queryWithParams->query
         );
     }
