@@ -15,6 +15,7 @@ class DB2Dialect extends SQLDialect
         "\0" => '',
         "\b" => '\\b'
     ];
+    public const bool BOOLEAN = false;
     public const bool RETURNING = true;
 
     public function __construct(DriverInterface $driver, int|string $version, array $options)

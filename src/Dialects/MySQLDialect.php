@@ -40,6 +40,7 @@ class MySQLDialect extends SQLDialect
         "\x1A" => '\\Z',
         "'" => "\\'"
     ];
+    public const bool BOOLEAN = false;
     public const bool DROP_INDEX_ON_TABLE = true;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
     public const bool TABLE_EXISTS = true;

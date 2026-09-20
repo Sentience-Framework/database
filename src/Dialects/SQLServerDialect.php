@@ -18,6 +18,7 @@ class SQLServerDialect extends SQLDialect
     public const string OPTIONS_USE_DOUBLEQUOTES = 'use_doublequotes';
 
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s.v';
+    public const bool BOOLEAN = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
 
     public function createTable(

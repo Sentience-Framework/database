@@ -15,6 +15,7 @@ class InformixDialect extends SQLDialect
         "\0" => '',
         "\b" => '\\b'
     ];
+    public const bool BOOLEAN = false;
     public const bool LATERAL = true;
     public const bool RETURNING = true;
 

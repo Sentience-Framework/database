@@ -11,7 +11,6 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 
 class FirebirdDialect extends SQLDialect
 {
-    public const bool BOOL = true;
     public const bool RETURNING = true;
 
     public function __construct(DriverInterface $driver, int|string $version, array $options)

@@ -25,7 +25,6 @@ class PgSQLDialect extends SQLDialect
         "\f" => '\\f',
         "\v" => '\\v'
     ];
-    public const bool BOOL = true;
     public const bool DISTINCT_ON = true;
     public const bool INDEX_EXISTS = true;
     public const bool TABLE_EXISTS = true;

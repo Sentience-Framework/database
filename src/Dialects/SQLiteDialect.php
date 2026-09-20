@@ -23,6 +23,7 @@ class SQLiteDialect extends SQLDialect
 {
     public const string OPTIONS_USE_REGEXP = 'use_regexp';
 
+    public const bool BOOLEAN = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
     public const bool INDEX_EXISTS = true;
     public const bool TABLE_EXISTS = true;

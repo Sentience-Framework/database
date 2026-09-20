@@ -41,7 +41,7 @@ class SQLDialect extends DialectAbstract
     public const string ESCAPE_IDENTIFIER = '"';
     public const string ESCAPE_STRING = "'";
     public const array ESCAPE_CHARS = ["\0" => ''];
-    public const bool BOOL = false;
+    public const bool BOOLEAN = true;
     public const bool DISTINCT_ON = false;
     public const bool DROP_INDEX_ON_TABLE = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
@@ -1319,7 +1319,7 @@ class SQLDialect extends DialectAbstract
         }
 
         if (is_bool($value)) {
-            if ($this->bool()) {
+            if ($this->boolean()) {
                 return $value ? 'TRUE' : 'FALSE';
             }
 
@@ -1355,7 +1355,7 @@ class SQLDialect extends DialectAbstract
 
     public function castBool(bool $bool): null|bool|int|float|string
     {
-        return !$this->bool()
+        return !$this->boolean()
             ? ($bool ? 1 : 0)
             : $bool;
     }
@@ -1392,7 +1392,7 @@ class SQLDialect extends DialectAbstract
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::Bool => $this->bool() ? 'BOOLEAN' : 'INTEGER',
+            TypeEnum::Bool => $this->boolean() ? 'BOOLEAN' : 'INTEGER',
             TypeEnum::Int => $size > 32 ? 'BIGINT' : 'INTEGER',
             TypeEnum::Float => $size > 32 ? 'DECIMAL(30, 15)' : 'DECIMAL(15, 7)',
             TypeEnum::String => $size > 255 ? 'TEXT' : sprintf('VARCHAR(%d)', $size ?? 255),
@@ -1400,9 +1400,9 @@ class SQLDialect extends DialectAbstract
         };
     }
 
-    public function bool(): bool
+    public function boolean(): bool
     {
-        return static::BOOL;
+        return static::BOOLEAN;
     }
 
     public function distinctOn(): bool

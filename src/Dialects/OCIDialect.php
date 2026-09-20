@@ -12,6 +12,7 @@ use Sentience\Database\Queries\Objects\QueryWithParams;
 class OCIDialect extends SQLDialect
 {
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
+    public const bool BOOLEAN = false;
 
     public function createTable(
         bool $ifNotExists,

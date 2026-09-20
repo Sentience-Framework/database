@@ -113,7 +113,7 @@ interface DialectInterface
     public function parseBool(null|bool|int|float|string $bool): bool;
     public function parseDateTime(string $string): ?DateTime;
     public function type(TypeEnum $type, ?int $size = null): string;
-    public function bool(): bool;
+    public function boolean(): bool;
     public function distinctOn(): bool;
     public function generatedByDefaultAsIdentity(): bool;
     public function indexExists(): bool;
