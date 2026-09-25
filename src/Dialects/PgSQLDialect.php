@@ -7,6 +7,7 @@ use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
+use Sentience\Database\Queries\Objects\Type;
 
 class PgSQLDialect extends SQLDialect
 {
@@ -70,24 +71,24 @@ class PgSQLDialect extends SQLDialect
             $type = $column->type instanceof Type ? $this->type($column->type->type, $column->type->size) : $column->type;
             $typeIsUppercase = (bool) preg_match('/[A-Z]/', $column->type);
 
-            $serialColumn = new Column(
-                $column->name,
-                match (strtoupper($type)) {
-                    'SMALLINT',
-                    'INTEGER',
-                    'INT',
-                    'INT2',
-                    'INT4' => $typeIsUppercase ? 'SERIAL' : 'serial',
-                    'BIGINT',
-                    'INT8' => $typeIsUppercase ? 'BIGSERIAL' : 'bigserial',
-                    default => $type
-                },
-                $column->notNull,
-                $column->default,
-                false
+            return parent::buildColumn(
+                new Column(
+                    $column->name,
+                    match (strtoupper($type)) {
+                        'SMALLINT',
+                        'INTEGER',
+                        'INT',
+                        'INT2',
+                        'INT4' => $typeIsUppercase ? 'SERIAL' : 'serial',
+                        'BIGINT',
+                        'INT8' => $typeIsUppercase ? 'BIGSERIAL' : 'bigserial',
+                        default => $type
+                    },
+                    $column->notNull,
+                    $column->default,
+                    false
+                )
             );
-
-            return parent::buildColumn($serialColumn);
         }
 
         return parent::buildColumn($column);

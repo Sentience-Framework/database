@@ -10,9 +10,11 @@ use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
+use Sentience\Database\Queries\Objects\CurrentTimestamp;
 use Sentience\Database\Queries\Objects\DropConstraint;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Type;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
 
@@ -197,7 +199,17 @@ class MySQLDialect extends SQLDialect
 
     protected function buildColumn(Column $column): string
     {
-        $sql = parent::buildColumn($column);
+        $sql = $column->type instanceof Type && $column->type->size > 0 && $column->default instanceof CurrentTimestamp
+            ? parent::buildColumn(
+                new Column(
+                    $column->name,
+                    $column->type,
+                    $column->notNull,
+                    Query::currentTimestamp($column->type->size),
+                    $column->generatedByDefaultAsIdentity
+                )
+            )
+            : parent::buildColumn($column);
 
         if ($column->generatedByDefaultAsIdentity) {
             $sql .= ' AUTO_INCREMENT';

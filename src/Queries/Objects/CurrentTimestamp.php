@@ -7,13 +7,19 @@ use Sentience\Database\Queries\Interfaces\Sql;
 
 class CurrentTimestamp implements Sql
 {
-    public function __construct()
+    public function __construct(protected ?int $precision)
     {
     }
 
     public function sql(DialectInterface $dialect): string
     {
-        return 'CURRENT_TIMESTAMP';
+        $sql = 'CURRENT_TIMESTAMP';
+
+        if ($this->precision) {
+            $sql .= sprintf('(%d)', abs($this->precision));
+        }
+
+        return $sql;
     }
 
     public function params(DialectInterface $dialect): array

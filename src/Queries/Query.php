@@ -51,9 +51,9 @@ abstract class Query implements QueryInterface
         return new Alias($identifier, $alias);
     }
 
-    public static function currentTimestamp(): CurrentTimestamp
+    public static function currentTimestamp(?int $precision = null): CurrentTimestamp
     {
-        return new CurrentTimestamp();
+        return new CurrentTimestamp($precision);
     }
 
     public static function expression(string $sql, array $params = []): Expression
