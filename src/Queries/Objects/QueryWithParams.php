@@ -27,10 +27,24 @@ class QueryWithParams
 
         $params = [];
 
+        $index = 0;
+
         $query = $this->pregReplaceCallback(
             static::REGEX_PATTERN,
             function (array $match) use (&$params, &$index): string {
                 [$sql, $questionMark, $namedParam] = $match;
+
+                if ($questionMark) {
+                    if (!array_key_exists($index, $this->params)) {
+                        throw new QueryWithParamsException('question mark and param count do not match');
+                    }
+
+                    $params[] = $this->params[$index];
+
+                    $index++;
+
+                    return $questionMark;
+                }
 
                 if ($namedParam) {
                     if (!array_key_exists($namedParam, $this->params)) {
