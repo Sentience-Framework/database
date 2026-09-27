@@ -1159,14 +1159,14 @@ class SQLDialect extends DialectAbstract
 
         if ($foreignKeyConstraint->onUpdate) {
             $sql .= ' ON UPDATE ';
-            $sql .= (string) is_subclass_of($foreignKeyConstraint->onUpdate, BackedEnum::class)
+            $sql .= is_subclass_of($foreignKeyConstraint->onUpdate, BackedEnum::class)
                 ? $foreignKeyConstraint->onUpdate->value
                 : $foreignKeyConstraint->onUpdate;
         }
 
         if ($foreignKeyConstraint->onDelete) {
             $sql .= ' ON DELETE ';
-            $sql .= (string) is_subclass_of($foreignKeyConstraint->onDelete, BackedEnum::class)
+            $sql .= is_subclass_of($foreignKeyConstraint->onDelete, BackedEnum::class)
                 ? $foreignKeyConstraint->onDelete->value
                 : $foreignKeyConstraint->onDelete;
         }
