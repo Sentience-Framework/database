@@ -14,6 +14,13 @@ use Sentience\Database\Queries\Objects\UniqueConstraint;
 
 class SQLiteSchema extends SchemaAbstract
 {
+    public function schemas(DatabaseInterface $database, DialectInterface $dialect): array
+    {
+        $databases = $database->query('PRAGMA database_list')->fetchAssocs();
+
+        return array_column($databases, 'file');
+    }
+
     public function tables(DatabaseInterface $database, DialectInterface $dialect): array
     {
         $tables = $database->select('sqlite_master')

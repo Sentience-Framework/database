@@ -17,6 +17,16 @@ use Sentience\Database\Queries\Query;
 
 class FirebirdSchema extends SchemaAbstract
 {
+    public function schemas(DatabaseInterface $database, DialectInterface $dialect): array
+    {
+        $databases = $database->select('MON$DATABASE')
+            ->columns(['database_name' => $this->trim(['MON$DATABASE', 'MON$DATABASE_NAME'])])
+            ->execute()
+            ->fetchAssocs();
+
+        return array_column($databases, 'database_name');
+    }
+
     public function tables(DatabaseInterface $database, DialectInterface $dialect): array
     {
         $tables = $database->select('RDB$RELATIONS')

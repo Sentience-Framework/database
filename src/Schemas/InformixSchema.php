@@ -12,10 +12,22 @@ use Sentience\Database\Queries\Objects\Index;
 use Sentience\Database\Queries\Objects\Join;
 use Sentience\Database\Queries\Objects\Type;
 use Sentience\Database\Queries\Objects\UniqueConstraint;
+use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
 
 class InformixSchema extends SchemaAbstract
 {
+    public function schemas(DatabaseInterface $database, DialectInterface $dialect): array
+    {
+        $databases = $database->select(Query::raw('sysmaster:sysdatabases'))
+            ->columns(['database_name' => 'name'])
+            ->orderByAsc('name')
+            ->execute()
+            ->fetchAssocs();
+
+        return array_map('trim', array_column($databases, 'database_name'));
+    }
+
     public function tables(DatabaseInterface $database, DialectInterface $dialect): array
     {
         $tables = $database->select('systables')

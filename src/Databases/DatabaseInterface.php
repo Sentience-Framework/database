@@ -42,6 +42,7 @@ interface DatabaseInterface
     public function createIndex(string|array|Sql $table, string $name): CreateIndexQuery;
     public function dropIndex(string|array|Sql $table, string $name): DropIndexQuery;
     public function table(string|array|Sql $table): Table;
+    public function informationSchemaSchemas(): array;
     public function informationSchemaTables(): array;
     public function informationSchemaColumns(string $table): array;
     public function informationSchemaPrimaryKeys(string $table): array;

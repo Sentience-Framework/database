@@ -71,7 +71,8 @@ interface DialectInterface
         bool $ifNotExists,
         string $name,
         string|array|Sql $table,
-        array $columns
+        array $columns,
+        array $where
     ): QueryWithParams;
 
     public function dropIndex(

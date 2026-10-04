@@ -199,6 +199,11 @@ abstract class DatabaseAbstract implements DatabaseInterface
         return new DropIndexQuery($this, $this->dialect, $table, $name);
     }
 
+    public function informationSchemaSchemas(): array
+    {
+        return $this->schema->schemas($this, $this->dialect);
+    }
+
     public function informationSchemaTables(): array
     {
         return $this->schema->tables($this, $this->dialect);

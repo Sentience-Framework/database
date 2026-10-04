@@ -16,6 +16,17 @@ use Sentience\Database\Queries\SelectQuery;
 
 class OCISchema extends SchemaAbstract
 {
+    public function schemas(DatabaseInterface $database, DialectInterface $dialect): array
+    {
+        $schemas = $database->select('ALL_USERS')
+            ->columns(['schema_name' => 'USERNAME'])
+            ->orderByAsc('USERNAME')
+            ->execute()
+            ->fetchAssocs();
+
+        return array_column($schemas, 'schema_name');
+    }
+
     public function tables(DatabaseInterface $database, DialectInterface $dialect): array
     {
         $tables = $database->select('USER_TABLES')

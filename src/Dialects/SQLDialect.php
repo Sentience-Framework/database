@@ -69,31 +69,8 @@ class SQLDialect extends DialectAbstract
         $params = [];
 
         $this->buildDistinct($query, $distinct);
-
-        $query .= ' ';
-        $query .= count($columns) > 0
-            ? implode(
-                ', ',
-                array_map(
-                    function (string|array|Alias|SelectQuery|Sql|SubQuery $column) use (&$params): string {
-                        if ($column instanceof SelectQuery) {
-                            return $this->buildSelectQuery($params, $column);
-                        }
-
-                        if ($column instanceof SubQuery) {
-                            $column = $this->subQueryToAlias($params, $column);
-                        }
-
-                        return $this->escapeIdentifier($column);
-                    },
-                    $columns
-                )
-            )
-            : '*';
-
-        $query .= ' FROM';
-
-        $this->buildTable($query, $params, $table);
+        $this->buildColumns($query, $params, $columns);
+        $this->buildFrom($query, $params, $table);
         $this->buildJoins($query, $params, $joins);
         $this->buildWhere($query, $params, $where);
         $this->buildGroupBy($query, $groupBy);
@@ -148,26 +125,7 @@ class SQLDialect extends DialectAbstract
             )
         );
 
-        $query .= ' VALUES';
-
-        array_walk(
-            $values,
-            function (array $values, int $index) use (&$query, &$params, $columns): void {
-                foreach ($columns as $column) {
-                    $value = !array_key_exists($column, $values)
-                        ? Query::raw('DEFAULT')
-                        : $values[$column];
-
-                    unset($values[$column]);
-
-                    $values[$column] = $value;
-                }
-
-                $query .= $index > 0 ? ', ' : ' ';
-                $query .= $this->buildQuestionMarks($params, $values);
-            }
-        );
-
+        $this->buildValues($query, $params, $columns, $values);
         $this->buildOnConflict($query, $params, $onConflict, $values, $lastInsertId);
         $this->buildReturning($query, $returning);
 
@@ -188,25 +146,7 @@ class SQLDialect extends DialectAbstract
         $params = [];
 
         $this->buildTable($query, $params, $table);
-
-        $query .= ' SET ';
-        $query .= implode(
-            ', ',
-            array_map(
-                function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, string $key) use (&$params): string {
-                    return sprintf(
-                        '%s = %s',
-                        $this->escapeIdentifier($key),
-                        $value instanceof SelectQuery
-                        ? $this->buildSelectQuery($params, $value)
-                        : $this->buildQuestionMarks($params, $value)
-                    );
-                },
-                $set,
-                array_keys($set)
-            )
-        );
-
+        $this->buildSet($query, $params, $set);
         $this->buildWhere($query, $params, $where);
         $this->buildReturning($query, $returning);
 
@@ -218,10 +158,10 @@ class SQLDialect extends DialectAbstract
         array $where,
         ?array $returning
     ): QueryWithParams {
-        $query = 'DELETE FROM';
+        $query = 'DELETE';
         $params = [];
 
-        $this->buildTable($query, $params, $table);
+        $this->buildFrom($query, $params, $table);
         $this->buildWhere($query, $params, $where);
         $this->buildReturning($query, $returning);
 
@@ -340,7 +280,8 @@ class SQLDialect extends DialectAbstract
         bool $ifNotExists,
         string $name,
         string|array|Sql $table,
-        array $columns
+        array $columns,
+        array $where
     ): QueryWithParams {
         if (count($columns) == 0) {
             throw new QueryException('no columns specified');
@@ -376,6 +317,8 @@ class SQLDialect extends DialectAbstract
                 )
             )
         );
+
+        $this->buildWhere($query, $params, $where);
 
         return new QueryWithParams($query, $params);
     }
@@ -502,6 +445,38 @@ class SQLDialect extends DialectAbstract
                 )
             )
         );
+    }
+
+    protected function buildColumns(string &$query, &$params, array $columns): void
+    {
+        $query .= ' ';
+
+        $query .= count($columns) > 0
+            ? implode(
+                ', ',
+                array_map(
+                    function (string|array|Alias|SelectQuery|Sql|SubQuery $column) use (&$params): string {
+                        if ($column instanceof SelectQuery) {
+                            return $this->buildSelectQuery($params, $column);
+                        }
+
+                        if ($column instanceof SubQuery) {
+                            $column = $this->subQueryToAlias($params, $column);
+                        }
+
+                        return $this->escapeIdentifier($column);
+                    },
+                    $columns
+                )
+            )
+            : '*';
+    }
+
+    protected function buildFrom(string &$query, &$params, string|array|Alias|Sql|SubQuery $table): void
+    {
+        $query .= ' FROM';
+
+        $this->buildTable($query, $params, $table);
     }
 
     protected function buildTable(string &$query, &$params, string|array|Alias|Sql|SubQuery $table): void
@@ -934,6 +909,29 @@ class SQLDialect extends DialectAbstract
         }
     }
 
+    protected function buildValues(string &$query, array &$params, array $columns, array $values): void
+    {
+        $query .= ' VALUES';
+
+        array_walk(
+            $values,
+            function (array $values, int $index) use (&$query, &$params, $columns): void {
+                foreach ($columns as $column) {
+                    $value = !array_key_exists($column, $values)
+                        ? Query::raw('DEFAULT')
+                        : $values[$column];
+
+                    unset($values[$column]);
+
+                    $values[$column] = $value;
+                }
+
+                $query .= $index > 0 ? ', ' : ' ';
+                $query .= $this->buildQuestionMarks($params, $values);
+            }
+        );
+    }
+
     protected function buildOnConflict(string &$query, array &$params, ?OnConflict $onConflict, array $values, ?string $lastInsertId): void
     {
         if (!$this->onConflict()) {
@@ -986,25 +984,9 @@ class SQLDialect extends DialectAbstract
             })()
             : $onConflict->updates;
 
-        $query .= sprintf(
-            'UPDATE SET %s',
-            implode(
-                ', ',
-                array_map(
-                    function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, string $key) use (&$params): string {
-                        return sprintf(
-                            '%s = %s',
-                            $this->escapeIdentifier($key),
-                            $value instanceof SelectQuery
-                            ? $this->buildSelectQuery($params, $value)
-                            : $this->buildQuestionMarks($params, $value)
-                        );
-                    },
-                    $updates,
-                    array_keys($updates)
-                )
-            )
-        );
+        $query .= 'UPDATE';
+
+        $this->buildSet($query, $params, $updates);
     }
 
     protected function buildReturning(string &$query, ?array $returning): void
@@ -1028,6 +1010,28 @@ class SQLDialect extends DialectAbstract
             : '*';
 
         $query .= " RETURNING {$columns}";
+    }
+
+    protected function buildSet(string &$query, array &$params, array $set): void
+    {
+        $query .= ' SET ';
+
+        $query .= implode(
+            ', ',
+            array_map(
+                function (null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql $value, string $key) use (&$params): string {
+                    return sprintf(
+                        '%s = %s',
+                        $this->escapeIdentifier($key),
+                        $value instanceof SelectQuery
+                        ? $this->buildSelectQuery($params, $value)
+                        : $this->buildQuestionMarks($params, $value)
+                    );
+                },
+                $set,
+                array_keys($set)
+            )
+        );
     }
 
     protected function buildQuestionMarks(array &$params, null|bool|int|float|string|array|DateTimeInterface|Sql $value, bool $parentheses = true, string $separator = ', '): string

@@ -17,6 +17,17 @@ use Sentience\Database\Queries\SelectQuery;
 
 class DB2Schema extends SchemaAbstract
 {
+    public function schemas(DatabaseInterface $database, DialectInterface $dialect): array
+    {
+        $schemas = $database->select(['SYSCAT', 'SCHEMATA'])
+            ->columns(['schema_name' => 'SCHEMANAME'])
+            ->orderByAsc('SCHEMANAME')
+            ->execute()
+            ->fetchAssocs();
+
+        return array_map('trim', array_column($schemas, 'schema_name'));
+    }
+
     public function tables(DatabaseInterface $database, DialectInterface $dialect): array
     {
         $tables = $database->select(['SYSCAT', 'TABLES'])
