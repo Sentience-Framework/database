@@ -975,7 +975,10 @@ class SQLDialect extends DialectAbstract
                                 continue;
                             }
 
-                            $columns[$column] = Query::identifier(['excluded', $column]);
+                            $columns[$column] = Query::identifier([
+                                Query::raw('excluded'),
+                                $column
+                            ]);
                         }
                     }
                 );
