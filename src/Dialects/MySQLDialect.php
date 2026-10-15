@@ -122,7 +122,7 @@ class MySQLDialect extends SQLDialect
             return;
         }
 
-        $insertIgnore = is_null($onConflict->updates);
+        $insertIgnore = is_null($onConflict->set);
 
         if ($insertIgnore && !$lastInsertId) {
             $query = substr_replace($query, 'INSERT IGNORE', 0, 6);
@@ -130,8 +130,8 @@ class MySQLDialect extends SQLDialect
             return;
         }
 
-        $updates = !$insertIgnore
-            ? (count($onConflict->updates) == 0
+        $set = !$insertIgnore
+            ? (count($onConflict->set) == 0
                 ? (function () use ($values): array {
                     $columns = [];
 
@@ -155,11 +155,11 @@ class MySQLDialect extends SQLDialect
 
                     return $columns;
                 })()
-                : $onConflict->updates)
+                : $onConflict->set)
             : [];
 
         if ($lastInsertId) {
-            $updates[$lastInsertId] = Query::raw(
+            $set[$lastInsertId] = Query::raw(
                 sprintf(
                     'last_insert_id(%s)',
                     $this->escapeIdentifier($lastInsertId)
@@ -181,8 +181,8 @@ class MySQLDialect extends SQLDialect
                             : $this->buildQuestionMarks($params, $value)
                         );
                     },
-                    $updates,
-                    array_keys($updates)
+                    $set,
+                    array_keys($set)
                 )
             )
         );

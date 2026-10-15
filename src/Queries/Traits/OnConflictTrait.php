@@ -15,9 +15,9 @@ trait OnConflictTrait
         return $this;
     }
 
-    public function onConflictDoUpdate(string|array $conflict, array $updates = []): static
+    public function onConflictDoUpdate(string|array $conflict, array $set = []): static
     {
-        $this->onConflict = new OnConflict($conflict, $updates);
+        $this->onConflict = new OnConflict($conflict, $set);
 
         return $this;
     }
@@ -27,8 +27,8 @@ trait OnConflictTrait
         return $this->onConflictDoNothing($conflict);
     }
 
-    public function onDuplicateKeyUpdate(string|array $conflict, array $updates = []): static
+    public function onDuplicateKeyUpdate(string|array $conflict, array $set = []): static
     {
-        return $this->onConflictDoUpdate($conflict, $updates);
+        return $this->onConflictDoUpdate($conflict, $set);
     }
 }

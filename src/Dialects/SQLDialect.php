@@ -957,13 +957,13 @@ class SQLDialect extends DialectAbstract
 
         $query .= sprintf(' ON CONFLICT %s DO ', $conflict);
 
-        if (is_null($onConflict->updates)) {
+        if (is_null($onConflict->set)) {
             $query .= 'NOTHING';
 
             return;
         }
 
-        $updates = count($onConflict->updates) == 0
+        $set = count($onConflict->set) == 0
             ? (function () use ($values): array {
                 $columns = [];
 
@@ -985,11 +985,11 @@ class SQLDialect extends DialectAbstract
 
                 return $columns;
             })()
-            : $onConflict->updates;
+            : $onConflict->set;
 
         $query .= 'UPDATE';
 
-        $this->buildSet($query, $params, $updates);
+        $this->buildSet($query, $params, $set);
     }
 
     protected function buildReturning(string &$query, ?array $returning): void
