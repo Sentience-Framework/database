@@ -4,7 +4,6 @@ namespace Sentience\Database\Adapters;
 
 use Closure;
 use SQLite3;
-use SQLite3Stmt;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\DriverInterface;
@@ -156,9 +155,11 @@ class SQLite3Adapter extends AdapterAbstract
                 default => SQLITE3_TEXT
             };
 
-            ((bool) preg_match('/^[0-9]+$/', (string) $key))
-                ? $this->bindValue($sqlite3Stmt, $key, $value, $type)
-                : $this->bindParam($sqlite3Stmt, $key, $value, $type);
+            (function (null|bool|int|float|string $value) use ($sqlite3Stmt, $key, $type) {
+                ((bool) preg_match('/^[0-9]+$/', (string) $key))
+                    ? $sqlite3Stmt->bindValue($key + 1, $value, $type)
+                    : $sqlite3Stmt->bindParam($key, $value, $type);
+            })($value);
         }
 
         try {
@@ -192,16 +193,6 @@ class SQLite3Adapter extends AdapterAbstract
     public function lastInsertId(?string $name = null): int
     {
         return $this->sqlite3->lastInsertRowID();
-    }
-
-    protected function bindValue(SQLite3Stmt $sqlite3Stmt, int $key, null|int|float|string $value, int $type): void
-    {
-        $sqlite3Stmt->bindValue($key + 1, $value, $type);
-    }
-
-    protected function bindParam(SQLite3Stmt $sqlite3Stmt, string $key, null|int|float|string $value, int $type): void
-    {
-        $sqlite3Stmt->bindParam($key, $value, $type);
     }
 
     public function __destruct()
