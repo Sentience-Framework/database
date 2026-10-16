@@ -280,7 +280,7 @@ class SQLSchema extends SchemaAbstract
             'TEXT' => new Type(TypeEnum::String, $size ?? PHP_INT_MAX),
             'DATETIME',
             'TIMESTAMP' => new Type(TypeEnum::DateTime, $size ?? 0),
-            default => !is_null($size) ? sprintf('%s(%d)', $type, $size) : $size
+            default => !is_null($size) ? sprintf('%s(%d)', $type, $size) : $type
         };
     }
 
