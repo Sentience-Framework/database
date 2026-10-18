@@ -1299,7 +1299,7 @@ class SQLDialect extends DialectAbstract
                 ...static::ESCAPE_CHARS,
                 $char => static::ESCAPE_ANSI
                     ? sprintf('%s%s', $char, $char)
-                    : sprintf('\\%s', $char, $char)
+                    : sprintf('\\%s', $char)
             ]
         );
 
