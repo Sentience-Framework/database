@@ -162,7 +162,7 @@ trait WhereTrait
 
     public function wheref(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
     {
-        return $this->addExpressionf($this->where, $format, $values, ChainEnum::Or);
+        return $this->addExpressionf($this->where, $format, $values, ChainEnum::And);
     }
 
     public function where(string $sql, array $values = []): static
@@ -218,6 +218,16 @@ trait WhereTrait
     public function orWhereNotContains(string|array|Sql $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
         return $this->notContains($this->where, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::Or);
+    }
+
+    public function orWhereGlob(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->glob($this->where, $column, $value, $caseInsensitive, ChainEnum::Or);
+    }
+
+    public function orWhereNotGlob(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->notGlob($this->where, $column, $value, $caseInsensitive, ChainEnum::Or);
     }
 
     public function orWhereIn(string|array|Sql $column, array|SelectQuery $values): static

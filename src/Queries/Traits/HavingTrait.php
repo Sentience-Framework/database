@@ -162,7 +162,7 @@ trait HavingTrait
 
     public function havingf(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static
     {
-        return $this->addExpressionf($this->having, $format, $values, ChainEnum::Or);
+        return $this->addExpressionf($this->having, $format, $values, ChainEnum::And);
     }
 
     public function having(string $sql, array $values = []): static
@@ -218,6 +218,16 @@ trait HavingTrait
     public function orHavingNotContains(string|array|Sql $column, string $value, bool $caseInsensitive = false, bool $escapeBackslash = false): static
     {
         return $this->notContains($this->having, $column, $value, $caseInsensitive, $escapeBackslash, ChainEnum::Or);
+    }
+
+    public function orHavingGlob(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->glob($this->having, $column, $value, $caseInsensitive, ChainEnum::Or);
+    }
+
+    public function orHavingNotGlob(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->notGlob($this->having, $column, $value, $caseInsensitive, ChainEnum::Or);
     }
 
     public function orHavingIn(string|array|Sql $column, array|SelectQuery $values): static

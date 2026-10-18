@@ -50,11 +50,11 @@ class InsertQuery extends TableQuery
 
     public function execute(bool $emulatePrepare = false): array|ResultInterface
     {
-        if (!$this->onConflict && is_null($this->returning)) {
-            return parent::execute($emulatePrepare);
-        }
+        if (!$this->onConflict || (!$this->emulateOnConflict && $this->dialect->onConflict())) {
+            if (is_null($this->returning)) {
+                return parent::execute($emulatePrepare);
+            }
 
-        if (!$this->emulateOnConflict && $this->dialect->onConflict()) {
             return $this->insert($this->values, $emulatePrepare);
         }
 
@@ -113,7 +113,7 @@ class InsertQuery extends TableQuery
             throw new QueryException('multiple rows in constraint');
         }
 
-        return !is_null($this->onConflict->updates)
+        return !is_null($this->onConflict->set)
             ? $this->update($values, $conflict, $emulatePrepare)
             : $this->ignore($result, $rows);
     }
@@ -146,7 +146,7 @@ class InsertQuery extends TableQuery
             $this->lastInsertId
         );
 
-        $result = $this->database->queryWithParams($queryWithParams);
+        $result = $this->database->queryWithParams($queryWithParams, $emulatePrepare);
 
         if (!$this->lastInsertId || is_null($this->returning) || (!$this->emulateReturning && $this->dialect->returning())) {
             return $result;
@@ -174,8 +174,8 @@ class InsertQuery extends TableQuery
     {
         $updateQuery = $this->database->update($this->table);
 
-        $updates = !is_null($this->onConflict->updates)
-            ? (count($this->onConflict->updates) > 0 ? $this->onConflict->updates : $values)
+        $updates = !is_null($this->onConflict->set)
+            ? (count($this->onConflict->set) > 0 ? $this->onConflict->set : $values)
             : $conflict;
 
         $updateQuery->set($updates);

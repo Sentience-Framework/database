@@ -38,9 +38,8 @@ class MySQLDialect extends SQLDialect
         "\r" => '\\r',
         "\t" => '\\t',
         "\0" => '\\0',
-        "\b" => '\\b',
-        "\x1A" => '\\Z',
-        "'" => "\\'"
+        "\x08" => '\\b',
+        "\x1A" => '\\Z'
     ];
     public const bool BOOLEAN = false;
     public const bool DROP_INDEX_ON_TABLE = true;

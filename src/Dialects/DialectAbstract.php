@@ -11,6 +11,8 @@ abstract class DialectAbstract implements DialectInterface
 
     public function __construct(protected DriverInterface $driver, int|string $version, array $options)
     {
+        $this->options = [...($options[SQLDialect::class] ?? []), ...($options[static::class] ?? [])];
+
         if (is_int($version)) {
             $this->version = $version;
 
@@ -34,6 +36,5 @@ abstract class DialectAbstract implements DialectInterface
         }
 
         $this->version = $number;
-        $this->options = [...($options[SQLDialect::class] ?? []), ...($options[static::class] ?? [])];
     }
 }

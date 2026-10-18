@@ -37,7 +37,11 @@ class SQLiteSchema extends SchemaAbstract
         $type = function (string $type): string|Type {
             preg_match('/^(\w+)(?:\((\d+)\))?$/', $type, $match);
 
-            $size = !empty($match[2]) ? $match[2] : null;
+            if (empty($match)) {
+                return $type;
+            }
+
+            $size = !empty($match[2]) ? (int) $match[2] : null;
 
             return match ($match[1]) {
                 'BOOLEAN' => new Type(TypeEnum::Bool),
@@ -72,20 +76,19 @@ class SQLiteSchema extends SchemaAbstract
         $columns = [];
 
         foreach ($rows as $row) {
-            if (!(bool) $row['pk']) {
+            $pk = $row['pk'];
+            $name = $row['name'];
+
+            if (!(bool) $pk) {
                 continue;
             }
 
-            $column = $row['name'];
-
-            if (in_array($column, $columns)) {
-                continue;
-            }
-
-            $columns[] = $column;
+            $columns[(int) $pk] = $name;
         }
 
-        return $columns;
+        ksort($columns);
+
+        return array_values($columns);
     }
 
     public function uniqueConstraints(DatabaseInterface $database, DialectInterface $dialect, string $table): array
@@ -167,9 +170,9 @@ class SQLiteSchema extends SchemaAbstract
         $indexes = $database->query("PRAGMA index_list({$dialect->escapeIdentifier($table)})")->fetchAssocs();
 
         return array_map(
-            function (array $index) use ($database): Index {
+            function (array $index) use ($database, $dialect): Index {
                 $name = $index['name'];
-                $columns = array_column($database->query("PRAGMA index_info({$name})")->fetchAssocs(), 'name');
+                $columns = array_column($database->query("PRAGMA index_info({$dialect->escapeIdentifier($name)})")->fetchAssocs(), 'name');
                 $unique = (bool) $index['unique'];
 
                 return new Index($name, $columns, $unique);

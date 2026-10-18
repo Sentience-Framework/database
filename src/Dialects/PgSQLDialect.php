@@ -21,7 +21,7 @@ class PgSQLDialect extends SQLDialect
         "\r" => '\\r',
         "\t" => '\\t',
         "\0" => '',
-        "\b" => '\\b',
+        "\x08" => '\\b',
         "\x1A" => '\\x1A',
         "\f" => '\\f',
         "\v" => '\\v'
