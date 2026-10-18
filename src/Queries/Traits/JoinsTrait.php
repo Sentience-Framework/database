@@ -90,49 +90,49 @@ trait JoinsTrait
         return $this->crossJoin(Query::subQuery($selectQuery, $alias));
     }
 
-    public function crossJoinLateral(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
+    public function crossJoinLateral(string|array|Alias|Sql|SubQuery $table): static
     {
-        return $this->addJoin(JoinEnum::CrossJoinLateral, $table, $on);
+        return $this->addJoin(JoinEnum::CrossJoinLateral, $table, null);
     }
 
-    public function crossJoinLateralTable(string|array|Sql $table, ?callable $on = null, ?string $alias = null): static
+    public function crossJoinLateralTable(string|array|Sql $table, ?string $alias = null): static
     {
-        return $this->crossJoinLateral($alias ? Query::alias($table, $alias) : $table, $on);
+        return $this->crossJoinLateral($alias ? Query::alias($table, $alias) : $table);
     }
 
-    public function crossJoinLateralSubQuery(SelectQuery $selectQuery, string $alias, ?callable $on = null): static
+    public function crossJoinLateralSubQuery(SelectQuery $selectQuery, string $alias): static
     {
-        return $this->crossJoinLateral(Query::subQuery($selectQuery, $alias), $on);
+        return $this->crossJoinLateral(Query::subQuery($selectQuery, $alias));
     }
 
     public function outerApply(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
     {
-        return $this->addJoin(JoinEnum::LeftJoinLateral, $table, $on);
+        return $this->leftJoinLateral($table, $on);
     }
 
     public function outerApplyTable(string|array|Sql $table, ?callable $on = null, ?string $alias = null): static
     {
-        return $this->outerApply($alias ? Query::alias($table, $alias) : $table, $on);
+        return $this->leftJoinLateralTable($table, $on, $alias);
     }
 
     public function outerApplySubQuery(SelectQuery $selectQuery, string $alias, ?callable $on = null): static
     {
-        return $this->outerApply(Query::subQuery($selectQuery, $alias), $on);
+        return $this->leftJoinLateralSubQuery($selectQuery, $alias, $on);
     }
 
     public function crossApply(string|array|Alias|Sql|SubQuery $table, ?callable $on = null): static
     {
-        return $this->addJoin(JoinEnum::InnerJoinLateral, $table, $on);
+        return $this->innerJoinLateral($table, $on);
     }
 
     public function crossApplyTable(string|array|Sql $table, ?callable $on = null, ?string $alias = null): static
     {
-        return $this->crossApply($alias ? Query::alias($table, $alias) : $table, $on);
+        return $this->innerJoinLateralTable($table, $on, $alias);
     }
 
     public function crossApplySubQuery(SelectQuery $selectQuery, string $alias, ?callable $on = null): static
     {
-        return $this->crossApply(Query::subQuery($selectQuery, $alias), $on);
+        return $this->innerJoinSubQuery($selectQuery, $alias, $on);
     }
 
     public function joinf(string $format, null|bool|int|float|string|DateTimeInterface|SelectQuery|Sql ...$values): static

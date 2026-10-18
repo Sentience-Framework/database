@@ -523,19 +523,25 @@ class SQLDialect extends DialectAbstract
                 JoinEnum::InnerJoin,
                 JoinEnum::InnerJoinLateral => $this->buildInnerJoin($query, $params, $join->join, $table, $join->conditions()),
                 JoinEnum::CrossJoin,
-                JoinEnum::CrossJoinLateral => $this->buildCrossJoin($query, $params, $join->join, $table, $join->conditions()),
+                JoinEnum::CrossJoinLateral => $this->buildCrossJoin($query, $params, $join->join, $table),
                 default => $this->buildJoin($query, $params, $join->join, $table, $join->conditions())
             };
         }
     }
 
-    protected function buildJoin(string &$query, array &$params, string|JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    protected function buildJoin(string &$query, array &$params, string|JoinEnum $join, string|array|Alias|Sql $table, ?array $conditions): void
     {
         $query .= sprintf(
-            '%s %s ON ',
+            '%s %s',
             $join instanceof JoinEnum ? $join->value : $join,
             $this->escapeIdentifier($table)
         );
+
+        if (is_null($conditions)) {
+            return;
+        }
+
+        $query .= ' ON ';
 
         if (count($conditions) == 0) {
             $query .= $this->castToQuery(true);
@@ -560,9 +566,9 @@ class SQLDialect extends DialectAbstract
         $this->buildJoin($query, $params, $join, $table, $conditions);
     }
 
-    protected function buildCrossJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void
+    protected function buildCrossJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table): void
     {
-        $this->buildJoin($query, $params, $join, $table, $conditions);
+        $this->buildJoin($query, $params, $join, $table, null);
     }
 
     protected function buildWhere(string &$query, array &$params, array $where): void
