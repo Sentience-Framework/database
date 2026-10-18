@@ -1152,7 +1152,7 @@ class SQLDialect extends DialectAbstract
                     $foreignKeyConstraint->columns
                 )
             ),
-            $foreignKeyConstraint->referenceTable,
+            $this->escapeIdentifier($foreignKeyConstraint->referenceTable),
             implode(
                 ', ',
                 array_map(
