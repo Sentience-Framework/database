@@ -53,7 +53,9 @@ class ExpressionF implements Sql
 
     protected function build(DialectInterface $dialect): void
     {
-        $pattern = '/(?<!\%)\%(\.[0-9]{0,53})?(['
+        $percent = fn (string $string): string => strtr($string, ['%%' => '%']);
+
+        $pattern = '/(?<!%)((?:%%)*)%(\.[0-9]{0,53})?(['
             . implode('', [
                 ...static::BOOL_MODIFIERS,
                 ...static::INT_MODIFIERS,
@@ -66,7 +68,7 @@ class ExpressionF implements Sql
         $this->params = [];
         $this->rawSql = '';
 
-        if (!preg_match_all($pattern, $this->format, $matches, PREG_OFFSET_CAPTURE)) {
+        if (!(bool) preg_match_all($pattern, $this->format, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
             $this->sql = $this->format;
             $this->rawSql = $this->format;
 
@@ -75,7 +77,7 @@ class ExpressionF implements Sql
 
         $offset = 0;
 
-        foreach ($matches[0] as $index => $match) {
+        foreach ($matches as $index => $match) {
             if (!array_key_exists($index, $this->values)) {
                 throw new ArgumentCountError(
                     sprintf(
@@ -86,9 +88,9 @@ class ExpressionF implements Sql
                 );
             }
 
-            [$matchString, $matchOffset] = $match;
+            [$matchString, $matchOffset] = $match[0];
 
-            $beforeMatch = substr($this->format, $offset, $matchOffset - $offset);
+            $beforeMatch = $percent(substr($this->format, $offset, $matchOffset - $offset) . $match[1][0]);
 
             $this->sql .= $beforeMatch;
             $this->rawSql .= $beforeMatch;
@@ -108,8 +110,8 @@ class ExpressionF implements Sql
                 $this->sql .= $value->sql($dialect);
                 $this->rawSql .= $value->rawSql($dialect);
             } else {
-                $type = $matches[2][$index][0];
-                $precision = $matches[1][$index][0];
+                $type = $match[3][0];
+                $precision = $match[2][0];
 
                 $param = match (true) {
                     is_null($value) => null,
@@ -117,8 +119,8 @@ class ExpressionF implements Sql
                     in_array($type, static::BOOL_MODIFIERS) => (bool) $value,
                     in_array($type, static::INT_MODIFIERS) => (int) $value,
                     in_array($type, static::FLOAT_MODIFIERS) => strlen($precision) > 1
-                    ? round($value, (int) substr($precision, 1))
-                    : (float) $value,
+                        ? round($value, (int) substr($precision, 1))
+                        : (float) $value,
                     default => (string) $value
                 };
 
@@ -130,7 +132,7 @@ class ExpressionF implements Sql
             $offset = $matchOffset + strlen($matchString);
         }
 
-        $afterMatches = substr($this->format, $offset);
+        $afterMatches = $percent(substr($this->format, $offset));
 
         $this->sql .= $afterMatches;
         $this->rawSql .= $afterMatches;
