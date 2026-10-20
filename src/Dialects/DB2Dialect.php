@@ -8,7 +8,6 @@ use Sentience\Database\Queries\Enums\TypeEnum;
 class DB2Dialect extends SQLDialect
 {
     public const array ESCAPE_CHARS = [
-        '\\' => '\\\\',
         "\n" => '\\n',
         "\r" => '\\r',
         "\t" => '\\t',

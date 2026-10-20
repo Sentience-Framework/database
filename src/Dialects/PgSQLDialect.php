@@ -16,7 +16,6 @@ class PgSQLDialect extends SQLDialect
 
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
     public const array ESCAPE_CHARS = [
-        '\\' => '\\\\',
         "\n" => '\\n',
         "\r" => '\\r',
         "\t" => '\\t',
