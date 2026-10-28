@@ -54,6 +54,10 @@ class MySQLDialect extends SQLDialect
         array $constraints
     ): QueryWithParams {
         foreach ($columns as $column) {
+            if ($column instanceof Sql) {
+                continue;
+            }
+
             if (!$column->generatedByDefaultAsIdentity) {
                 continue;
             }

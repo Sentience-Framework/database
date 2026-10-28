@@ -29,6 +29,10 @@ class SQLServerDialect extends SQLDialect
         array $constraints
     ): QueryWithParams {
         foreach ($columns as $column) {
+            if ($column instanceof Sql) {
+                continue;
+            }
+
             if ($column->generatedByDefaultAsIdentity && !in_array($column->name, $primaryKeys)) {
                 $primaryKeys[] = $column->name;
             }

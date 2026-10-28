@@ -67,15 +67,9 @@ class SelectQuery extends TableQuery
 
     public function count(bool $emulatePrepare = false): int
     {
-        $queryWithParams = $this->toQueryWithParams();
-
-        $queryWithParams->query = sprintf(
-            'SELECT count(*) FROM (%s)',
-            $queryWithParams->query
-        );
-
-        return (int) $this->database
-            ->queryWithParams($queryWithParams, $emulatePrepare)
+        return $this->database->selectSubQuery($this, 'result')
+            ->columns(['count' => Query::raw('count(*)')])
+            ->execute($emulatePrepare)
             ->scalar() ?? 0;
     }
 }

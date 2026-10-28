@@ -195,6 +195,12 @@ class SQLDialect extends DialectAbstract
                 $query .= ', ';
             }
 
+            if ($column instanceof Sql) {
+                $query .= $column->rawSql($this);
+
+                continue;
+            }
+
             $query .= $this->buildColumn($column);
         }
 
