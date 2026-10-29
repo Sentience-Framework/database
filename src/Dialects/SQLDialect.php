@@ -12,12 +12,14 @@ use Sentience\Database\Queries\Enums\JoinEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\ConditionGroup;
 use Sentience\Database\Queries\Interfaces\Sql;
+use Sentience\Database\Queries\Objects\AddCheckConstraint;
 use Sentience\Database\Queries\Objects\AddColumn;
 use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\AddPrimaryKeys;
 use Sentience\Database\Queries\Objects\AddUniqueConstraint;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\AlterColumn;
+use Sentience\Database\Queries\Objects\CheckConstraint;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\DropColumn;
@@ -222,6 +224,7 @@ class SQLDialect extends DialectAbstract
             $query .= match (true) {
                 $constraint instanceof UniqueConstraint => $this->buildUniqueConstraint($constraint),
                 $constraint instanceof ForeignKeyConstraint => $this->buildForeignKeyConstraint($constraint),
+                $constraint instanceof CheckConstraint => $this->buildCheckConstraint($params, $constraint),
                 default => $constraint->rawSql($this)
             };
         }
@@ -255,6 +258,7 @@ class SQLDialect extends DialectAbstract
                     $alter instanceof AddPrimaryKeys => $this->buildAlterTableAddPrimaryKeys($alter),
                     $alter instanceof AddUniqueConstraint => $this->buildAlterTableAddUniqueConstraint($alter),
                     $alter instanceof AddForeignKeyConstraint => $this->buildAlterTableAddForeignKeyConstraint($alter),
+                    $alter instanceof AddCheckConstraint => $this->buildAlterTableAddCheckConstraint($params, $alter),
                     $alter instanceof DropConstraint => $this->buildAlterTableDropConstraint($alter),
                     default => $alter->rawSql($this)
                 };
@@ -1193,6 +1197,29 @@ class SQLDialect extends DialectAbstract
         return $sql;
     }
 
+    protected function buildCheckConstraint(array &$params, CheckConstraint $checkConstraint): string
+    {
+        $sql = 'CHECK (';
+
+        foreach ($checkConstraint->conditions() as $index => $condition) {
+            $condition instanceof Condition
+                ? $this->buildCondition($sql, $params, $index, $condition)
+                : $this->buildConditionGroup($sql, $params, $index, $condition);
+        }
+
+        $sql .= ')';
+
+        if ($checkConstraint->name) {
+            $sql = sprintf(
+                'CONSTRAINT %s %s',
+                $this->escapeIdentifier($checkConstraint->name),
+                $sql
+            );
+        }
+
+        return $sql;
+    }
+
     protected function buildAlterTableAddColumn(AddColumn $addColumn): string
     {
         return sprintf(
@@ -1254,6 +1281,14 @@ class SQLDialect extends DialectAbstract
         return sprintf(
             'ADD %s',
             $this->buildForeignKeyConstraint($addForeignKeyConstraint)
+        );
+    }
+
+    protected function buildAlterTableAddCheckConstraint(array &$params, AddCheckConstraint $addCheckConstraint): string
+    {
+        return sprintf(
+            'ADD %s',
+            $this->buildCheckConstraint($params, $addCheckConstraint)
         );
     }
 

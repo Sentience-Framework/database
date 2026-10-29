@@ -6,6 +6,7 @@ use DateTimeInterface;
 use Sentience\Database\Queries\Enums\ReferentialActionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
+use Sentience\Database\Queries\Objects\AddCheckConstraint;
 use Sentience\Database\Queries\Objects\AddColumn;
 use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\AddPrimaryKeys;
@@ -66,6 +67,25 @@ trait AltersTrait
     public function addForeignKeyConstraint(string|array $columns, string $referenceTable, string|array $referenceColumns, ?string $name = null, null|string|ReferentialActionEnum $onUpdate = null, null|string|ReferentialActionEnum $onDelete = null): static
     {
         $this->alters[] = new AddForeignKeyConstraint((array) $columns, $referenceTable, (array) $referenceColumns, $name, $onUpdate, $onDelete);
+
+        return $this;
+    }
+
+    public function addCheckConstraint(callable $check, ?string $name = null): static
+    {
+        $addCheckConstraint = new AddCheckConstraint($name);
+
+        $addCheckConstraint = $check($addCheckConstraint) ?? $addCheckConstraint;
+
+        if (!($addCheckConstraint instanceof AddCheckConstraint)) {
+            return $this;
+        }
+
+        if (count($addCheckConstraint->conditions()) == 0) {
+            return $this;
+        }
+
+        $this->alters[] = $addCheckConstraint;
 
         return $this;
     }

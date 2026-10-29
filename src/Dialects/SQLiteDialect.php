@@ -6,10 +6,12 @@ use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
+use Sentience\Database\Queries\Objects\AddCheckConstraint;
 use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\AddPrimaryKeys;
 use Sentience\Database\Queries\Objects\AddUniqueConstraint;
 use Sentience\Database\Queries\Objects\AlterColumn;
+use Sentience\Database\Queries\Objects\CheckConstraint;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\DropConstraint;
@@ -185,6 +187,15 @@ class SQLiteDialect extends SQLDialect
         return parent::buildForeignKeyConstraint($foreignKeyConstraint);
     }
 
+    protected function buildCheckConstraint(array &$params, CheckConstraint $checkConstraint): string
+    {
+        $checkConstraint = clone $checkConstraint;
+
+        $checkConstraint->name = null;
+
+        return parent::buildCheckConstraint($params, $checkConstraint);
+    }
+
     protected function buildAlterTableAlterColumn(AlterColumn $alterColumn): string
     {
         throw new QueryException('SQLite does not support altering columns');
@@ -210,6 +221,11 @@ class SQLiteDialect extends SQLDialect
     }
 
     protected function buildAlterTableAddForeignKeyConstraint(AddForeignKeyConstraint $addForeignKeyConstraint): string
+    {
+        throw new QueryException('SQLite does not support adding constraints by altering the table');
+    }
+
+    protected function buildAlterTableAddCheckConstraint(array &$params, AddCheckConstraint $addCheckConstraint): string
     {
         throw new QueryException('SQLite does not support adding constraints by altering the table');
     }
