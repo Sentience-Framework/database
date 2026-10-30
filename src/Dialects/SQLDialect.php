@@ -12,11 +12,6 @@ use Sentience\Database\Queries\Enums\JoinEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\ConditionGroup;
 use Sentience\Database\Queries\Interfaces\Sql;
-use Sentience\Database\Queries\Objects\AddCheckConstraint;
-use Sentience\Database\Queries\Objects\AddColumn;
-use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
-use Sentience\Database\Queries\Objects\AddPrimaryKeys;
-use Sentience\Database\Queries\Objects\AddUniqueConstraint;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\CheckConstraint;
@@ -27,6 +22,7 @@ use Sentience\Database\Queries\Objects\DropConstraint;
 use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\OrderBy;
+use Sentience\Database\Queries\Objects\PrimaryKeys;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\RenameColumn;
 use Sentience\Database\Queries\Objects\SubQuery;
@@ -251,14 +247,14 @@ class SQLDialect extends DialectAbstract
 
                 $query .= ' ';
                 $query .= match (true) {
-                    $alter instanceof AddColumn => $this->buildAlterTableAddColumn($alter),
+                    $alter instanceof Column => $this->buildAlterTableAddColumn($alter),
                     $alter instanceof AlterColumn => $this->buildAlterTableAlterColumn($alter),
                     $alter instanceof RenameColumn => $this->buildAlterTableRenameColumn($alter),
                     $alter instanceof DropColumn => $this->buildAlterTableDropColumn($alter),
-                    $alter instanceof AddPrimaryKeys => $this->buildAlterTableAddPrimaryKeys($alter),
-                    $alter instanceof AddUniqueConstraint => $this->buildAlterTableAddUniqueConstraint($alter),
-                    $alter instanceof AddForeignKeyConstraint => $this->buildAlterTableAddForeignKeyConstraint($alter),
-                    $alter instanceof AddCheckConstraint => $this->buildAlterTableAddCheckConstraint($params, $alter),
+                    $alter instanceof PrimaryKeys => $this->buildAlterTableAddPrimaryKeys($alter),
+                    $alter instanceof UniqueConstraint => $this->buildAlterTableAddUniqueConstraint($alter),
+                    $alter instanceof ForeignKeyConstraint => $this->buildAlterTableAddForeignKeyConstraint($alter),
+                    $alter instanceof CheckConstraint => $this->buildAlterTableAddCheckConstraint($params, $alter),
                     $alter instanceof DropConstraint => $this->buildAlterTableDropConstraint($alter),
                     default => $alter->rawSql($this)
                 };
@@ -1220,11 +1216,11 @@ class SQLDialect extends DialectAbstract
         return $sql;
     }
 
-    protected function buildAlterTableAddColumn(AddColumn $addColumn): string
+    protected function buildAlterTableAddColumn(Column $column): string
     {
         return sprintf(
             'ADD COLUMN %s',
-            $this->buildColumn($addColumn)
+            $this->buildColumn($column)
         );
     }
 
@@ -1254,7 +1250,7 @@ class SQLDialect extends DialectAbstract
         );
     }
 
-    protected function buildAlterTableAddPrimaryKeys(AddPrimaryKeys $addPrimaryKeys): string
+    protected function buildAlterTableAddPrimaryKeys(PrimaryKeys $primaryKeys): string
     {
         return sprintf(
             'ADD PRIMARY KEY (%s)',
@@ -1262,33 +1258,33 @@ class SQLDialect extends DialectAbstract
                 ', ',
                 array_map(
                     fn (string|array|Sql $column): string => $this->escapeIdentifier($column),
-                    $addPrimaryKeys->columns
+                    $primaryKeys->columns
                 )
             )
         );
     }
 
-    protected function buildAlterTableAddUniqueConstraint(AddUniqueConstraint $addUniqueConstraint): string
+    protected function buildAlterTableAddUniqueConstraint(UniqueConstraint $uniqueConstraint): string
     {
         return sprintf(
             'ADD %s',
-            $this->buildUniqueConstraint($addUniqueConstraint)
+            $this->buildUniqueConstraint($uniqueConstraint)
         );
     }
 
-    protected function buildAlterTableAddForeignKeyConstraint(AddForeignKeyConstraint $addForeignKeyConstraint): string
+    protected function buildAlterTableAddForeignKeyConstraint(ForeignKeyConstraint $foreignKeyConstraint): string
     {
         return sprintf(
             'ADD %s',
-            $this->buildForeignKeyConstraint($addForeignKeyConstraint)
+            $this->buildForeignKeyConstraint($foreignKeyConstraint)
         );
     }
 
-    protected function buildAlterTableAddCheckConstraint(array &$params, AddCheckConstraint $addCheckConstraint): string
+    protected function buildAlterTableAddCheckConstraint(array &$params, CheckConstraint $checkConstraint): string
     {
         return sprintf(
             'ADD %s',
-            $this->buildCheckConstraint($params, $addCheckConstraint)
+            $this->buildCheckConstraint($params, $checkConstraint)
         );
     }
 

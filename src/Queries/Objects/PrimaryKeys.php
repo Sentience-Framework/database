@@ -2,7 +2,7 @@
 
 namespace Sentience\Database\Queries\Objects;
 
-class AddPrimaryKeys
+class PrimaryKeys
 {
     public function __construct(public array $columns)
     {

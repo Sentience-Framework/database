@@ -6,10 +6,6 @@ use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
-use Sentience\Database\Queries\Objects\AddCheckConstraint;
-use Sentience\Database\Queries\Objects\AddForeignKeyConstraint;
-use Sentience\Database\Queries\Objects\AddPrimaryKeys;
-use Sentience\Database\Queries\Objects\AddUniqueConstraint;
 use Sentience\Database\Queries\Objects\AlterColumn;
 use Sentience\Database\Queries\Objects\CheckConstraint;
 use Sentience\Database\Queries\Objects\Column;
@@ -17,6 +13,7 @@ use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\DropConstraint;
 use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\OnConflict;
+use Sentience\Database\Queries\Objects\PrimaryKeys;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\RenameColumn;
 use Sentience\Database\Queries\Objects\UniqueConstraint;
@@ -210,22 +207,22 @@ class SQLiteDialect extends SQLDialect
         return parent::buildAlterTableRenameColumn($renameColumn);
     }
 
-    protected function buildAlterTableAddPrimaryKeys(AddPrimaryKeys $addPrimaryKeys): string
+    protected function buildAlterTableAddPrimaryKeys(PrimaryKeys $primaryKey): string
     {
         throw new QueryException('SQLite does not support adding primary keys by altering the table');
     }
 
-    protected function buildAlterTableAddUniqueConstraint(AddUniqueConstraint $addUniqueConstraint): string
+    protected function buildAlterTableAddUniqueConstraint(UniqueConstraint $uniqueConstraint): string
     {
         throw new QueryException('SQLite does not support adding constraints by altering the table');
     }
 
-    protected function buildAlterTableAddForeignKeyConstraint(AddForeignKeyConstraint $addForeignKeyConstraint): string
+    protected function buildAlterTableAddForeignKeyConstraint(ForeignKeyConstraint $foreignKeyConstraint): string
     {
         throw new QueryException('SQLite does not support adding constraints by altering the table');
     }
 
-    protected function buildAlterTableAddCheckConstraint(array &$params, AddCheckConstraint $addCheckConstraint): string
+    protected function buildAlterTableAddCheckConstraint(array &$params, CheckConstraint $checkConstraint): string
     {
         throw new QueryException('SQLite does not support adding constraints by altering the table');
     }
