@@ -1197,7 +1197,9 @@ class SQLDialect extends DialectAbstract
     {
         $sql = 'CHECK (';
 
-        foreach ($checkConstraint->conditions() as $index => $condition) {
+        $conditions = $checkConstraint->conditions();
+
+        foreach ($conditions as $index => $condition) {
             $condition instanceof Condition
                 ? $this->buildCondition($sql, $params, $index, $condition)
                 : $this->buildConditionGroup($sql, $params, $index, $condition);

@@ -488,8 +488,8 @@ class PDOAdapter extends AdapterAbstract
 
     public function __destruct()
     {
-        if ($this->driver == Driver::SQLite) {
-            $this->sqliteOptimize($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false);
+        if ($this->driver == Driver::SQLite && ($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false)) {
+            $this->sqliteOptimize();
         }
     }
 }

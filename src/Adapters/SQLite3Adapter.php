@@ -197,7 +197,9 @@ class SQLite3Adapter extends AdapterAbstract
 
     public function __destruct()
     {
-        $this->sqliteOptimize($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false);
+        if ($this->options[static::OPTIONS_SQLITE_OPTIMIZE] ?? false) {
+            $this->sqliteOptimize();
+        }
 
         if (!($this->options[static::OPTIONS_PERSISTENT] ?? false)) {
             $this->sqlite3->close();

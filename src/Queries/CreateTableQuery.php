@@ -64,7 +64,7 @@ class CreateTableQuery extends SchemaQuery
         foreach ($columns as $name => $column) {
             match (true) {
                 $column instanceof BoolColumn => $this->bool($name, $column->notNull, $column->default),
-                $column instanceof IntColumn => $this->int($name, $column->size, $column->notNull, $column->default),
+                $column instanceof IntColumn => $this->int($name, $column->size, $column->notNull, $column->default, $column->generatedByDefaultAsIdentity),
                 $column instanceof FloatColumn => $this->float($name, $column->size, $column->notNull, $column->default),
                 $column instanceof StringColumn => $this->string($name, $column->size, $column->notNull, $column->default),
                 $column instanceof DateTimeColumn => $this->dateTime($name, $column->size, $column->notNull, $column->default),
