@@ -9,6 +9,7 @@ use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\WhereGroup;
+use Sentience\Database\Queries\Traits\DefaultsTrait;
 use Sentience\Database\Queries\Traits\LastInsertIdTrait;
 use Sentience\Database\Queries\Traits\OnConflictTrait;
 use Sentience\Database\Queries\Traits\ReturningTrait;
@@ -18,6 +19,7 @@ use Sentience\Database\Results\ResultInterface;
 
 class InsertQuery extends TableQuery
 {
+    use DefaultsTrait;
     use LastInsertIdTrait;
     use OnConflictTrait;
     use ReturningTrait;
@@ -37,6 +39,7 @@ class InsertQuery extends TableQuery
         return $this->dialect->insert(
             $this->table,
             $this->values,
+            $this->defaults,
             !$this->emulateOnConflict ? $this->onConflict : null,
             !$this->emulateReturning ? $this->returning : null,
             $this->lastInsertId
@@ -62,7 +65,7 @@ class InsertQuery extends TableQuery
             $results = [];
 
             foreach ($this->values as $values) {
-                $results[] = $this->upsert($values, $emulatePrepare);
+                $results[] = $this->upsert([...$this->defaults, ...$values], $emulatePrepare);
             }
 
             return count($results) == 1 ? $results[0] : $results;
@@ -75,13 +78,35 @@ class InsertQuery extends TableQuery
 
     protected function upsert(array $values, bool $emulatePrepare): ResultInterface
     {
-        if (is_string($this->onConflict->conflict)) {
-            throw new QueryException('database does not support named constraints');
-        }
+        $columns = is_string($this->onConflict->conflict)
+            ? (function () {
+                $end = function (string|array|Sql $table) use (&$end): string|Sql {
+                    if (!is_array($table)) {
+                        return $table;
+                    }
+
+                    return $end(end($table));
+                };
+
+                $table = $end($this->table);
+
+                $uniqueConstraints = $this->database->informationSchemaUniqueConstraints($table);
+
+                foreach ($uniqueConstraints as $uniqueConstraint) {
+                    if ($this->onConflict->conflict != $uniqueConstraint->name) {
+                        continue;
+                    }
+
+                    return $uniqueConstraint->columns;
+                }
+
+                throw new QueryException('constraint does not exist');
+            })()
+            : $this->onConflict->conflict;
 
         $conflict = [];
 
-        foreach ($this->onConflict->conflict as $column) {
+        foreach ($columns as $column) {
             if (!array_key_exists($column, $values)) {
                 throw new QueryException('insert values does not contain constraint columns');
             }
@@ -141,6 +166,7 @@ class InsertQuery extends TableQuery
         $queryWithParams = $this->dialect->insert(
             $this->table,
             $values,
+            $this->defaults,
             !$this->emulateOnConflict ? $this->onConflict : null,
             !$this->emulateReturning ? $this->returning : null,
             $this->lastInsertId

@@ -3,14 +3,12 @@
 namespace Sentience\Database\Queries;
 
 use Sentience\Database\Queries\Objects\QueryWithParams;
-use Sentience\Database\Queries\Traits\EmulateIfExistsTrait;
 use Sentience\Database\Queries\Traits\IfExistsTrait;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
 
 class DropTableQuery extends SchemaQuery
 {
-    use EmulateIfExistsTrait;
     use IfExistsTrait;
 
     public function toQueryWithParams(): QueryWithParams

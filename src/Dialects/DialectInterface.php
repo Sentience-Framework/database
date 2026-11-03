@@ -30,6 +30,7 @@ interface DialectInterface
     public function insert(
         string|array|Sql $table,
         array $values,
+        array $defaults,
         ?OnConflict $onConflict,
         ?array $returning,
         ?string $lastInsertId

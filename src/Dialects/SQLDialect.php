@@ -84,6 +84,7 @@ class SQLDialect extends DialectAbstract
     public function insert(
         string|array|Sql $table,
         array $values,
+        array $defaults,
         ?OnConflict $onConflict,
         ?array $returning,
         ?string $lastInsertId
@@ -123,7 +124,7 @@ class SQLDialect extends DialectAbstract
             )
         );
 
-        $this->buildValues($query, $params, $columns, $values);
+        $this->buildValues($query, $params, $columns, $values, $defaults);
         $this->buildOnConflict($query, $params, $onConflict, $values, $lastInsertId);
         $this->buildReturning($query, $returning);
 
@@ -913,16 +914,16 @@ class SQLDialect extends DialectAbstract
         }
     }
 
-    protected function buildValues(string &$query, array &$params, array $columns, array $values): void
+    protected function buildValues(string &$query, array &$params, array $columns, array $values, array $defaults): void
     {
         $query .= ' VALUES';
 
         array_walk(
             $values,
-            function (array $values, int $index) use (&$query, &$params, $columns): void {
+            function (array $values, int $index) use (&$query, &$params, $columns, $defaults): void {
                 foreach ($columns as $column) {
                     $value = !array_key_exists($column, $values)
-                        ? Query::raw('DEFAULT')
+                        ? $defaults[$column] ?? Query::raw('DEFAULT')
                         : $values[$column];
 
                     unset($values[$column]);
