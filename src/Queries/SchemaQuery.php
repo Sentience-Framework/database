@@ -25,19 +25,16 @@ abstract class SchemaQuery extends TableQuery
 
     protected function tableExists(): bool
     {
-        $end = function (string|array|Sql $table) use (&$end): string|Sql {
-            if (!is_array($table)) {
-                return $table;
+        $end = function (string|array|Sql $table) use (&$end): string {
+            if (is_array($table)) {
+                return $end(end($table));
             }
 
-            return $end(end($table));
+            return $table instanceof Sql ? $table->rawSql($this->dialect) : $table;
         };
 
         $table = $end($this->table);
 
-        return in_array(
-            !is_string($table) ? $table->rawSql($this->dialect) : $table,
-            $this->database->informationSchemaTables()
-        );
+        return in_array($table, $this->database->informationSchemaTables());
     }
 }
