@@ -1224,12 +1224,14 @@ class SQLDialect extends DialectAbstract
         return $sql;
     }
 
+    protected function buildAlterTableAdd(string $sql): string
+    {
+        return sprintf('ADD %s', $sql);
+    }
+
     protected function buildAlterTableAddColumn(Column $column): string
     {
-        return sprintf(
-            'ADD COLUMN %s',
-            $this->buildColumn($column)
-        );
+        return $this->buildAlterTableAdd($this->buildColumn($column));
     }
 
     protected function buildAlterTableAlterColumn(AlterColumn $alterColumn): string
@@ -1260,34 +1262,22 @@ class SQLDialect extends DialectAbstract
 
     protected function buildAlterTableAddPrimaryKeys(PrimaryKeys $primaryKeys): string
     {
-        return sprintf(
-            'ADD %s',
-            $this->buildPrimaryKeys($primaryKeys->columns)
-        );
+        return $this->buildAlterTableAdd($this->buildPrimaryKeys($primaryKeys->columns));
     }
 
     protected function buildAlterTableAddUniqueConstraint(UniqueConstraint $uniqueConstraint): string
     {
-        return sprintf(
-            'ADD %s',
-            $this->buildUniqueConstraint($uniqueConstraint)
-        );
+        return $this->buildAlterTableAdd($this->buildUniqueConstraint($uniqueConstraint));
     }
 
     protected function buildAlterTableAddForeignKeyConstraint(ForeignKeyConstraint $foreignKeyConstraint): string
     {
-        return sprintf(
-            'ADD %s',
-            $this->buildForeignKeyConstraint($foreignKeyConstraint)
-        );
+        return $this->buildAlterTableAdd($this->buildForeignKeyConstraint($foreignKeyConstraint));
     }
 
     protected function buildAlterTableAddCheckConstraint(array &$params, CheckConstraint $checkConstraint): string
     {
-        return sprintf(
-            'ADD %s',
-            $this->buildCheckConstraint($params, $checkConstraint)
-        );
+        return $this->buildAlterTableAdd($this->buildCheckConstraint($params, $checkConstraint));
     }
 
     protected function buildAlterTableDropConstraint(DropConstraint $dropConstraint): string
