@@ -40,21 +40,4 @@ class SQLite3Result extends ResultAbstract
 
         return $assoc;
     }
-
-    public function fetchAssocs(): array
-    {
-        $assocs = [];
-
-        while (true) {
-            $assoc = $this->fetchAssoc();
-
-            if (is_null($assoc)) {
-                break;
-            }
-
-            $assocs[] = $assoc;
-        }
-
-        return $assocs;
-    }
 }

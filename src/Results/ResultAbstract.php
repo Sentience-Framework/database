@@ -52,6 +52,23 @@ abstract class ResultAbstract implements ResultInterface
         );
     }
 
+    public function fetchAssocs(): array
+    {
+        $assocs = [];
+
+        while (true) {
+            $assoc = $this->fetchAssoc();
+
+            if (is_null($assoc)) {
+                break;
+            }
+
+            $assocs[] = $assoc;
+        }
+
+        return $assocs;
+    }
+
     protected function assocToObject(object $object, array $assoc): object
     {
         foreach ($assoc as $key => $value) {
