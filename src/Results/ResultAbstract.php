@@ -33,23 +33,30 @@ abstract class ResultAbstract implements ResultInterface
             return null;
         }
 
-        return $this->assocToObject(
-            new $class(...$constructorArgs),
-            $assoc
-        );
+        $object = new $class(...$constructorArgs);
+
+        foreach ($assoc as $key => $value) {
+            $object->{$key} = $value;
+        }
+
+        return $object;
     }
 
     public function fetchObjects(string $class = 'stdClass', array $constructorArgs = []): array
     {
-        $assocs = $this->fetchAssocs();
+        $objects = [];
 
-        return array_map(
-            fn (array $assoc): object => $this->assocToObject(
-                new $class(...$constructorArgs),
-                $assoc
-            ),
-            $assocs
-        );
+        while (true) {
+            $object = $this->fetchObject($class, $constructorArgs);
+
+            if (is_null($object)) {
+                break;
+            }
+
+            $objects[] = $object;
+        }
+
+        return $objects;
     }
 
     public function fetchAssocs(): array
@@ -67,14 +74,5 @@ abstract class ResultAbstract implements ResultInterface
         }
 
         return $assocs;
-    }
-
-    protected function assocToObject(object $object, array $assoc): object
-    {
-        foreach ($assoc as $key => $value) {
-            $object->{$key} = $value;
-        }
-
-        return $object;
     }
 }
