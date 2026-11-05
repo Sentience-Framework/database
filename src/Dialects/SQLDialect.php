@@ -418,6 +418,17 @@ class SQLDialect extends DialectAbstract
         );
     }
 
+    protected function buildTable(string &$query, &$params, string|array|Alias|Sql|SubQuery $table): void
+    {
+        $query .= ' ';
+
+        if ($table instanceof SubQuery) {
+            $table = $this->subQueryToAlias($params, $table);
+        }
+
+        $query .= $this->escapeIdentifier($table);
+    }
+
     protected function buildDistinct(string &$query, ?array $distinct): void
     {
         if (is_null($distinct)) {
@@ -476,17 +487,6 @@ class SQLDialect extends DialectAbstract
         $query .= ' FROM';
 
         $this->buildTable($query, $params, $table);
-    }
-
-    protected function buildTable(string &$query, &$params, string|array|Alias|Sql|SubQuery $table): void
-    {
-        $query .= ' ';
-
-        if ($table instanceof SubQuery) {
-            $table = $this->subQueryToAlias($params, $table);
-        }
-
-        $query .= $this->escapeIdentifier($table);
     }
 
     protected function buildJoins(string &$query, array &$params, array $joins): void
@@ -1130,6 +1130,15 @@ class SQLDialect extends DialectAbstract
         );
     }
 
+    protected function buildConstraint(string $name, string $sql): string
+    {
+        return sprintf(
+            'CONSTRAINT %s %s',
+            $this->escapeIdentifier($name),
+            $sql
+        );
+    }
+
     protected function buildUniqueConstraint(UniqueConstraint $uniqueConstraint): string
     {
         $sql = sprintf(
@@ -1143,15 +1152,9 @@ class SQLDialect extends DialectAbstract
             )
         );
 
-        if ($uniqueConstraint->name) {
-            return sprintf(
-                'CONSTRAINT %s %s',
-                $this->escapeIdentifier($uniqueConstraint->name),
-                $sql
-            );
-        }
-
-        return $sql;
+        return $uniqueConstraint->name
+            ? $this->buildConstraint($uniqueConstraint->name, $sql)
+            : $sql;
     }
 
     protected function buildForeignKeyConstraint(ForeignKeyConstraint $foreignKeyConstraint): string
@@ -1175,14 +1178,6 @@ class SQLDialect extends DialectAbstract
             )
         );
 
-        if ($foreignKeyConstraint->name) {
-            $sql = sprintf(
-                'CONSTRAINT %s %s',
-                $this->escapeIdentifier($foreignKeyConstraint->name),
-                $sql
-            );
-        }
-
         if ($foreignKeyConstraint->onUpdate) {
             $sql .= ' ON UPDATE ';
             $sql .= is_subclass_of($foreignKeyConstraint->onUpdate, BackedEnum::class)
@@ -1197,7 +1192,9 @@ class SQLDialect extends DialectAbstract
                 : $foreignKeyConstraint->onDelete;
         }
 
-        return $sql;
+        return $foreignKeyConstraint->name
+            ? $this->buildConstraint($foreignKeyConstraint->name, $sql)
+            : $sql;
     }
 
     protected function buildCheckConstraint(array &$params, CheckConstraint $checkConstraint): string
@@ -1214,15 +1211,9 @@ class SQLDialect extends DialectAbstract
 
         $sql .= ')';
 
-        if ($checkConstraint->name) {
-            $sql = sprintf(
-                'CONSTRAINT %s %s',
-                $this->escapeIdentifier($checkConstraint->name),
-                $sql
-            );
-        }
-
-        return $sql;
+        return $checkConstraint->name
+            ? $this->buildConstraint($checkConstraint->name, $sql)
+            : $sql;
     }
 
     protected function buildAlterTableAdd(string $sql): string
