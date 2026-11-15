@@ -80,6 +80,16 @@ trait ConditionsTrait
         return $this->addCondition($conditions, ConditionEnum::NotGlob, $column, [$value, $caseInsensitive], $chain);
     }
 
+    protected function grep(array &$conditions, string|array|Sql $column, string $value, bool $caseInsensitive, ChainEnum $chain): static
+    {
+        return $this->addCondition($conditions, ConditionEnum::Grep, $column, [$value, $caseInsensitive], $chain);
+    }
+
+    protected function notGrep(array &$conditions, string|array|Sql $column, string $value, bool $caseInsensitive, ChainEnum $chain): static
+    {
+        return $this->addCondition($conditions, ConditionEnum::NotGrep, $column, [$value, $caseInsensitive], $chain);
+    }
+
     protected function in(array &$conditions, string|array|Sql $column, array|SelectQuery $values, ChainEnum $chain): static
     {
         return $this->addCondition($conditions, ConditionEnum::In, $column, $values, $chain);

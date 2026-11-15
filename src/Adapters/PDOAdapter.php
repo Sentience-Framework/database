@@ -243,6 +243,8 @@ class PDOAdapter extends AdapterAbstract
         if (array_key_exists(static::OPTIONS_MYSQL_ENGINE, $options)) {
             $this->mysqlEngine((string) $options[static::OPTIONS_MYSQL_ENGINE]);
         }
+
+        $this->mysqlBackslashEscapes();
     }
 
     protected function configurePDOForPgSQL(array $options): void
@@ -255,6 +257,8 @@ class PDOAdapter extends AdapterAbstract
                 )
             );
         }
+
+        $this->exec('SET standard_conforming_strings TO on');
     }
 
     protected function configurePDOForSQLite(array $options): void

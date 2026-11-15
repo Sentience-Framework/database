@@ -71,6 +71,8 @@ class MySQLiAdapter extends AdapterAbstract
             $this->mysqlEngine((string) $options[static::OPTIONS_MYSQL_ENGINE]);
         }
 
+        $this->mysqlBackslashEscapes();
+
         foreach ($queries as $query) {
             $this->exec($query);
         }

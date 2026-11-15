@@ -75,6 +75,16 @@ trait HavingTrait
         return $this->notGlob($this->having, $column, $value, $caseInsensitive, ChainEnum::And);
     }
 
+    public function havingGrep(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->grep($this->having, $column, $value, $caseInsensitive, ChainEnum::And);
+    }
+
+    public function havingNotGrep(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->notGrep($this->having, $column, $value, $caseInsensitive, ChainEnum::And);
+    }
+
     public function havingIn(string|array|Sql $column, array|SelectQuery $values): static
     {
         return $this->in($this->having, $column, $values, ChainEnum::And);
@@ -228,6 +238,16 @@ trait HavingTrait
     public function orHavingNotGlob(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
     {
         return $this->notGlob($this->having, $column, $value, $caseInsensitive, ChainEnum::Or);
+    }
+
+    public function orHavingGrep(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->grep($this->having, $column, $value, $caseInsensitive, ChainEnum::Or);
+    }
+
+    public function orHavingNotGrep(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->notGrep($this->having, $column, $value, $caseInsensitive, ChainEnum::Or);
     }
 
     public function orHavingIn(string|array|Sql $column, array|SelectQuery $values): static

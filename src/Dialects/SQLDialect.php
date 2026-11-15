@@ -600,6 +600,8 @@ class SQLDialect extends DialectAbstract
             ConditionEnum::NotLike => $this->buildConditionLike($query, $params, $condition),
             ConditionEnum::Glob,
             ConditionEnum::NotGlob => $this->buildConditionGlob($query, $params, $condition),
+            ConditionEnum::Grep,
+            ConditionEnum::NotGrep => $this->buildConditionGrep($query, $params, $condition),
             ConditionEnum::In,
             ConditionEnum::NotIn => $this->buildConditionIn($query, $params, $condition),
             ConditionEnum::Regex,
@@ -704,10 +706,11 @@ class SQLDialect extends DialectAbstract
         $questionMark = $this->buildQuestionMarks($params, $value);
 
         $query .= sprintf(
-            '%s %s %s',
+            '%s %s %s ESCAPE %s',
             $caseInsensitive ? sprintf('lower(%s)', $identifier) : $identifier,
             $condition->condition->value,
-            $caseInsensitive ? sprintf('lower(%s)', $questionMark) : $questionMark
+            $caseInsensitive ? sprintf('lower(%s)', $questionMark) : $questionMark,
+            $this->escapeString('\\')
         );
     }
 
@@ -738,6 +741,69 @@ class SQLDialect extends DialectAbstract
                 '*' => '%',
                 '?' => '_'
             ]
+        );
+    }
+
+    protected function buildConditionGrep(string &$query, array &$params, Condition $condition): void
+    {
+        [$value, $caseInsensitive] = $condition->value;
+
+        $likePattern = $this->grepToLike($value);
+
+        $likeCondition = new Condition(
+            $condition->condition == ConditionEnum::Grep ? ConditionEnum::Like : ConditionEnum::NotLike,
+            $condition->identifier,
+            [$likePattern, $caseInsensitive],
+            $condition->chain
+        );
+
+        $this->buildConditionLike($query, $params, $likeCondition);
+    }
+
+    protected function grepToLike(string $grepPattern): string
+    {
+        $anchorStart = str_starts_with($grepPattern, '^');
+
+        if ($anchorStart) {
+            $grepPattern = substr($grepPattern, 1);
+        }
+
+        $anchorEnd = (bool) preg_match('/(?<!\\\\)(?:\\\\\\\\)*\$\z/', $grepPattern);
+
+        if ($anchorEnd) {
+            $grepPattern = substr($grepPattern, 0, -1);
+        }
+
+        $likePattern = preg_replace_callback(
+            '/\\\\(.?)|\.\*+|(?<=.)\*|[.%_\[]/su',
+            fn (array $match): string => match ($match[0]) {
+                '.' => '_',
+                '%' => '\%',
+                '_' => '\_',
+                '\\' => throw new QueryException('GREP pattern ends with a trailing backslash'),
+                '*' => throw new QueryException('GREP repetition is only supported as .*'),
+                '[' => throw new QueryException('GREP bracket expressions are not supported'),
+                default => match (true) {
+                    str_starts_with($match[0], '.') => '%',
+                    (bool) preg_match('/^[0-9A-Za-z(){}|+?<>]$/', $match[1]) => throw new QueryException('GREP escape sequence not supported'),
+                    default => strtr(
+                        $match[1],
+                        [
+                            '\\' => '\\\\',
+                            '%' => '\%',
+                            '_' => '\_'
+                        ]
+                    )
+                }
+            },
+            $grepPattern
+        );
+
+        return sprintf(
+            '%s%s%s',
+            $anchorStart ? '' : '%',
+            $likePattern,
+            $anchorEnd ? '' : '%'
         );
     }
 

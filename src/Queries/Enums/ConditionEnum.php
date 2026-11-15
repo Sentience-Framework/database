@@ -16,6 +16,8 @@ enum ConditionEnum: string
     case NotLike = 'NOT LIKE';
     case Glob = 'GLOB';
     case NotGlob = 'NOT GLOB';
+    case Grep = 'GREP';
+    case NotGrep = 'NOT GREP';
     case In = 'IN';
     case NotIn = 'NOT IN';
     case Regex = 'REGEX';

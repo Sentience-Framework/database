@@ -104,6 +104,16 @@ class SQLServerDialect extends SQLDialect
         $this->buildJoin($query, $params, $join == JoinEnum::CrossJoinLateral ? 'CROSS APPLY' : $join, $table, null);
     }
 
+    protected function globToLike(string $globPattern): string
+    {
+        return strtr(parent::globToLike($globPattern), ['[' => '\[']);
+    }
+
+    protected function grepToLike(string $grepPattern): string
+    {
+        return strtr(parent::grepToLike($grepPattern), ['[' => '\[']);
+    }
+
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
     {
         parent::buildConditionRegexOperator(

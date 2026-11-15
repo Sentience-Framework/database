@@ -53,6 +53,11 @@ abstract class AdapterAbstract implements AdapterInterface
         );
     }
 
+    protected function mysqlBackslashEscapes(): void
+    {
+        $this->exec("SET SESSION sql_mode = trim(BOTH ',' FROM replace(concat(',', @@SESSION.sql_mode, ','), ',NO_BACKSLASH_ESCAPES,', ','))");
+    }
+
     protected function sqliteEncoding(string $encoding): void
     {
         $this->exec(

@@ -75,6 +75,16 @@ trait WhereTrait
         return $this->notGlob($this->where, $column, $value, $caseInsensitive, ChainEnum::And);
     }
 
+    public function whereGrep(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->grep($this->where, $column, $value, $caseInsensitive, ChainEnum::And);
+    }
+
+    public function whereNotGrep(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->notGrep($this->where, $column, $value, $caseInsensitive, ChainEnum::And);
+    }
+
     public function whereIn(string|array|Sql $column, array|SelectQuery $values): static
     {
         return $this->in($this->where, $column, $values, ChainEnum::And);
@@ -228,6 +238,16 @@ trait WhereTrait
     public function orWhereNotGlob(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
     {
         return $this->notGlob($this->where, $column, $value, $caseInsensitive, ChainEnum::Or);
+    }
+
+    public function orWhereGrep(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->grep($this->where, $column, $value, $caseInsensitive, ChainEnum::Or);
+    }
+
+    public function orWhereNotGrep(string|array|Sql $column, string $value, bool $caseInsensitive = false): static
+    {
+        return $this->notGrep($this->where, $column, $value, $caseInsensitive, ChainEnum::Or);
     }
 
     public function orWhereIn(string|array|Sql $column, array|SelectQuery $values): static
