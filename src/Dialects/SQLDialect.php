@@ -1492,11 +1492,11 @@ class SQLDialect extends DialectAbstract
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::Bool => $this->boolean() ? 'BOOLEAN' : 'INTEGER',
-            TypeEnum::Int => $size > 32 ? 'BIGINT' : 'INTEGER',
-            TypeEnum::Float => $size > 32 ? 'DECIMAL(30, 15)' : 'DECIMAL(15, 7)',
-            TypeEnum::String => $size > 255 ? 'TEXT' : sprintf('VARCHAR(%d)', $size ?? 255),
-            TypeEnum::DateTime => 'DATETIME'
+            TypeEnum::Bool => $this->boolean() ? 'boolean' : 'integer',
+            TypeEnum::Int => $size > 32 ? 'bigint' : 'integer',
+            TypeEnum::Float => $size > 32 ? 'decimal(30, 15)' : 'decimal(15, 7)',
+            TypeEnum::String => $size > 255 ? 'text' : sprintf('varchar(%d)', $size ?? 255),
+            TypeEnum::DateTime => 'datetime'
         };
     }
 

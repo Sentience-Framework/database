@@ -23,9 +23,8 @@ class SQLiteDatabase extends DatabaseAbstract
             $file,
             null,
             $queries,
-            $options,
-            $debug,
-            $usePDOAdapter
+            [...$options, Driver::PDO => $usePDOAdapter],
+            $debug
         );
 
         $version = $adapter->version();

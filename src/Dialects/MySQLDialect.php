@@ -23,10 +23,10 @@ class MySQLDialect extends SQLDialect
     public const string OPTIONS_USE_REGEXP = 'use_regexp';
 
     public const array CAST_TYPES = [
-        'bool' => 'UNSIGNED',
-        'int' => 'SIGNED',
-        'float' => 'DECIMAL',
-        'string' => 'CHAR'
+        'bool' => 'unsigned',
+        'int' => 'signed',
+        'float' => 'decimal',
+        'string' => 'char'
     ];
     public const string DATETIME_FORMAT = 'Y-m-d H:i:s.u';
     public const bool ESCAPE_ANSI = false;
@@ -244,15 +244,15 @@ class MySQLDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::Bool => 'TINYINT',
-            TypeEnum::Float => $size > 32 ? 'DOUBLE' : 'FLOAT',
+            TypeEnum::Bool => 'tinyint',
+            TypeEnum::Float => $size > 32 ? 'double' : 'float',
             TypeEnum::String => match (true) {
-                $size > 16777215 => 'LONGTEXT',
-                $size > 65535 => 'MEDIUMTEXT',
-                $size > 255 => 'TEXT',
-                default => sprintf('VARCHAR(%d)', $size ?? 255)
+                $size > 16777215 => 'longtext',
+                $size > 65535 => 'mediumtext',
+                $size > 255 => 'text',
+                default => sprintf('varchar(%d)', $size ?? 255)
             },
-            TypeEnum::DateTime => $size > 0 ? sprintf('DATETIME(%d)', $size) : 'DATETIME',
+            TypeEnum::DateTime => $size > 0 ? sprintf('datetime(%d)', $size) : 'datetime',
             default => parent::type($type, $size)
         };
     }

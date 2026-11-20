@@ -48,9 +48,9 @@ class InformixDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::Bool => 'SMALLINT',
-            TypeEnum::String => $size > 255 ? ($size > 2048 ? 'LONG VARCHAR' : 'VARCHAR') : sprintf('VARCHAR(%d)', $size ?? 255),
-            TypeEnum::DateTime => 'DATETIME YEAR TO FRACTION',
+            TypeEnum::Bool => 'smallint',
+            TypeEnum::String => $size > 255 ? ($size > 2048 ? 'long varchar' : 'varchar') : sprintf('varchar(%d)', $size ?? 255),
+            TypeEnum::DateTime => 'datetime year to fraction',
             default => parent::type($type, $size)
         };
     }

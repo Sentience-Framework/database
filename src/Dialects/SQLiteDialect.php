@@ -237,7 +237,7 @@ class SQLiteDialect extends SQLDialect
         return match ($type) {
             TypeEnum::Bool => 'BOOLEAN',
             TypeEnum::Float => 'REAL',
-            default => parent::type($type, $size)
+            default => strtoupper(parent::type($type, $size))
         };
     }
 

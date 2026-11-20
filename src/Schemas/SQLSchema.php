@@ -59,7 +59,7 @@ class SQLSchema extends SchemaAbstract
 
         return array_map(
             function (array $column): Column {
-                $type = strtoupper($column['data_type']);
+                $type = strtolower($column['data_type']);
                 $size = $column['character_maximum_length'] ?? $column['numeric_precision'] ?? $column['datetime_precision'];
 
                 return new Column(
@@ -269,17 +269,17 @@ class SQLSchema extends SchemaAbstract
     protected function type(string $type, ?int $size): string|Type
     {
         return match ($type) {
-            'BOOLEAN' => new Type(TypeEnum::Bool),
-            'INTEGER' => new Type(TypeEnum::Int, 32),
-            'BIGINT' => new Type(TypeEnum::Int, 64),
-            'REAL',
-            'FLOAT',
-            'DOUBLE',
-            'DECIMAL' => new Type(TypeEnum::Float, 64),
-            'VARCHAR',
-            'TEXT' => new Type(TypeEnum::String, $size ?? PHP_INT_MAX),
-            'DATETIME',
-            'TIMESTAMP' => new Type(TypeEnum::DateTime, $size ?? 0),
+            'boolean' => new Type(TypeEnum::Bool),
+            'integer' => new Type(TypeEnum::Int, 32),
+            'bigint' => new Type(TypeEnum::Int, 64),
+            'real',
+            'float',
+            'double',
+            'decimal' => new Type(TypeEnum::Float, 64),
+            'varchar',
+            'text' => new Type(TypeEnum::String, $size ?? PHP_INT_MAX),
+            'datetime',
+            'timestamp' => new Type(TypeEnum::DateTime, $size ?? 0),
             default => !is_null($size) ? sprintf('%s(%d)', $type, $size) : $type
         };
     }

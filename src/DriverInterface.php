@@ -12,15 +12,7 @@ interface DriverInterface
 {
     public function driver(): string;
 
-    public function adapter(
-        string $name,
-        ?SocketAbstract $socket,
-        array $queries,
-        array $options,
-        ?Closure $debug,
-        bool $usePDOAdapter = false
-    ): AdapterInterface;
-
+    public function adapter(string $name, ?SocketAbstract $socket, array $queries, array $options, ?Closure $debug): AdapterInterface;
     public function dialect(int|string $version, array $options = []): DialectInterface;
     public function schema(): SchemaInterface;
 }

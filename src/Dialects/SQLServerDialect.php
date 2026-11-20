@@ -200,7 +200,7 @@ class SQLServerDialect extends SQLDialect
 
     protected function escape(string $string, string $char): string
     {
-        if ($char == static::ESCAPE_IDENTIFIER && $this->options[static::OPTIONS_USE_DOUBLEQUOTES] ?? false) {
+        if ($char == static::ESCAPE_IDENTIFIER && ($this->options[static::OPTIONS_USE_DOUBLEQUOTES] ?? false)) {
             return '[' . Query::escapeAnsi($string, ['[', ']']) . ']';
         }
 
@@ -210,10 +210,11 @@ class SQLServerDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::Bool => 'SMALLINT',
-            TypeEnum::Float => $size > 32 ? 'FLOAT(8)' : 'FLOAT(4)',
-            TypeEnum::DateTime => $size > 3 ? sprintf('DATETIME2', $size) : 'DATETIME',
-            default => parent::type($type, $size)
+            TypeEnum::Bool => 'bit',
+            TypeEnum::Int => $size > 32 ? 'bigint' : 'int',
+            TypeEnum::Float => $size > 32 ? 'float' : 'real',
+            TypeEnum::String => $size > 4000 ? 'nvarchar(max)' : sprintf('nvarchar(%d)', $size ?? 255),
+            TypeEnum::DateTime => sprintf('datetime2(%d)', max(0, min($size ?? 7, 7)))
         };
     }
 }

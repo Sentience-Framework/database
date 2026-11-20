@@ -30,7 +30,7 @@ class CUBRIDDialect extends MySQLDialect
             TypeEnum::Float => $size > 32 ? 'DOUBLE PRECISION' : 'FLOAT',
             TypeEnum::String => $size > 255 ? 'LONG VARCHAR' : sprintf('VARCHAR(%d)', $size ?? 255),
             TypeEnum::DateTime => 'DATETIME YEAR TO FRACTION(5)',
-            default => parent::type($type, $size)
+            default => strtoupper(parent::type($type, $size))
         };
     }
 }

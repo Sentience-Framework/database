@@ -29,9 +29,8 @@ class MySQLDatabase extends DatabaseAbstract
             $name,
             new NetworkSocket($host, $port, $username, $password),
             $queries,
-            $options,
-            $debug,
-            $usePDOAdapter
+            [...$options, Driver::PDO => $usePDOAdapter],
+            $debug
         );
 
         $version = $adapter->version();
@@ -59,9 +58,8 @@ class MySQLDatabase extends DatabaseAbstract
             $name,
             new UnixSocket($unixSocket, null, $username, $password),
             $queries,
-            $options,
-            $debug,
-            $usePDOAdapter
+            [...$options, Driver::PDO => $usePDOAdapter],
+            $debug
         );
 
         $version = $adapter->version();

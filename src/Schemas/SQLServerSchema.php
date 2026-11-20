@@ -125,19 +125,22 @@ class SQLServerSchema extends SQLSchema
         $size = $size < 0 ? PHP_INT_MAX : $size;
 
         return match ($type) {
-            'BIT',
-            'SMALLINT' => new Type(TypeEnum::Bool),
-            'TINYINT' => new Type(TypeEnum::Int, 32),
-            'MONEY',
-            'SMALLMONEY',
-            'NUMERIC' => new Type(TypeEnum::Float, 64),
-            'CHAR',
-            'NCHAR',
-            'NVARCHAR' => new Type(TypeEnum::String, $size ?? 255),
-            'NTEXT' => new Type(TypeEnum::String, $size ?? PHP_INT_MAX),
-            'DATETIME2',
-            'DATETIMEOFFSET',
-            'SMALLDATETIME' => new Type(TypeEnum::DateTime, $size ?? 0),
+            'bit' => new Type(TypeEnum::Bool),
+            'tinyint',
+            'smallint',
+            'int' => new Type(TypeEnum::Int, 32),
+            'real' => new Type(TypeEnum::Float, 32),
+            'float',
+            'money',
+            'smallmoney',
+            'numeric' => new Type(TypeEnum::Float, 64),
+            'char',
+            'nchar',
+            'nvarchar' => new Type(TypeEnum::String, $size ?? 255),
+            'ntext' => new Type(TypeEnum::String, $size ?? PHP_INT_MAX),
+            'datetime2',
+            'datetimeoffset',
+            'smalldatetime' => new Type(TypeEnum::DateTime, $size ?? 0),
             default => parent::type($type, $size)
         };
     }

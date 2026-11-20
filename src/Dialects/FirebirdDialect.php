@@ -125,7 +125,7 @@ class FirebirdDialect extends SQLDialect
         return match ($type) {
             TypeEnum::String => sprintf('VARCHAR(%d)', min((int) $size, 255)),
             TypeEnum::DateTime => 'TIMESTAMP',
-            default => parent::type($type, $size)
+            default => strtoupper(parent::type($type, $size))
         };
     }
 

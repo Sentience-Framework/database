@@ -73,14 +73,14 @@ class PgSQLDialect extends SQLDialect
             return parent::buildColumn(
                 new Column(
                     $column->name,
-                    match (strtoupper($type)) {
-                        'SMALLINT',
-                        'INTEGER',
-                        'INT',
-                        'INT2',
-                        'INT4' => $typeIsUppercase ? 'SERIAL' : 'serial',
-                        'BIGINT',
-                        'INT8' => $typeIsUppercase ? 'BIGSERIAL' : 'bigserial',
+                    match (strtolower($type)) {
+                        'smallint',
+                        'integer',
+                        'int',
+                        'int2',
+                        'int4' => $typeIsUppercase ? 'SERIAL' : 'serial',
+                        'bigint',
+                        'int8' => $typeIsUppercase ? 'BIGSERIAL' : 'bigserial',
                         default => $type
                     },
                     $column->notNull,
@@ -105,8 +105,8 @@ class PgSQLDialect extends SQLDialect
     public function type(TypeEnum $type, ?int $size = null): string
     {
         return match ($type) {
-            TypeEnum::Float => $size > 32 ? 'DOUBLE PRECISION' : 'REAL',
-            TypeEnum::DateTime => 'TIMESTAMP',
+            TypeEnum::Float => $size > 32 ? 'double precision' : 'real',
+            TypeEnum::DateTime => 'timestamp',
             default => parent::type($type, $size)
         };
     }

@@ -108,10 +108,10 @@ class PgSQLSchema extends SQLSchema
     protected function type(string $type, ?int $size): string|Type
     {
         return match ($type) {
-            'DOUBLE PRECISION' => new Type(TypeEnum::Float, 64),
-            'CHARACTER VARYING' => new Type(TypeEnum::String, $size ?? 255),
-            'TIMESTAMP WITHOUT TIME ZONE',
-            'TIMESTAMP WITH TIME ZONE' => new Type(TypeEnum::DateTime, $size ?? 0),
+            'double precision' => new Type(TypeEnum::Float, 64),
+            'character varying' => new Type(TypeEnum::String, $size ?? 255),
+            'timestamp without time zone',
+            'timestamp with time zone' => new Type(TypeEnum::DateTime, $size ?? 0),
             default => parent::type($type, $size)
         };
     }

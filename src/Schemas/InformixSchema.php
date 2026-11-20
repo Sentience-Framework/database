@@ -79,7 +79,7 @@ class InformixSchema extends SchemaAbstract
                     $this->type($type, $this->size($type, $length)),
                     $columnType >= 256,
                     $this->columnDefault($type, $column['default_type'], $column['column_default']),
-                    in_array($type, ['SERIAL', 'SERIAL8', 'BIGSERIAL'])
+                    in_array($type, ['serial', 'serial8', 'bigserial'])
                 );
             },
             $columns
@@ -333,29 +333,29 @@ class InformixSchema extends SchemaAbstract
     protected function columnType(int $type): string
     {
         return match ($type) {
-            0 => 'CHAR',
-            1 => 'SMALLINT',
-            2 => 'INTEGER',
-            3 => 'FLOAT',
-            4 => 'SMALLFLOAT',
-            5 => 'DECIMAL',
-            6 => 'SERIAL',
-            7 => 'DATE',
-            8 => 'MONEY',
-            10 => 'DATETIME',
-            11 => 'BYTE',
-            12 => 'TEXT',
-            13 => 'VARCHAR',
-            14 => 'INTERVAL',
-            15 => 'NCHAR',
-            16 => 'NVARCHAR',
-            17 => 'INT8',
-            18 => 'SERIAL8',
+            0 => 'char',
+            1 => 'smallint',
+            2 => 'integer',
+            3 => 'float',
+            4 => 'smallfloat',
+            5 => 'decimal',
+            6 => 'serial',
+            7 => 'date',
+            8 => 'money',
+            10 => 'datetime',
+            11 => 'byte',
+            12 => 'text',
+            13 => 'varchar',
+            14 => 'interval',
+            15 => 'nchar',
+            16 => 'nvarchar',
+            17 => 'int8',
+            18 => 'serial8',
             40,
-            43 => 'LVARCHAR',
-            41 => 'CLOB',
-            52 => 'BIGINT',
-            53 => 'BIGSERIAL',
+            43 => 'lvarchar',
+            41 => 'clob',
+            52 => 'bigint',
+            53 => 'bigserial',
             default => (string) $type
         };
     }
@@ -375,15 +375,15 @@ class InformixSchema extends SchemaAbstract
     protected function size(string $type, int $length): ?int
     {
         return match ($type) {
-            'DECIMAL',
-            'MONEY' => intdiv($length, 256),
-            'VARCHAR',
-            'NVARCHAR' => $length % 256,
-            'BYTE',
-            'TEXT',
-            'CLOB',
-            'DATETIME',
-            'INTERVAL' => null,
+            'decimal',
+            'money' => intdiv($length, 256),
+            'varchar',
+            'nvarchar' => $length % 256,
+            'byte',
+            'text',
+            'clob',
+            'datetime',
+            'interval' => null,
             default => $length
         };
     }
@@ -407,13 +407,13 @@ class InformixSchema extends SchemaAbstract
         }
 
         $strings = [
-            'CHAR',
-            'NCHAR',
-            'VARCHAR',
-            'NVARCHAR',
-            'LVARCHAR',
-            'TEXT',
-            'CLOB'
+            'char',
+            'nchar',
+            'varchar',
+            'nvarchar',
+            'lvarchar',
+            'text',
+            'clob'
         ];
 
         if (in_array($type, $strings)) {
@@ -430,19 +430,19 @@ class InformixSchema extends SchemaAbstract
     protected function type(string $type, ?int $size): string|Type
     {
         return match ($type) {
-            'SMALLINT' => new Type(TypeEnum::Bool),
-            'SMALLFLOAT' => new Type(TypeEnum::Float, 32),
-            'MONEY' => new Type(TypeEnum::Float, 64),
-            'SERIAL' => new Type(TypeEnum::Int, 32),
-            'INT8',
-            'SERIAL8',
-            'BIGSERIAL' => new Type(TypeEnum::Int, 64),
-            'CHAR',
-            'NCHAR',
-            'NVARCHAR',
-            'LVARCHAR' => new Type(TypeEnum::String, $size ?? 255),
-            'CLOB' => new Type(TypeEnum::String, $size ?? PHP_INT_MAX),
-            'DATETIME' => new Type(TypeEnum::DateTime, $size ?? 0),
+            'smallint' => new Type(TypeEnum::Bool),
+            'smallfloat' => new Type(TypeEnum::Float, 32),
+            'money' => new Type(TypeEnum::Float, 64),
+            'serial' => new Type(TypeEnum::Int, 32),
+            'int8',
+            'serial8',
+            'bigserial' => new Type(TypeEnum::Int, 64),
+            'char',
+            'nchar',
+            'nvarchar',
+            'lvarchar' => new Type(TypeEnum::String, $size ?? 255),
+            'clob' => new Type(TypeEnum::String, $size ?? PHP_INT_MAX),
+            'datetime' => new Type(TypeEnum::DateTime, $size ?? 0),
             default => parent::type($type, $size)
         };
     }

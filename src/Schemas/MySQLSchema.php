@@ -61,12 +61,12 @@ class MySQLSchema extends SQLSchema
     protected function type(string $type, ?int $size): string|Type
     {
         return match ($type) {
-            'TINYINT' => new Type(TypeEnum::Bool),
-            'DOUBLE' => new Type(TypeEnum::Float, 64),
-            'TEXT' => new Type(TypeEnum::String, $size ?? 65535),
-            'MEDIUMTEXT' => new Type(TypeEnum::String, $size ?? 16777215),
-            'LONGTEXT' => new Type(TypeEnum::String, $size ?? 4294967295),
-            'DATETIME' => new Type(TypeEnum::DateTime, $size ?? 0),
+            'tinyint' => new Type(TypeEnum::Bool),
+            'double' => new Type(TypeEnum::Float, 64),
+            'text' => new Type(TypeEnum::String, $size ?? 65535),
+            'mediumtext' => new Type(TypeEnum::String, $size ?? 16777215),
+            'longtext' => new Type(TypeEnum::String, $size ?? 4294967295),
+            'datetime' => new Type(TypeEnum::DateTime, $size ?? 0),
             default => parent::type($type, $size)
         };
     }
