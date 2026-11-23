@@ -53,7 +53,7 @@ class InsertQuery extends TableQuery
 
     public function execute(bool $emulatePrepare = false): array|ResultInterface
     {
-        if (!$this->onConflict || (!$this->emulateOnConflict && $this->dialect->onConflict()) || (is_string($this->onConflict->conflict) && $this->dialect->namedConstraints())) {
+        if (!$this->onConflict || (!$this->emulateOnConflict && $this->dialect->onConflict() && (!is_string($this->onConflict->conflict) || $this->dialect->namedConstraints()))) {
             if (is_null($this->returning)) {
                 return parent::execute($emulatePrepare);
             }
