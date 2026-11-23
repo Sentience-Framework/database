@@ -45,6 +45,7 @@ class SQLDialect extends DialectAbstract
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = true;
     public const bool INDEX_EXISTS = false;
     public const bool LATERAL = true;
+    public const bool NAMED_CONSTRAINTS = true;
     public const bool ON_CONFLICT = false;
     public const bool RETURNING = false;
     public const bool SAVEPOINTS = true;
@@ -1196,8 +1197,12 @@ class SQLDialect extends DialectAbstract
         );
     }
 
-    protected function buildConstraint(string $name, string $sql): string
+    protected function buildConstraint(?string $name, string $sql): string
     {
+        if (!$this->namedConstraints()) {
+            return $sql;
+        }
+
         return sprintf(
             'CONSTRAINT %s %s',
             $this->escapeIdentifier($name),
@@ -1218,9 +1223,7 @@ class SQLDialect extends DialectAbstract
             )
         );
 
-        return $uniqueConstraint->name
-            ? $this->buildConstraint($uniqueConstraint->name, $sql)
-            : $sql;
+        return $this->buildConstraint($uniqueConstraint->name, $sql);
     }
 
     protected function buildForeignKeyConstraint(ForeignKeyConstraint $foreignKeyConstraint): string
@@ -1258,9 +1261,7 @@ class SQLDialect extends DialectAbstract
                 : $foreignKeyConstraint->onDelete;
         }
 
-        return $foreignKeyConstraint->name
-            ? $this->buildConstraint($foreignKeyConstraint->name, $sql)
-            : $sql;
+        return $this->buildConstraint($foreignKeyConstraint->name, $sql);
     }
 
     protected function buildCheckConstraint(array &$params, CheckConstraint $checkConstraint): string
@@ -1277,9 +1278,7 @@ class SQLDialect extends DialectAbstract
 
         $sql .= ')';
 
-        return $checkConstraint->name
-            ? $this->buildConstraint($checkConstraint->name, $sql)
-            : $sql;
+        return $this->buildConstraint($checkConstraint->name, $sql);
     }
 
     protected function buildAlterTableAdd(string $sql): string
@@ -1523,6 +1522,11 @@ class SQLDialect extends DialectAbstract
     public function lateral(): bool
     {
         return static::LATERAL;
+    }
+
+    public function namedConstraints(): bool
+    {
+        return static::NAMED_CONSTRAINTS;
     }
 
     public function onConflict(): bool

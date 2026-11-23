@@ -26,6 +26,7 @@ class SQLiteDialect extends SQLDialect
     public const bool BOOLEAN = false;
     public const bool GENERATED_BY_DEFAULT_AS_IDENTITY = false;
     public const bool INDEX_EXISTS = true;
+    public const bool NAMED_CONSTRAINTS = false;
     public const bool TABLE_EXISTS = true;
 
     public function createTable(
@@ -164,33 +165,6 @@ class SQLiteDialect extends SQLDialect
         }
 
         return parent::buildColumn($column);
-    }
-
-    protected function buildUniqueConstraint(UniqueConstraint $uniqueConstraint): string
-    {
-        $uniqueConstraint = clone $uniqueConstraint;
-
-        $uniqueConstraint->name = null;
-
-        return parent::buildUniqueConstraint($uniqueConstraint);
-    }
-
-    protected function buildForeignKeyConstraint(ForeignKeyConstraint $foreignKeyConstraint): string
-    {
-        $foreignKeyConstraint = clone $foreignKeyConstraint;
-
-        $foreignKeyConstraint->name = null;
-
-        return parent::buildForeignKeyConstraint($foreignKeyConstraint);
-    }
-
-    protected function buildCheckConstraint(array &$params, CheckConstraint $checkConstraint): string
-    {
-        $checkConstraint = clone $checkConstraint;
-
-        $checkConstraint->name = null;
-
-        return parent::buildCheckConstraint($params, $checkConstraint);
     }
 
     protected function buildAlterTableAlterColumn(AlterColumn $alterColumn): string

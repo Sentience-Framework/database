@@ -120,6 +120,7 @@ interface DialectInterface
     public function generatedByDefaultAsIdentity(): bool;
     public function indexExists(): bool;
     public function lateral(): bool;
+    public function namedConstraints(): bool;
     public function onConflict(): bool;
     public function returning(): bool;
     public function savepoints(): bool;
