@@ -988,18 +988,14 @@ class SQLDialect extends DialectAbstract
         array_walk(
             $values,
             function (array $values, int $index) use (&$query, &$params, $columns, $defaults): void {
+                $sorted = [];
+
                 foreach ($columns as $column) {
-                    $value = !array_key_exists($column, $values)
-                        ? $defaults[$column] ?? Query::raw('DEFAULT')
-                        : $values[$column];
-
-                    unset($values[$column]);
-
-                    $values[$column] = $value;
+                    $sorted[$column] = $values[$column] ?? $defaults[$column] ?? Query::raw('DEFAULT');
                 }
 
                 $query .= $index > 0 ? ', ' : ' ';
-                $query .= $this->buildQuestionMarks($params, $values);
+                $query .= $this->buildQuestionMarks($params, $sorted);
             }
         );
     }
