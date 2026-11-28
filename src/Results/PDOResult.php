@@ -19,7 +19,7 @@ class PDOResult extends ResultAbstract
             $meta = $this->pdoStatement->getColumnMeta($i);
 
             $name = $meta['name'];
-            $nativeType = strtoupper($meta['native_type']);
+            $nativeType = $meta['native_type'];
 
             $columns[$name] = $nativeType;
         }
