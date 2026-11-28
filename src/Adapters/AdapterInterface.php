@@ -3,7 +3,7 @@
 namespace Sentience\Database\Adapters;
 
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Results\ResultInterface;
 
 interface AdapterInterface
@@ -35,7 +35,7 @@ interface AdapterInterface
     public function version(): int|string;
     public function exec(string $query): void;
     public function query(string $query): ResultInterface;
-    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): ResultInterface;
+    public function statement(DialectInterface $dialect, Statement $statement, bool $emulatePrepare): ResultInterface;
     public function beginTransaction(DialectInterface $dialect, ?string $name = null): void;
     public function commitTransaction(DialectInterface $dialect, ?string $name = null): void;
     public function rollbackTransaction(DialectInterface $dialect, ?string $name = null): void;

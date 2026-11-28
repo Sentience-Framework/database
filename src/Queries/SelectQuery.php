@@ -4,7 +4,7 @@ namespace Sentience\Database\Queries;
 
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Traits\ColumnsTrait;
 use Sentience\Database\Queries\Traits\DistinctTrait;
@@ -31,7 +31,7 @@ class SelectQuery extends TableQuery
     use UnionTrait;
     use WhereTrait;
 
-    public function toQueryWithParams(): QueryWithParams
+    public function toStatement(): Statement
     {
         return $this->dialect->select(
             $this->distinct,

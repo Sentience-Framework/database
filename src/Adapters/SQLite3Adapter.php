@@ -7,7 +7,7 @@ use SQLite3;
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\DriverInterface;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Results\SQLite3Result;
 use Sentience\Database\Sockets\SocketAbstract;
 
@@ -128,23 +128,23 @@ class SQLite3Adapter extends AdapterAbstract
         }
     }
 
-    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): SQLite3Result
+    public function statement(DialectInterface $dialect, Statement $statement, bool $emulatePrepare): SQLite3Result
     {
         if ($emulatePrepare) {
-            return $this->query($queryWithParams->toSql($dialect));
+            return $this->query($statement->toSql($dialect));
         }
 
         $start = microtime(true);
 
         try {
-            $sqlite3Stmt = $this->sqlite3->prepare($queryWithParams->query);
+            $sqlite3Stmt = $this->sqlite3->prepare($statement->query);
         } catch (Throwable $exception) {
-            $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start, $exception);
+            $this->debug(fn (): string => $statement->toSql($dialect), $start, $exception);
 
             throw $exception;
         }
 
-        foreach ($queryWithParams->params as $key => $param) {
+        foreach ($statement->params as $key => $param) {
             $value = $dialect->castToDriver($param);
 
             $type = match (get_debug_type($value)) {
@@ -165,12 +165,12 @@ class SQLite3Adapter extends AdapterAbstract
         try {
             $sqlite3Result = $sqlite3Stmt->execute();
         } catch (Throwable $exception) {
-            $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start, $exception);
+            $this->debug(fn (): string => $statement->toSql($dialect), $start, $exception);
 
             throw $exception;
         }
 
-        $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start);
+        $this->debug(fn (): string => $statement->toSql($dialect), $start);
 
         return new SQLite3Result($sqlite3Result);
     }

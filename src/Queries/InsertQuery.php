@@ -7,7 +7,7 @@ use Sentience\Database\Databases\DatabaseInterface;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Interfaces\Sql;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Objects\WhereGroup;
 use Sentience\Database\Queries\Traits\DefaultsTrait;
 use Sentience\Database\Queries\Traits\LastInsertIdTrait;
@@ -34,7 +34,7 @@ class InsertQuery extends TableQuery
         parent::__construct($database, $dialect, $table);
     }
 
-    public function toQueryWithParams(): QueryWithParams
+    public function toStatement(): Statement
     {
         return $this->dialect->insert(
             $this->table,
@@ -163,7 +163,7 @@ class InsertQuery extends TableQuery
 
     protected function insert(array $values, bool $emulatePrepare): ResultInterface
     {
-        $queryWithParams = $this->dialect->insert(
+        $statement = $this->dialect->insert(
             $this->table,
             $values,
             $this->defaults,
@@ -172,7 +172,7 @@ class InsertQuery extends TableQuery
             $this->lastInsertId
         );
 
-        $result = $this->database->queryWithParams($queryWithParams, $emulatePrepare);
+        $result = $this->database->statement($statement, $emulatePrepare);
 
         if (!$this->lastInsertId || is_null($this->returning) || (!$this->emulateReturning && $this->dialect->returning())) {
             return $result;

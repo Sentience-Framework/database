@@ -2,7 +2,7 @@
 
 namespace Sentience\Database\Queries;
 
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Traits\ColumnsTrait;
 use Sentience\Database\Queries\Traits\IfNotExistsTrait;
 use Sentience\Database\Queries\Traits\WhereTrait;
@@ -17,7 +17,7 @@ class CreateIndexQuery extends IndexQuery
 
     protected bool $unique = false;
 
-    public function toQueryWithParams(): QueryWithParams
+    public function toStatement(): Statement
     {
         return $this->dialect->createIndex(
             $this->unique,

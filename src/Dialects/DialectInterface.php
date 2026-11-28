@@ -8,7 +8,7 @@ use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\OnConflict;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Objects\SubQuery;
 
 interface DialectInterface
@@ -25,7 +25,7 @@ interface DialectInterface
         ?int $limit,
         ?int $offset,
         array $unions
-    ): QueryWithParams;
+    ): Statement;
 
     public function insert(
         string|array|Sql $table,
@@ -34,20 +34,20 @@ interface DialectInterface
         ?OnConflict $onConflict,
         ?array $returning,
         ?string $lastInsertId
-    ): QueryWithParams;
+    ): Statement;
 
     public function update(
         string|array|Sql $table,
         array $set,
         array $where,
         ?array $returning
-    ): QueryWithParams;
+    ): Statement;
 
     public function delete(
         string|array|Sql $table,
         array $where,
         ?array $returning
-    ): QueryWithParams;
+    ): Statement;
 
     public function createTable(
         bool $ifNotExists,
@@ -55,7 +55,7 @@ interface DialectInterface
         array $columns,
         array $primaryKeys,
         array $constraints
-    ): QueryWithParams;
+    ): Statement;
 
     public function alterTable(
         string|array|Sql $table,
@@ -65,7 +65,7 @@ interface DialectInterface
     public function dropTable(
         bool $ifExists,
         string|array|Sql $table
-    ): QueryWithParams;
+    ): Statement;
 
     public function createIndex(
         bool $unique,
@@ -74,37 +74,37 @@ interface DialectInterface
         string|array|Sql $table,
         array $columns,
         array $where
-    ): QueryWithParams;
+    ): Statement;
 
     public function dropIndex(
         bool $ifExists,
         string $name,
         string|array|Sql $table
-    ): QueryWithParams;
+    ): Statement;
 
     public function beginTransaction(
         ?string $name
-    ): QueryWithParams;
+    ): Statement;
 
     public function commitTransaction(
         ?string $name
-    ): QueryWithParams;
+    ): Statement;
 
     public function rollbackTransaction(
         ?string $name
-    ): QueryWithParams;
+    ): Statement;
 
     public function beginSavepoint(
         string $name
-    ): QueryWithParams;
+    ): Statement;
 
     public function commitSavepoint(
         string $name
-    ): QueryWithParams;
+    ): Statement;
 
     public function rollbackSavepoint(
         string $name
-    ): QueryWithParams;
+    ): Statement;
 
     public function escapeIdentifier(string|array|Alias|Sql $identifier): string;
     public function escapeString(string $string): string;

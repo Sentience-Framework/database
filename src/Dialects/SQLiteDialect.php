@@ -14,8 +14,8 @@ use Sentience\Database\Queries\Objects\DropConstraint;
 use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\PrimaryKeys;
-use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\RenameColumn;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Objects\UniqueConstraint;
 
 class SQLiteDialect extends SQLDialect
@@ -35,7 +35,7 @@ class SQLiteDialect extends SQLDialect
         array $columns,
         array $primaryKeys,
         array $constraints
-    ): QueryWithParams {
+    ): Statement {
         foreach ($columns as $column) {
             if ($column instanceof Sql) {
                 continue;
@@ -51,7 +51,7 @@ class SQLiteDialect extends SQLDialect
             );
         }
 
-        $queryWithParams = parent::createTable(
+        $statement = parent::createTable(
             $ifNotExists,
             $table,
             $columns,
@@ -60,10 +60,10 @@ class SQLiteDialect extends SQLDialect
         );
 
         if ($this->options[static::OPTIONS_STRICT] ?? false) {
-            $queryWithParams->query .= ' STRICT';
+            $statement->query .= ' STRICT';
         }
 
-        return $queryWithParams;
+        return $statement;
     }
 
     protected function buildConditionLike(string &$query, array &$params, Condition $condition): void

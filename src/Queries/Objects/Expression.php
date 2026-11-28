@@ -25,11 +25,11 @@ class Expression implements Sql
 
     public function rawSql(DialectInterface $dialect): string
     {
-        $queryWithParams = new QueryWithParams(
+        $statement = new Statement(
             $this->sql($dialect),
             $this->params($dialect)
         );
 
-        return $queryWithParams->toSql($dialect);
+        return $statement->toSql($dialect);
     }
 }

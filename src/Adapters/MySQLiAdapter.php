@@ -8,7 +8,7 @@ use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\DriverInterface;
 use Sentience\Database\Exceptions\AdapterException;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Results\MySQLiResult;
 use Sentience\Database\Sockets\NetworkSocket;
 use Sentience\Database\Sockets\SocketAbstract;
@@ -115,20 +115,20 @@ class MySQLiAdapter extends AdapterAbstract
         }
     }
 
-    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): MySQLiResult
+    public function statement(DialectInterface $dialect, Statement $statement, bool $emulatePrepare): MySQLiResult
     {
-        $queryWithParams->namedParamsToQuestionMarks();
+        $statement->namedParamsToQuestionMarks();
 
         if ($emulatePrepare) {
-            return $this->query($queryWithParams->toSql($dialect));
+            return $this->query($statement->toSql($dialect));
         }
 
         $start = microtime(true);
 
         try {
-            $mysqliStmt = $this->mysqli->prepare($queryWithParams->query);
+            $mysqliStmt = $this->mysqli->prepare($statement->query);
         } catch (Throwable $exception) {
-            $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start, $exception);
+            $this->debug(fn (): string => $statement->toSql($dialect), $start, $exception);
 
             throw $exception;
         }
@@ -136,7 +136,7 @@ class MySQLiAdapter extends AdapterAbstract
         $paramTypes = [];
         $paramValues = [];
 
-        foreach ($queryWithParams->params as $param) {
+        foreach ($statement->params as $param) {
             $value = $dialect->castToDriver($param);
 
             $type = match (get_debug_type($value)) {
@@ -164,14 +164,14 @@ class MySQLiAdapter extends AdapterAbstract
         try {
             $mysqliStmt->execute();
         } catch (Throwable $exception) {
-            $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start, $exception);
+            $this->debug(fn (): string => $statement->toSql($dialect), $start, $exception);
 
             throw $exception;
         }
 
         $mysqliResult = $mysqliStmt->get_result();
 
-        $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start);
+        $this->debug(fn (): string => $statement->toSql($dialect), $start);
 
         return new MySQLiResult($mysqliResult);
     }

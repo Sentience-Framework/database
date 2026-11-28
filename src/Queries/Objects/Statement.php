@@ -4,9 +4,9 @@ namespace Sentience\Database\Queries\Objects;
 
 use Throwable;
 use Sentience\Database\Dialects\DialectInterface;
-use Sentience\Database\Exceptions\QueryWithParamsException;
+use Sentience\Database\Exceptions\StatementException;
 
-class QueryWithParams
+class Statement
 {
     public const string INI_PCRE_JIT = 'pcre.jit';
     public const string INI_PCRE_BACKTRACE_LIMIT = 'pcre.backtrack_limit';
@@ -36,7 +36,7 @@ class QueryWithParams
 
                 if ($questionMark) {
                     if (!array_key_exists($index, $this->params)) {
-                        throw new QueryWithParamsException('question mark and param count do not match');
+                        throw new StatementException('question mark and param count do not match');
                     }
 
                     $params[] = $this->params[$index];
@@ -48,7 +48,7 @@ class QueryWithParams
 
                 if ($namedParam) {
                     if (!array_key_exists($namedParam, $this->params)) {
-                        throw new QueryWithParamsException("named param {$namedParam} does not exist");
+                        throw new StatementException("named param {$namedParam} does not exist");
                     }
 
                     $params[] = $this->params[$namedParam];
@@ -99,7 +99,7 @@ class QueryWithParams
 
                 if ($questionMark) {
                     if (!array_key_exists($index, $questionMarks)) {
-                        throw new QueryWithParamsException('question mark and param count do not match');
+                        throw new StatementException('question mark and param count do not match');
                     }
 
                     return $dialect->castToQuery($questionMarks[$index++]);
@@ -107,7 +107,7 @@ class QueryWithParams
 
                 if ($namedParam) {
                     if (!array_key_exists($namedParam, $namedParams)) {
-                        throw new QueryWithParamsException("named param {$namedParam} does not exist");
+                        throw new StatementException("named param {$namedParam} does not exist");
                     }
 
                     return $dialect->castToQuery($namedParams[$namedParam]);

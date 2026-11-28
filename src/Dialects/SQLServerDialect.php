@@ -10,7 +10,7 @@ use Sentience\Database\Queries\Objects\Alias;
 use Sentience\Database\Queries\Objects\Column;
 use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\OnConflict;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Query;
 
 class SQLServerDialect extends SQLDialect
@@ -27,7 +27,7 @@ class SQLServerDialect extends SQLDialect
         array $columns,
         array $primaryKeys,
         array $constraints
-    ): QueryWithParams {
+    ): Statement {
         foreach ($columns as $column) {
             if ($column instanceof Sql) {
                 continue;
@@ -60,13 +60,13 @@ class SQLServerDialect extends SQLDialect
             $createTableQuery->toSql($this)
         );
 
-        return new QueryWithParams($query, $createTableQuery->params);
+        return new Statement($query, $createTableQuery->params);
     }
 
     public function dropTable(
         bool $ifExists,
         string|array|Sql $table
-    ): QueryWithParams {
+    ): Statement {
         $dropTableQuery = parent::dropTable(
             false,
             $table
@@ -86,7 +86,7 @@ class SQLServerDialect extends SQLDialect
             $dropTableQuery->toSql($this)
         );
 
-        return new QueryWithParams($query, $dropTableQuery->params);
+        return new Statement($query, $dropTableQuery->params);
     }
 
     protected function buildLeftJoin(string &$query, array &$params, JoinEnum $join, string|array|Alias|Sql $table, array $conditions): void

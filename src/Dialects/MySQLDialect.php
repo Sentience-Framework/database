@@ -13,7 +13,7 @@ use Sentience\Database\Queries\Objects\Condition;
 use Sentience\Database\Queries\Objects\CurrentTimestamp;
 use Sentience\Database\Queries\Objects\DropConstraint;
 use Sentience\Database\Queries\Objects\OnConflict;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Objects\Type;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
@@ -52,7 +52,7 @@ class MySQLDialect extends SQLDialect
         array $columns,
         array $primaryKeys,
         array $constraints
-    ): QueryWithParams {
+    ): Statement {
         foreach ($columns as $column) {
             if ($column instanceof Sql) {
                 continue;

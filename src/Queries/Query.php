@@ -25,24 +25,24 @@ abstract class Query implements QueryInterface
 
     public function toSql(): string|array
     {
-        return $this->toQueryWithParams()->toSql($this->dialect);
+        return $this->toStatement()->toSql($this->dialect);
     }
 
     public function execute(bool $emulatePrepare = false): mixed
     {
-        $queryWithParams = $this->toQueryWithParams();
+        $statement = $this->toStatement();
 
-        return $this->database->queryWithParams($queryWithParams, $emulatePrepare);
+        return $this->database->statement($statement, $emulatePrepare);
     }
 
     public function explain(bool $emulatePrepare = false): array
     {
-        $queryWithParams = $this->toQueryWithParams();
+        $statement = $this->toStatement();
 
-        $queryWithParams->query = sprintf('EXPLAIN %s', $queryWithParams->query);
+        $statement->query = sprintf('EXPLAIN %s', $statement->query);
 
         return $this->database
-            ->queryWithParams($queryWithParams, $emulatePrepare)
+            ->statement($statement, $emulatePrepare)
             ->fetchAssocs();
     }
 

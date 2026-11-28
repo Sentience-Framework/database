@@ -23,8 +23,8 @@ use Sentience\Database\Queries\Objects\ForeignKeyConstraint;
 use Sentience\Database\Queries\Objects\OnConflict;
 use Sentience\Database\Queries\Objects\OrderBy;
 use Sentience\Database\Queries\Objects\PrimaryKeys;
-use Sentience\Database\Queries\Objects\QueryWithParams;
 use Sentience\Database\Queries\Objects\RenameColumn;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Objects\Type;
 use Sentience\Database\Queries\Objects\UniqueConstraint;
@@ -63,7 +63,7 @@ class SQLDialect extends DialectAbstract
         ?int $limit,
         ?int $offset,
         array $unions
-    ): QueryWithParams {
+    ): Statement {
         $query = 'SELECT';
         $params = [];
 
@@ -79,7 +79,7 @@ class SQLDialect extends DialectAbstract
         $this->buildOffset($query, $limit, $offset);
         $this->buildUnions($query, $params, $unions);
 
-        return new QueryWithParams($query, $params);
+        return new Statement($query, $params);
     }
 
     public function insert(
@@ -89,7 +89,7 @@ class SQLDialect extends DialectAbstract
         ?OnConflict $onConflict,
         ?array $returning,
         ?string $lastInsertId
-    ): QueryWithParams {
+    ): Statement {
         if (count($values) == 0) {
             throw new QueryException('no insert values specified');
         }
@@ -129,7 +129,7 @@ class SQLDialect extends DialectAbstract
         $this->buildOnConflict($query, $params, $onConflict, $values, $lastInsertId);
         $this->buildReturning($query, $returning);
 
-        return new QueryWithParams($query, $params);
+        return new Statement($query, $params);
     }
 
     public function update(
@@ -137,7 +137,7 @@ class SQLDialect extends DialectAbstract
         array $set,
         array $where,
         ?array $returning
-    ): QueryWithParams {
+    ): Statement {
         if (count($set) == 0) {
             throw new QueryException('no updates specified');
         }
@@ -150,14 +150,14 @@ class SQLDialect extends DialectAbstract
         $this->buildWhere($query, $params, $where);
         $this->buildReturning($query, $returning);
 
-        return new QueryWithParams($query, $params);
+        return new Statement($query, $params);
     }
 
     public function delete(
         string|array|Sql $table,
         array $where,
         ?array $returning
-    ): QueryWithParams {
+    ): Statement {
         $query = 'DELETE';
         $params = [];
 
@@ -165,7 +165,7 @@ class SQLDialect extends DialectAbstract
         $this->buildWhere($query, $params, $where);
         $this->buildReturning($query, $returning);
 
-        return new QueryWithParams($query, $params);
+        return new Statement($query, $params);
     }
 
     public function createTable(
@@ -174,7 +174,7 @@ class SQLDialect extends DialectAbstract
         array $columns,
         array $primaryKeys,
         array $constraints
-    ): QueryWithParams {
+    ): Statement {
         if (count($columns) == 0) {
             throw new QueryException('no table columns specified');
         }
@@ -221,7 +221,7 @@ class SQLDialect extends DialectAbstract
 
         $query .= ')';
 
-        return new QueryWithParams($query, $params);
+        return new Statement($query, $params);
     }
 
     public function alterTable(
@@ -233,7 +233,7 @@ class SQLDialect extends DialectAbstract
         }
 
         return array_map(
-            function (object $alter) use ($table): QueryWithParams {
+            function (object $alter) use ($table): Statement {
                 $query = 'ALTER TABLE';
                 $params = [];
 
@@ -253,7 +253,7 @@ class SQLDialect extends DialectAbstract
                     default => $alter->rawSql($this)
                 };
 
-                return new QueryWithParams($query, $params);
+                return new Statement($query, $params);
             },
             $alters
         );
@@ -262,7 +262,7 @@ class SQLDialect extends DialectAbstract
     public function dropTable(
         bool $ifExists,
         string|array|Sql $table
-    ): QueryWithParams {
+    ): Statement {
         $query = 'DROP TABLE';
         $params = [];
 
@@ -272,7 +272,7 @@ class SQLDialect extends DialectAbstract
 
         $this->buildTable($query, $params, $table);
 
-        return new QueryWithParams($query, $params);
+        return new Statement($query, $params);
     }
 
     public function createIndex(
@@ -282,7 +282,7 @@ class SQLDialect extends DialectAbstract
         string|array|Sql $table,
         array $columns,
         array $where
-    ): QueryWithParams {
+    ): Statement {
         if (count($columns) == 0) {
             throw new QueryException('no columns specified');
         }
@@ -320,14 +320,14 @@ class SQLDialect extends DialectAbstract
 
         $this->buildWhere($query, $params, $where);
 
-        return new QueryWithParams($query, $params);
+        return new Statement($query, $params);
     }
 
     public function dropIndex(
         bool $ifExists,
         string $name,
         string|array|Sql $table
-    ): QueryWithParams {
+    ): Statement {
         $query = 'DROP INDEX';
         $params = [];
 
@@ -344,12 +344,12 @@ class SQLDialect extends DialectAbstract
             $this->buildTable($query, $params, $table);
         }
 
-        return new QueryWithParams($query, $params);
+        return new Statement($query, $params);
     }
 
     public function beginTransaction(
         ?string $name
-    ): QueryWithParams {
+    ): Statement {
         $query = 'BEGIN TRANSACTION';
 
         if ($name) {
@@ -357,12 +357,12 @@ class SQLDialect extends DialectAbstract
             $query .= $this->escapeIdentifier($name);
         }
 
-        return new QueryWithParams($query);
+        return new Statement($query);
     }
 
     public function commitTransaction(
         ?string $name
-    ): QueryWithParams {
+    ): Statement {
         $query = 'COMMIT';
 
         if ($name) {
@@ -370,12 +370,12 @@ class SQLDialect extends DialectAbstract
             $query .= $this->escapeIdentifier($name);
         }
 
-        return new QueryWithParams($query);
+        return new Statement($query);
     }
 
     public function rollbackTransaction(
         ?string $name
-    ): QueryWithParams {
+    ): Statement {
         $query = 'ROLLBACK';
 
         if ($name) {
@@ -383,13 +383,13 @@ class SQLDialect extends DialectAbstract
             $query .= $this->escapeIdentifier($name);
         }
 
-        return new QueryWithParams($query);
+        return new Statement($query);
     }
 
     public function beginSavepoint(
         string $name
-    ): QueryWithParams {
-        return new QueryWithParams(
+    ): Statement {
+        return new Statement(
             sprintf(
                 'SAVEPOINT %s',
                 $this->escapeIdentifier($name)
@@ -399,8 +399,8 @@ class SQLDialect extends DialectAbstract
 
     public function commitSavepoint(
         string $name
-    ): QueryWithParams {
-        return new QueryWithParams(
+    ): Statement {
+        return new Statement(
             sprintf(
                 'RELEASE SAVEPOINT %s',
                 $this->escapeIdentifier($name)
@@ -410,8 +410,8 @@ class SQLDialect extends DialectAbstract
 
     public function rollbackSavepoint(
         string $name
-    ): QueryWithParams {
-        return new QueryWithParams(
+    ): Statement {
+        return new Statement(
             sprintf(
                 'ROLLBACK TO %s',
                 $this->escapeIdentifier($name)
@@ -1135,13 +1135,13 @@ class SQLDialect extends DialectAbstract
 
     protected function buildSelectQuery(array &$params, SelectQuery $selectQuery, bool $parentheses = true): string
     {
-        $queryWithParams = $selectQuery->toQueryWithParams();
+        $statement = $selectQuery->toStatement();
 
-        array_push($params, ...$queryWithParams->params);
+        array_push($params, ...$statement->params);
 
         return sprintf(
             $parentheses ? '(%s)' : '%s',
-            $queryWithParams->query
+            $statement->query
         );
     }
 

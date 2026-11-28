@@ -2,7 +2,7 @@
 
 namespace Sentience\Database\Queries;
 
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Traits\IfExistsTrait;
 use Sentience\Database\Results\Result;
 use Sentience\Database\Results\ResultInterface;
@@ -11,7 +11,7 @@ class DropTableQuery extends SchemaQuery
 {
     use IfExistsTrait;
 
-    public function toQueryWithParams(): QueryWithParams
+    public function toStatement(): Statement
     {
         return $this->dialect->dropTable(
             !$this->emulateIfExists ? $this->ifExists : false,

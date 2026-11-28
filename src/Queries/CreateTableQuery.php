@@ -12,7 +12,7 @@ use Sentience\Database\Queries\Columns\StringColumn;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Column;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Objects\Type;
 use Sentience\Database\Queries\Traits\ConstraintsTrait;
 use Sentience\Database\Queries\Traits\IfNotExistsTrait;
@@ -28,7 +28,7 @@ class CreateTableQuery extends SchemaQuery
 
     protected array $columns = [];
 
-    public function toQueryWithParams(): QueryWithParams
+    public function toStatement(): Statement
     {
         return $this->dialect->createTable(
             !$this->emulateIfNotExists ? $this->ifNotExists : false,

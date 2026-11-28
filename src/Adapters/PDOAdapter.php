@@ -9,7 +9,7 @@ use Sentience\Database\Dialects\DialectInterface;
 use Sentience\Database\Driver;
 use Sentience\Database\DriverInterface;
 use Sentience\Database\Exceptions\AdapterException;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Results\PDOResult;
 use Sentience\Database\Sockets\NetworkSocket;
 use Sentience\Database\Sockets\SocketAbstract;
@@ -373,7 +373,7 @@ class PDOAdapter extends AdapterAbstract
         }
     }
 
-    public function queryWithParams(DialectInterface $dialect, QueryWithParams $queryWithParams, bool $emulatePrepare): PDOResult
+    public function statement(DialectInterface $dialect, Statement $statement, bool $emulatePrepare): PDOResult
     {
         $start = microtime(true);
 
@@ -382,9 +382,9 @@ class PDOAdapter extends AdapterAbstract
                 $this->enableEmulatePrepares();
             }
 
-            $pdoStatement = $this->pdo->prepare($queryWithParams->query);
+            $pdoStatement = $this->pdo->prepare($statement->query);
         } catch (Throwable $exception) {
-            $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start, $exception);
+            $this->debug(fn (): string => $statement->toSql($dialect), $start, $exception);
 
             throw $exception;
         } finally {
@@ -393,7 +393,7 @@ class PDOAdapter extends AdapterAbstract
             }
         }
 
-        foreach ($queryWithParams->params as $key => $param) {
+        foreach ($statement->params as $key => $param) {
             $value = $dialect->castToDriver($param);
 
             $type = match (get_debug_type($value)) {
@@ -415,7 +415,7 @@ class PDOAdapter extends AdapterAbstract
         try {
             $pdoStatement->execute();
         } catch (Throwable $exception) {
-            $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start, $exception);
+            $this->debug(fn (): string => $statement->toSql($dialect), $start, $exception);
 
             throw $exception;
         } finally {
@@ -424,7 +424,7 @@ class PDOAdapter extends AdapterAbstract
             }
         }
 
-        $this->debug(fn (): string => $queryWithParams->toSql($dialect), $start);
+        $this->debug(fn (): string => $statement->toSql($dialect), $start);
 
         return new PDOResult($pdoStatement);
     }

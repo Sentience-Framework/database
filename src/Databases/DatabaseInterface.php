@@ -11,7 +11,7 @@ use Sentience\Database\Queries\DropTableQuery;
 use Sentience\Database\Queries\InsertQuery;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\SelectQuery;
 use Sentience\Database\Queries\Table;
@@ -23,7 +23,7 @@ interface DatabaseInterface
     public function exec(string $query): void;
     public function query(string $query): ResultInterface;
     public function prepared(string $query, array $params = [], bool $emulatePrepare = false): ResultInterface;
-    public function queryWithParams(QueryWithParams $queryWithParams, bool $emulatePrepare = false): ResultInterface;
+    public function statement(Statement $statement, bool $emulatePrepare = false): ResultInterface;
     public function beginTransaction(?string $name = null): void;
     public function commitTransaction(bool $releaseSavepoints = false, ?string $name = null): void;
     public function rollbackTransaction(bool $releaseSavepoints = false, ?string $name = null): void;

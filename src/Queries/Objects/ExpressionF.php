@@ -98,12 +98,12 @@ class ExpressionF implements Sql
             $value = $this->values[$index];
 
             if ($value instanceof SelectQuery) {
-                $queryWithParams = $value->toQueryWithParams();
+                $statement = $value->toStatement();
 
-                array_push($this->params, ...$queryWithParams->params);
+                array_push($this->params, ...$statement->params);
 
-                $this->sql .= $queryWithParams->query;
-                $this->rawSql .= $queryWithParams->toSql($dialect);
+                $this->sql .= $statement->query;
+                $this->rawSql .= $statement->toSql($dialect);
             } elseif ($value instanceof Sql) {
                 array_push($this->params, ...$value->params($dialect));
 

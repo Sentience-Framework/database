@@ -14,7 +14,7 @@ use Sentience\Database\Queries\DropTableQuery;
 use Sentience\Database\Queries\InsertQuery;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Alias;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Objects\SubQuery;
 use Sentience\Database\Queries\Query;
 use Sentience\Database\Queries\SelectQuery;
@@ -46,17 +46,17 @@ abstract class DatabaseAbstract implements DatabaseInterface
 
     public function prepared(string $query, array $params = [], bool $emulatePrepare = false): ResultInterface
     {
-        return $this->queryWithParams(
-            new QueryWithParams($query, $params),
+        return $this->statement(
+            new Statement($query, $params),
             $emulatePrepare
         );
     }
 
-    public function queryWithParams(QueryWithParams $queryWithParams, bool $emulatePrepare = false): ResultInterface
+    public function statement(Statement $statement, bool $emulatePrepare = false): ResultInterface
     {
-        return count($queryWithParams->params) > 0
-            ? $this->adapter->queryWithParams($this->dialect, $queryWithParams, $emulatePrepare)
-            : $this->adapter->query($queryWithParams->query);
+        return count($statement->params) > 0
+            ? $this->adapter->statement($this->dialect, $statement, $emulatePrepare)
+            : $this->adapter->query($statement->query);
     }
 
     public function beginTransaction(?string $name = null): void

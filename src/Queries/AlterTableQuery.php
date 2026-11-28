@@ -2,7 +2,7 @@
 
 namespace Sentience\Database\Queries;
 
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 use Sentience\Database\Queries\Traits\AltersTrait;
 use Sentience\Database\Results\ResultInterface;
 
@@ -10,7 +10,7 @@ class AlterTableQuery extends SchemaQuery
 {
     use AltersTrait;
 
-    public function toQueryWithParams(): array
+    public function toStatement(): array
     {
         return $this->dialect->alterTable(
             $this->table,
@@ -20,24 +20,24 @@ class AlterTableQuery extends SchemaQuery
 
     public function toSql(): array
     {
-        $queriesWithParams = $this->toQueryWithParams();
+        $statements = $this->toStatement();
 
         return array_map(
-            fn (QueryWithParams $queryWithParams): string => $queryWithParams->toSql($this->dialect),
-            $queriesWithParams
+            fn (Statement $statement): string => $statement->toSql($this->dialect),
+            $statements
         );
     }
 
     public function execute(bool $emulatePrepares = false): array
     {
-        $queriesWithParams = $this->toQueryWithParams();
+        $statements = $this->toStatement();
 
         return array_map(
-            fn (QueryWithParams $queryWithParams): ResultInterface => $this->database->queryWithParams(
-                $queryWithParams,
+            fn (Statement $statement): ResultInterface => $this->database->statement(
+                $statement,
                 $emulatePrepares
             ),
-            $queriesWithParams
+            $statements
         );
     }
 }

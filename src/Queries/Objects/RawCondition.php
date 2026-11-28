@@ -6,7 +6,7 @@ use Sentience\Database\Queries\Enums\ChainEnum;
 use Sentience\Database\Queries\Enums\ConditionEnum;
 use Sentience\Database\Queries\Query;
 
-class RawCondition extends QueryWithParams
+class RawCondition extends Statement
 {
     public function __construct(
         string $sql,

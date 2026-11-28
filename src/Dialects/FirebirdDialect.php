@@ -7,7 +7,7 @@ use Sentience\Database\Exceptions\QueryException;
 use Sentience\Database\Queries\Enums\TypeEnum;
 use Sentience\Database\Queries\Interfaces\Sql;
 use Sentience\Database\Queries\Objects\Condition;
-use Sentience\Database\Queries\Objects\QueryWithParams;
+use Sentience\Database\Queries\Objects\Statement;
 
 class FirebirdDialect extends SQLDialect
 {
@@ -32,7 +32,7 @@ class FirebirdDialect extends SQLDialect
         array $columns,
         array $primaryKeys,
         array $constraints
-    ): QueryWithParams {
+    ): Statement {
         $createTableQuery = parent::createTable(
             false,
             $table,
@@ -55,13 +55,13 @@ class FirebirdDialect extends SQLDialect
             $this->escapeString($createTableQuery->toSql($this))
         );
 
-        return new QueryWithParams($query);
+        return new Statement($query);
     }
 
     public function dropTable(
         bool $ifExists,
         string|array|Sql $table
-    ): QueryWithParams {
+    ): Statement {
         $dropTableQuery = parent::dropTable(
             false,
             $table
@@ -81,7 +81,7 @@ class FirebirdDialect extends SQLDialect
             $this->escapeString($dropTableQuery->toSql($this))
         );
 
-        return new QueryWithParams($query);
+        return new Statement($query);
     }
 
     protected function buildConditionRegex(string &$query, array &$params, Condition $condition): void
